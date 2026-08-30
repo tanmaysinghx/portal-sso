@@ -16,6 +16,55 @@
     </button>
   </div>
 
+  <!-- Filters in one row above the table, so the active narrowing is always visible. -->
+  <div class="mb-4 flex flex-wrap items-center gap-2.5">
+    <div class="relative">
+      <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400"
+           fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+      </svg>
+      <input
+        type="search"
+        [value]="searchTerm()"
+        (input)="onSearchInput($any($event.target).value)"
+        placeholder="Search name or email"
+        aria-label="Search users"
+        class="w-64 rounded-lg border border-ink-300 py-2 pl-9 pr-3 text-[13px] text-ink-900 shadow-sm placeholder:text-ink-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+      />
+    </div>
+
+    <select
+      [value]="enabledFilterValue()"
+      (change)="onEnabledFilterChange($any($event.target).value)"
+      aria-label="Filter by status"
+      class="rounded-lg border border-ink-300 bg-white py-2 pl-3 pr-8 text-[13px] text-ink-900 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+    >
+      <option value="">Any status</option>
+      <option value="true">Enabled</option>
+      <option value="false">Disabled</option>
+    </select>
+
+    <select
+      [value]="roleFilter()"
+      (change)="onRoleFilterChange($any($event.target).value)"
+      aria-label="Filter by role"
+      class="rounded-lg border border-ink-300 bg-white py-2 pl-3 pr-8 text-[13px] text-ink-900 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+    >
+      <option value="">Any role</option>
+      @for (role of availableRoles(); track role.id) {
+        <option [value]="role.name">{{ role.name }}</option>
+      }
+    </select>
+
+    @if (hasFilters()) {
+      <button type="button" (click)="clearFilters()" class="rounded-lg px-2.5 py-2 text-[13px] font-medium text-ink-500 transition hover:text-ink-900">
+        Clear
+      </button>
+    }
+
+    <span class="ml-auto text-[12px] tabular-nums text-ink-500">{{ rangeLabel() }}</span>
+  </div>
+
   @if (error()) {
     <div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ error() }}</div>
   }
@@ -32,7 +81,12 @@
         }
       </div>
     } @else if (users().length === 0) {
-      <div class="px-6 py-16 text-center text-sm text-ink-500">No users yet.</div>
+      <div class="px-6 py-16 text-center">
+        <p class="text-sm text-ink-500">{{ hasFilters() ? 'No users match these filters.' : 'No users yet.' }}</p>
+        @if (hasFilters()) {
+          <button type="button" (click)="clearFilters()" class="mt-2 text-[13px] font-medium text-brand-600 hover:text-brand-700">Clear filters</button>
+        }
+      </div>
     } @else {
       <div class="overflow-x-auto">
         <table class="w-full text-left">
@@ -147,6 +201,22 @@
           </tbody>
         </table>
       </div>
+
+      @if (totalPages() > 1) {
+        <div class="flex items-center justify-between border-t border-ink-200 bg-ink-50/40 px-5 py-3">
+          <span class="text-[12px] tabular-nums text-ink-500">Page {{ page() + 1 }} of {{ totalPages() }}</span>
+          <div class="flex items-center gap-2">
+            <button type="button" (click)="goToPage(page() - 1)" [disabled]="page() === 0"
+              class="rounded-lg border border-ink-300 bg-white px-3 py-1.5 text-[12px] font-medium text-ink-700 shadow-sm transition hover:bg-ink-50 disabled:cursor-not-allowed disabled:opacity-40">
+              Previous
+            </button>
+            <button type="button" (click)="goToPage(page() + 1)" [disabled]="page() + 1 >= totalPages()"
+              class="rounded-lg border border-ink-300 bg-white px-3 py-1.5 text-[12px] font-medium text-ink-700 shadow-sm transition hover:bg-ink-50 disabled:cursor-not-allowed disabled:opacity-40">
+              Next
+            </button>
+          </div>
+        </div>
+      }
     }
   </div>
 </div>

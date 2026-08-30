@@ -49,6 +49,16 @@ public class MfaService {
      */
     @Transactional
     public MfaSetupResponse initiateSetup(User user) {
+        if (!mfaEncryptionService.isConfigured()) {
+            // Refused rather than stored unencrypted or under a guessable key: an enrolment that
+            // cannot be protected is worse than no enrolment, because the user believes they have a
+            // second factor.
+            throw new BusinessRuleViolationException(
+                    ErrorCode.MFA_UNAVAILABLE,
+                    "Multi-factor authentication is not available: this server has no "
+                            + "app.security.mfa.encryption-key configured.");
+        }
+
         String secret = totpService.generateSecret();
         String encryptedSecret = mfaEncryptionService.encrypt(secret);
 

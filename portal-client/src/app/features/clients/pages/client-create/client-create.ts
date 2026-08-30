@@ -22,13 +22,42 @@ export class ClientCreate {
   readonly submitting = signal(false);
   readonly error = signal<string | null>(null);
 
+  /**
+   * Set only after a confidential client is created. The server hashes the secret and has no
+   * endpoint that can show it again, so navigating away here would lose it permanently — which is
+   * exactly what this screen did before confidential clients existed.
+   */
+  readonly issuedSecret = signal<string | null>(null);
+  readonly issuedClientId = signal<string | null>(null);
+  readonly secretCopied = signal(false);
+
   readonly form = this.fb.nonNullable.group({
     clientId: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9._-]+$/)]],
     clientName: ['', Validators.required],
     redirectUris: ['', Validators.required],
     profileScope: [true],
     emailScope: [true],
+    confidential: [false],
   });
+
+  copySecret(): void {
+    const secret = this.issuedSecret();
+    if (!secret) {
+      return;
+    }
+    navigator.clipboard.writeText(secret).then(
+      () => {
+        this.secretCopied.set(true);
+        setTimeout(() => this.secretCopied.set(false), 2000);
+      },
+      // Clipboard access can be denied; the secret is selectable on screen either way.
+      () => this.secretCopied.set(false),
+    );
+  }
+
+  done(): void {
+    this.router.navigateByUrl('/clients');
+  }
 
   clientIdClasses(): string {
     const control = this.form.controls.clientId;
@@ -64,9 +93,19 @@ export class ClientCreate {
         clientName: value.clientName,
         redirectUris,
         scopes,
+        confidential: value.confidential,
       })
       .subscribe({
-        next: () => this.router.navigateByUrl('/clients'),
+        next: (created) => {
+          if (created.clientSecret) {
+            // Stay put and show it once.
+            this.submitting.set(false);
+            this.issuedClientId.set(created.client.clientId);
+            this.issuedSecret.set(created.clientSecret);
+            return;
+          }
+          this.router.navigateByUrl('/clients');
+        },
         error: (err: HttpErrorResponse) => {
           this.submitting.set(false);
           if (err.status === 409) {

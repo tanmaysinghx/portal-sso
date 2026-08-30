@@ -1,11 +1,16 @@
 package com.tanmaysinghx.portalsso.registration.web.dto;
 
+import com.tanmaysinghx.portalsso.security.password.PasswordPolicy;
+
 /**
- * Lets the sign-in page decide whether to offer a "Create an account" link, and lets a relying
- * application decide whether to link users here to sign up.
+ * What an anonymous caller may know about this server's sign-up rules: whether registration is open,
+ * whether new accounts wait for approval, and the password requirements.
  *
- * @param enabled whether self-registration is accepted at all.
- * @param requiresApproval whether a new account needs an administrator to enable it, so the UI can
- *     say what will actually happen instead of promising immediate access.
+ * <p>The password rules are deliberately public. They are not a secret — every rejected attempt
+ * reveals them anyway — and stating them up front is the difference between a usable sign-up form
+ * and a guessing game.
  */
-public record RegistrationPolicyResponse(boolean enabled, boolean requiresApproval) {}
+public record RegistrationPolicyResponse(
+        boolean enabled,
+        boolean requiresApproval,
+        PasswordPolicy.PasswordPolicyDescription passwordPolicy) {}

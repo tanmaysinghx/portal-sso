@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { RegistrationService } from '../../../core/services/registration.service';
@@ -75,4 +75,21 @@ export class Register {
         },
       });
   }
+
+  /**
+   * Read from the server rather than duplicated here. The rules are configurable, and a copy in the
+   * client would drift and start rejecting passwords the server accepts (or worse, the reverse).
+   */
+  readonly passwordRules = computed<string[]>(() => {
+    const policy = this.registrationService.policy().passwordPolicy;
+    if (!policy) {
+      return [];
+    }
+    const rules = [`At least ${policy.minLength} characters`];
+    if (policy.requireUppercase) rules.push('An upper-case letter');
+    if (policy.requireLowercase) rules.push('A lower-case letter');
+    if (policy.requireDigit) rules.push('A digit');
+    if (policy.requireSymbol) rules.push('A symbol');
+    return rules;
+  });
 }

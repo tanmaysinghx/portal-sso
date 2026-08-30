@@ -1,9 +1,11 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { Page } from '../../../core/models/page.model';
 import {
   CreateOAuthClientRequest,
   OAuthClient,
+  OAuthClientCreated,
   UpdateOAuthClientRequest,
 } from '../models/oauth-client.model';
 
@@ -12,12 +14,20 @@ export class OAuthClientService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = '/api/admin/oauth-clients';
 
-  list(): Observable<OAuthClient[]> {
-    return this.http.get<OAuthClient[]>(this.baseUrl);
+  list(search = '', enabled: boolean | null = null, page = 0, size = 25): Observable<Page<OAuthClient>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (search.trim()) {
+      params = params.set('search', search.trim());
+    }
+    if (enabled !== null) {
+      params = params.set('enabled', enabled);
+    }
+    return this.http.get<Page<OAuthClient>>(this.baseUrl, { params });
   }
 
-  create(request: CreateOAuthClientRequest): Observable<OAuthClient> {
-    return this.http.post<OAuthClient>(this.baseUrl, request);
+  /** Returns the client plus its secret, which the server will never show again. */
+  create(request: CreateOAuthClientRequest): Observable<OAuthClientCreated> {
+    return this.http.post<OAuthClientCreated>(this.baseUrl, request);
   }
 
   update(id: string, request: UpdateOAuthClientRequest): Observable<OAuthClient> {

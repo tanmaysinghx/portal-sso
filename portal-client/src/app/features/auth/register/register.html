@@ -103,8 +103,19 @@
             placeholder="At least 8 characters"
             class="block w-full rounded-lg border border-ink-700 bg-ink-950/60 px-3.5 py-2.5 text-sm text-white shadow-sm transition-colors placeholder:text-ink-600 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
           />
+          <!-- Rules come from the server. Restating them here as a literal would drift the moment an
+               operator changes the policy, and start contradicting what actually gets accepted. -->
+          @if (passwordRules().length > 0) {
+            <ul class="mt-1.5 space-y-0.5 text-[11px] text-ink-500">
+              @for (rule of passwordRules(); track rule) {
+                <li class="flex items-center gap-1.5">
+                  <span class="inline-block h-1 w-1 rounded-full bg-ink-600"></span>{{ rule }}
+                </li>
+              }
+            </ul>
+          }
           @if (form.controls.password.touched && form.controls.password.invalid) {
-            <p class="mt-1.5 text-xs text-red-400">Use at least 8 characters.</p>
+            <p class="mt-1.5 text-xs text-red-400">Password does not meet the requirements above.</p>
           }
         </div>
 

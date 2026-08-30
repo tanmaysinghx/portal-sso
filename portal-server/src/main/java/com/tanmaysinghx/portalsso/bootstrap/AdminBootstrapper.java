@@ -2,11 +2,13 @@ package com.tanmaysinghx.portalsso.bootstrap;
 
 import com.tanmaysinghx.portalsso.audit.entity.AuditAction;
 import com.tanmaysinghx.portalsso.audit.service.AuditService;
+import com.tanmaysinghx.portalsso.security.password.PasswordPolicy;
 import com.tanmaysinghx.portalsso.user.entity.Role;
 import com.tanmaysinghx.portalsso.user.entity.User;
 import com.tanmaysinghx.portalsso.user.repository.RoleRepository;
 import com.tanmaysinghx.portalsso.user.repository.UserRepository;
 import com.tanmaysinghx.portalsso.user.service.RoleService;
+import java.util.List;
 import java.util.Locale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,18 +69,21 @@ public class AdminBootstrapper implements ApplicationRunner {
     private final PasswordEncoder passwordEncoder;
     private final AuditService auditService;
     private final BootstrapProperties properties;
+    private final PasswordPolicy passwordPolicy;
 
     public AdminBootstrapper(
             UserRepository userRepository,
             RoleRepository roleRepository,
             PasswordEncoder passwordEncoder,
             AuditService auditService,
-            BootstrapProperties properties) {
+            BootstrapProperties properties,
+            PasswordPolicy passwordPolicy) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.auditService = auditService;
         this.properties = properties;
+        this.passwordPolicy = passwordPolicy;
     }
 
     @Override
@@ -102,14 +107,19 @@ public class AdminBootstrapper implements ApplicationRunner {
         String email = properties.adminEmail().trim().toLowerCase(Locale.ROOT);
         String password = properties.adminPassword();
 
+        // The configured policy, plus this class's own higher length floor. Refused rather than
+        // accepted-with-a-warning: a warning scrolls past, and the result would be the most
+        // privileged account on the server behind a weak password.
+        List<String> failures = new java.util.ArrayList<>(passwordPolicy.failures(password));
         if (password.length() < MIN_PASSWORD_LENGTH) {
-            // Refused rather than accepted-with-a-warning: a warning scrolls past, and the result
-            // would be the most privileged account on the server behind a weak password.
+            failures.add("must be at least " + MIN_PASSWORD_LENGTH + " characters for the bootstrap administrator");
+        }
+        if (!failures.isEmpty()) {
             log.error(
-                    "Refusing to bootstrap administrator '{}': app.bootstrap.admin-password must be at "
-                            + "least {} characters. No account was created.",
+                    "Refusing to bootstrap administrator '{}': app.bootstrap.admin-password {}. "
+                            + "No account was created.",
                     email,
-                    MIN_PASSWORD_LENGTH);
+                    String.join("; ", failures));
             return;
         }
 

@@ -17,4 +17,17 @@ public record CreateOAuthClientRequest(
         @Size(max = 500) String logoUrl,
 
         /** When true the user is asked to approve scopes on first authorization. */
-        Boolean requireConsent) {}
+        Boolean requireConsent,
+
+        /**
+         * When true the client is issued a secret and authenticates with {@code client_secret_basic}
+         * or {@code client_secret_post} — the shape a server-side web application needs, where the
+         * secret can actually be kept.
+         *
+         * <p>Leave false for browser and mobile apps. A public client cannot hold a secret (anyone
+         * with the bundle has it), which is why PKCE exists and why it is the default here.
+         *
+         * <p>The secret is returned <strong>once</strong>, in the create response, and stored only as
+         * an Argon2 hash. There is no endpoint that can read it back.
+         */
+        Boolean confidential) {}

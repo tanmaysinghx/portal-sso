@@ -6,6 +6,12 @@ spring:
     driver-class-name: org.h2.Driver
 
 app:
+  security:
+    mfa:
+      # The suite enrols users in MFA, and enrolment now requires a key — as it does in any real
+      # deployment. Test-only value; production supplies its own.
+      encryption-key: test-only-mfa-encryption-key-not-a-secret
+
   seed:
     test-data: true
 

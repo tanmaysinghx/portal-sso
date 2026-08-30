@@ -66,6 +66,39 @@ app:
     # successful sign-in. Unlock via POST /api/admin/users/{id}/unlock.
     max-failed-login-attempts: 5
 
+    mfa:
+      # Protects stored TOTP secrets (AES-256-GCM). REQUIRED before anyone can enrol in MFA —
+      # there is deliberately no default. An earlier version fell back to a key written into the
+      # application source, which for a self-hosted product means a published key: a database dump
+      # was a complete second-factor bypass, silently.
+      #
+      # Unset, MFA is unavailable and enrolment is refused. Unset *with* secrets already stored,
+      # the server refuses to start — that combination is the unsafe legacy state, and the fix is
+      # to set a key and restart, which re-encrypts the existing secrets automatically.
+      #
+      # Losing this key means every enrolled user must re-enrol, so back it up with your database
+      # credentials. Supply it as APP_SECURITY_MFA_ENCRYPTION_KEY.
+      encryption-key: ${APP_SECURITY_MFA_ENCRYPTION_KEY:}
+      # Set only while rotating: secrets still readable under it are re-encrypted with the active
+      # key at startup, after which this can be removed.
+      previous-encryption-key: ${APP_SECURITY_MFA_PREVIOUS_ENCRYPTION_KEY:}
+
+    password:
+      # Applied wherever a password is set: admin-created accounts, self-registration, and the
+      # startup bootstrap (which additionally requires 12+). Published to the sign-up page via
+      # GET /api/public/registration-policy so the rules are stated before anyone types.
+      #
+      # Composition rules are a weak control on their own — they mostly produce Password1! — and
+      # NIST 800-63B now advises length plus a breach-list check instead. There is no breach list
+      # here yet, so these defaults keep a modest floor. Raising min-length is worth more than
+      # turning on require-symbol.
+      min-length: 10
+      max-length: 100
+      require-uppercase: true
+      require-lowercase: true
+      require-digit: true
+      require-symbol: false
+
   rate-limit:
     # Per-IP request limits. Complements the per-account lockout, which caps guesses against a
     # single account but not overall volume — spreading attempts across many usernames, or

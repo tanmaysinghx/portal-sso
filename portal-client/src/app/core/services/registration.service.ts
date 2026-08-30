@@ -2,9 +2,20 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, catchError, of, tap } from 'rxjs';
 
+export interface PasswordPolicy {
+  minLength: number;
+  maxLength: number;
+  requireUppercase: boolean;
+  requireLowercase: boolean;
+  requireDigit: boolean;
+  requireSymbol: boolean;
+}
+
 export interface RegistrationPolicy {
   enabled: boolean;
   requiresApproval: boolean;
+  /** Absent only if the server is older than the policy endpoint change. */
+  passwordPolicy?: PasswordPolicy;
 }
 
 export interface RegisterRequest {

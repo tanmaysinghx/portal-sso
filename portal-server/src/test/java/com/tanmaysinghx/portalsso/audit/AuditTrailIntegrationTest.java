@@ -141,6 +141,7 @@ class AuditTrailIntegrationTest {
                                 List.of("https://example.com/callback"),
                                 List.of("openid", "profile"),
                                 null,
+                                false,
                                 false))))
                 .andExpect(status().isCreated())
                 .andReturn()
@@ -152,7 +153,8 @@ class AuditTrailIntegrationTest {
                 .as("a redirect URI is how a client becomes an exfiltration path; it must be recorded")
                 .contains("https://example.com/callback");
 
-        String id = jsonMapper.readTree(body).get("id").asString();
+        // The create response now nests the client so a secret field cannot leak into the list DTO.
+        String id = jsonMapper.readTree(body).get("client").get("id").asString();
         mockMvc.perform(delete("/api/admin/oauth-clients/" + id)
                         .with(user("admin@portalsso.local").roles("ADMIN"))
                         .with(csrf()))

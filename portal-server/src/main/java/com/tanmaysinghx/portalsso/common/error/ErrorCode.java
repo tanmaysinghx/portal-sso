@@ -19,6 +19,7 @@ public enum ErrorCode {
     SESSION_EXPIRED("PRTL-1006", "The current session has expired.", HttpStatus.UNAUTHORIZED),
     INVALID_MFA_CODE("PRTL-1007", "Invalid or expired multi-factor authentication code.", HttpStatus.BAD_REQUEST),
     MFA_REQUIRED("PRTL-1008", "Multi-factor authentication challenge required.", HttpStatus.UNAUTHORIZED),
+    MFA_UNAVAILABLE("PRTL-1009", "Multi-factor authentication is not configured on this server.", HttpStatus.SERVICE_UNAVAILABLE),
 
     // =========================================================================
     // 2000 Series: User Management
@@ -33,6 +34,7 @@ public enum ErrorCode {
     ROLE_PROTECTED("PRTL-2008", "This role is required by the platform and cannot be deleted.", HttpStatus.BAD_REQUEST),
     LAST_ADMIN_PROHIBITED("PRTL-2009", "This would leave the server with no administrator.", HttpStatus.BAD_REQUEST),
     SELF_DEMOTION_PROHIBITED("PRTL-2010", "You cannot remove your own administrator role.", HttpStatus.BAD_REQUEST),
+    WEAK_PASSWORD("PRTL-2011", "The password does not meet the configured policy.", HttpStatus.BAD_REQUEST),
 
     // =========================================================================
     // 3000 Series: OAuth2 Client Management
@@ -40,6 +42,7 @@ public enum ErrorCode {
     CLIENT_ALREADY_EXISTS("PRTL-3001", "An OAuth client with this client_id already exists.", HttpStatus.CONFLICT),
     CLIENT_NOT_FOUND("PRTL-3002", "The requested OAuth client was not found.", HttpStatus.NOT_FOUND),
     INVALID_CLIENT_METADATA("PRTL-3003", "Provided OAuth client metadata is invalid.", HttpStatus.BAD_REQUEST),
+    CLIENT_SECRET_UNAVAILABLE("PRTL-3004", "A client secret is shown only once, when the client is created.", HttpStatus.BAD_REQUEST),
 
     // =========================================================================
     // 4000 Series: Validation, Formatting & Generic Client Errors

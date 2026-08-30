@@ -6,6 +6,7 @@ import com.tanmaysinghx.portalsso.common.error.BusinessRuleViolationException;
 import com.tanmaysinghx.portalsso.common.error.ErrorCode;
 import com.tanmaysinghx.portalsso.common.error.ResourceConflictException;
 import com.tanmaysinghx.portalsso.registration.config.RegistrationProperties;
+import com.tanmaysinghx.portalsso.security.password.PasswordPolicy;
 import com.tanmaysinghx.portalsso.registration.web.dto.RegisterRequest;
 import com.tanmaysinghx.portalsso.registration.web.dto.RegistrationPolicyResponse;
 import com.tanmaysinghx.portalsso.registration.web.dto.RegistrationResponse;
@@ -59,24 +60,30 @@ public class PublicRegistrationController {
     private final PasswordEncoder passwordEncoder;
     private final RegistrationProperties properties;
     private final AuditService auditService;
+    private final PasswordPolicy passwordPolicy;
 
     public PublicRegistrationController(
             UserRepository userRepository,
             RoleRepository roleRepository,
             PasswordEncoder passwordEncoder,
             RegistrationProperties properties,
-            AuditService auditService) {
+            AuditService auditService,
+            PasswordPolicy passwordPolicy) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.properties = properties;
         this.auditService = auditService;
+        this.passwordPolicy = passwordPolicy;
     }
 
     /** Readable whether or not registration is on — that answer is the whole point of it. */
     @GetMapping("/registration-policy")
     public RegistrationPolicyResponse policy() {
-        return new RegistrationPolicyResponse(properties.enabled(), properties.requireAdminApproval());
+        // The password rules ride along so the sign-up page can state them before the user types,
+        // rather than letting them find out one rejected submission at a time.
+        return new RegistrationPolicyResponse(
+                properties.enabled(), properties.requireAdminApproval(), passwordPolicy.describe());
     }
 
     @PostMapping("/register")
@@ -87,6 +94,8 @@ public class PublicRegistrationController {
             throw new BusinessRuleViolationException(
                     ErrorCode.REGISTRATION_DISABLED, "Self-registration is not enabled on this server.");
         }
+
+        passwordPolicy.validate(request.password());
 
         String email = request.email().trim().toLowerCase();
 

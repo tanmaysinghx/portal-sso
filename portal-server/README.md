@@ -86,6 +86,8 @@ configure a real deployment:
 | `SERVER_PORT` | `8080` | HTTP port |
 | `APP_BOOTSTRAP_ADMIN_EMAIL` | *(unset)* | The first administrator — see **First run** below. |
 | `APP_BOOTSTRAP_ADMIN_PASSWORD` | *(unset)* | Its password. Minimum 12 characters. |
+| `APP_SECURITY_MFA_ENCRYPTION_KEY` | *(unset)* | Protects stored TOTP secrets. **Required before anyone can enrol in MFA** — see **MFA encryption key** below. |
+| `APP_SECURITY_MFA_PREVIOUS_ENCRYPTION_KEY` | *(unset)* | Set only while rotating; secrets are re-encrypted at startup. |
 | `APP_GEOIP_DATABASE_PATH` | *(unset)* | Path to a MaxMind GeoLite2/GeoIP2 `.mmdb`. Without it, login geography reads "Unknown" and the dashboard map explains why. |
 | `SPRING_PROFILES_ACTIVE` | *(none)* | e.g. `mysql,local` — see below |
 
@@ -115,6 +117,36 @@ is **never** overwritten, so editing configuration cannot be used to take over s
 Start with no administrator and no variables set and the server logs a warning saying exactly
 that, because otherwise the only symptom is a sign-in page that rejects every credential.
 
+### MFA encryption key
+
+TOTP secrets are encrypted at rest with AES-256-GCM under `app.security.mfa.encryption-key`. There
+is **no default**, deliberately. An earlier version fell back to a key written into the application
+source — which for a self-hosted product is a *published* key, so any deployment that never set the
+property stored secrets anyone could decrypt from a database dump. That is the exact failure
+encrypting them was meant to prevent, and it happened silently.
+
+Behaviour by state:
+
+| State | What happens |
+|---|---|
+| Key set, all secrets readable | normal startup |
+| Key set, secrets written under an older key | re-encrypted in place at startup, logged |
+| Key set, secrets readable under no known key | **refuses to start**, naming the count |
+| No key, no secrets stored | starts, warns; MFA enrolment returns `PRTL-1009` |
+| No key, secrets stored | **refuses to start** |
+
+Refusing is safe because the message says how to fix it and the fix is one restart. The friendlier
+looking alternative — start up and skip the MFA challenge — would silently strip the second factor
+from every enrolled user, which is worse than a visible outage.
+
+**Upgrading from a build that used the default key:** set `app.security.mfa.encryption-key` to a new
+value and restart. Existing secrets are detected and re-encrypted under it automatically; users keep
+their existing authenticator entries. **Rotating:** set the new key, put the old one in
+`app.security.mfa.previous-encryption-key`, restart, then remove the previous key.
+
+Losing the key means every enrolled user must re-enrol (an admin can clear them with
+`POST /api/admin/users/{id}/mfa/reset`), so back it up alongside your database credentials.
+
 ### Profiles
 
 - **`mysql`** — activate for any MySQL deployment. Handles two MySQL-specific quirks, both
@@ -134,14 +166,25 @@ Postgres needs neither profile; run with no `SPRING_PROFILES_ACTIVE` at all.
   see `security/SecurityConfig.java` for the one thing it can't provide out of the box (cookie-based
   CSRF for the admin SPA, which requires taking over the security filter chains explicitly).
 - **Admin REST API** (`/api/admin/**`, session-cookie auth, `ROLE_ADMIN` via `@PreAuthorize`):
-  - `GET/POST /api/admin/oauth-clients` — list/register OAuth clients
   - `PUT /api/admin/oauth-clients/{id}` — edit name, redirect URIs, scopes, enabled.
     `clientId` is deliberately immutable: relying apps are configured with it, so changing it
     would break every one of them with no migration path.
+  - `GET /api/admin/oauth-clients?search=&enabled=&page=&size=` — paged and searchable.
+  - `POST /api/admin/oauth-clients` — register a client. `confidential: true` issues a client
+    secret for server-side apps (`client_secret_basic` / `client_secret_post`); omit it for a
+    public PKCE-only client. **The secret is returned once, in the create response**, and stored
+    only as an Argon2 hash — there is no endpoint that can show it again. PKCE is required for
+    both client types, because OAuth 2.1 mandates it for every authorization_code client.
   - `DELETE /api/admin/oauth-clients/{id}` — delete the client **and revoke its grants**. The
     authorization tables reference a client by a plain column with no foreign key, so nothing
     cascades; `OAuth2GrantRevoker` removes them explicitly.
-  - `GET/POST /api/admin/users`, `PATCH /api/admin/users/{id}` — list, create, enable/disable
+  - `GET /api/admin/users?search=&enabled=&role=&page=&size=` — paged, searchable, filterable.
+    Search matches email or name; `role` uses an EXISTS subquery rather than a join, so a
+    multi-role user is counted once instead of inflating the total. The page is selected without a
+    fetch join and roles are loaded for that page's ids in a second query — combining a fetch join
+    with `Pageable` makes Hibernate paginate **in memory** over the whole result set, which is the
+    behaviour paging exists to remove.
+  - `POST /api/admin/users`, `PATCH /api/admin/users/{id}` — create, enable/disable
   - `PUT /api/admin/users/{id}/roles` — replace a user's roles. The complete set, not a delta.
     Refuses to remove your own administrator role, or the last **enabled** administrator — a
     disabled admin cannot sign in, so counting them as cover would strand the server.
@@ -233,6 +276,14 @@ test (`JwtClaimsCustomizerIntegrationTest`).
   effective ceiling is the configured rate times the instance count. That is a deliberate trade
   against putting a shared store on the hot path of every sign-in; the per-account lockout is the
   hard stop, and a reverse proxy sees all traffic if you need a global limit.
+- **Password policy has no breach-list check.** `app.security.password` enforces length and
+  composition at every entry point, but composition rules are a weak control on their own — they
+  mostly produce `Password1!`. NIST 800-63B advises checking candidates against a breach corpus
+  instead, which is not implemented. Raising `min-length` is worth more than enabling
+  `require-symbol`.
+- **Confidential clients cannot use `client_credentials`.** They get authorization_code +
+  refresh_token only, so a machine-to-machine integration with no user context is not yet
+  supported.
 - **Registered emails are unverified.** Nothing proves a registrant owns the address they typed,
   because there is no email delivery yet. Set `app.registration.require-admin-approval: true` to
   keep a human in the loop until that lands.

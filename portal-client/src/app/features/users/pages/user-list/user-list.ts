@@ -1,6 +1,8 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, HostListener, inject, signal } from '@angular/core';
+import { Component, HostListener, computed, inject, signal } from '@angular/core';
+import { Subject, debounceTime } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../../core/services/auth.service';
 import { SnackbarService } from '../../../../core/services/snackbar.service';
@@ -9,6 +11,8 @@ import { PortalRole } from '../../../roles/models/role.model';
 import { RoleService } from '../../../roles/services/role.service';
 import { CreateUserRequest, PortalUser } from '../../models/portal-user.model';
 import { UserService } from '../../services/user.service';
+
+const PAGE_SIZE = 25;
 
 const INPUT_BASE_CLASSES =
   'block w-full rounded-lg border px-3.5 py-2.5 text-sm text-ink-900 shadow-sm transition-colors placeholder:text-ink-400 focus:outline-none focus:ring-2';
@@ -38,6 +42,34 @@ export class UserList {
   readonly rolesError = signal<string | null>(null);
 
   readonly users = signal<PortalUser[]>([]);
+
+  // Paging and filters. The list used to fetch and render every account at once.
+  readonly page = signal(0);
+  readonly totalPages = signal(0);
+  readonly totalElements = signal(0);
+  readonly searchTerm = signal('');
+  readonly enabledFilter = signal<boolean | null>(null);
+  readonly roleFilter = signal('');
+  private readonly searchInput = new Subject<string>();
+  private latestRequest = 0;
+
+  /** The select binds to a string; templates have no access to the global String(). */
+  readonly enabledFilterValue = computed(() =>
+    this.enabledFilter() === null ? '' : String(this.enabledFilter()),
+  );
+
+  readonly hasFilters = computed(
+    () => this.searchTerm() !== '' || this.enabledFilter() !== null || this.roleFilter() !== '',
+  );
+
+  readonly rangeLabel = computed(() => {
+    const total = this.totalElements();
+    if (total === 0) {
+      return 'No users';
+    }
+    const first = this.page() * PAGE_SIZE + 1;
+    return `${first}\u2013${Math.min(first + this.users().length - 1, total)} of ${total}`;
+  });
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly updatingId = signal<string | null>(null);
@@ -58,6 +90,14 @@ export class UserList {
   });
 
   constructor() {
+    // Debounced so typing a name does not fire a query per keystroke. This subscription is the only
+    // thing that applies a search change, so a value pushed here supersedes any pending keystroke.
+    this.searchInput.pipe(debounceTime(300), takeUntilDestroyed()).subscribe((value) => {
+      this.searchTerm.set(value);
+      this.page.set(0);
+      this.loadUsers();
+    });
+
     this.loadUsers();
     this.roleService.list().subscribe({
       next: (roles) => this.availableRoles.set(roles),
@@ -139,17 +179,64 @@ export class UserList {
 
   loadUsers(): void {
     this.loading.set(true);
-    this.userService.list().subscribe({
-      next: (users) => {
-        this.users.set(users);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.error.set('Could not load users.');
-        this.loading.set(false);
-        this.snackbarService.error('Error Loading Users', 'Unable to retrieve user directory from backend.', 'PRTL-5000');
-      },
-    });
+
+    // Responses are not guaranteed to arrive in request order, so a slow earlier query could
+    // otherwise overwrite a later one and leave the table disagreeing with the filters above it.
+    const request = ++this.latestRequest;
+
+    this.userService
+      .list(this.searchTerm(), this.enabledFilter(), this.roleFilter(), this.page(), PAGE_SIZE)
+      .subscribe({
+        next: (result) => {
+          if (request !== this.latestRequest) {
+            return;
+          }
+          this.users.set(result.content);
+          this.totalPages.set(result.totalPages);
+          this.totalElements.set(result.totalElements);
+          this.loading.set(false);
+        },
+        error: () => {
+          if (request !== this.latestRequest) {
+            return;
+          }
+          this.error.set('Could not load users.');
+          this.loading.set(false);
+          this.snackbarService.error('Error Loading Users', 'Unable to retrieve user directory from backend.', 'PRTL-5000');
+        },
+      });
+  }
+
+  onSearchInput(value: string): void {
+    this.searchInput.next(value);
+  }
+
+  onEnabledFilterChange(value: string): void {
+    this.enabledFilter.set(value === '' ? null : value === 'true');
+    this.page.set(0);
+    this.loadUsers();
+  }
+
+  onRoleFilterChange(value: string): void {
+    this.roleFilter.set(value);
+    this.page.set(0);
+    this.loadUsers();
+  }
+
+  clearFilters(): void {
+    this.enabledFilter.set(null);
+    this.roleFilter.set('');
+    // Pushed through the debounced stream so a keystroke still in flight cannot land afterwards and
+    // re-apply the search just cleared. The stream owns the reload, so this issues one request.
+    this.searchInput.next('');
+  }
+
+  goToPage(target: number): void {
+    if (target < 0 || (this.totalPages() > 0 && target >= this.totalPages())) {
+      return;
+    }
+    this.page.set(target);
+    this.loadUsers();
   }
 
   displayName(user: PortalUser): string {
@@ -199,7 +286,9 @@ export class UserList {
       next: (newUser) => {
         this.submitting.set(false);
         this.showCreateModal.set(false);
-        this.users.update((list) => [newUser, ...list]);
+        // Reload rather than splicing: with paging, the new row's position depends on the current
+        // sort, page and filters, and guessing it would show the list in a state the server disagrees with.
+        this.loadUsers();
         this.snackbarService.success(
           'User Created Successfully',
           `Created account for ${newUser.email} with ${newUser.roles.join(', ')} privileges.`

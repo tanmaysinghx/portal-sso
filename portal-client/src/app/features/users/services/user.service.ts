@@ -1,6 +1,7 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { Page } from '../../../core/models/page.model';
 import { CreateUserRequest, PortalUser } from '../models/portal-user.model';
 
 @Injectable({ providedIn: 'root' })
@@ -8,8 +9,24 @@ export class UserService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = '/api/admin/users';
 
-  list(): Observable<PortalUser[]> {
-    return this.http.get<PortalUser[]>(this.baseUrl);
+  list(
+    search = '',
+    enabled: boolean | null = null,
+    role = '',
+    page = 0,
+    size = 25,
+  ): Observable<Page<PortalUser>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (search.trim()) {
+      params = params.set('search', search.trim());
+    }
+    if (enabled !== null) {
+      params = params.set('enabled', enabled);
+    }
+    if (role) {
+      params = params.set('role', role);
+    }
+    return this.http.get<Page<PortalUser>>(this.baseUrl, { params });
   }
 
   create(request: CreateUserRequest): Observable<PortalUser> {
