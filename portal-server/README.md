@@ -106,6 +106,12 @@ Postgres needs neither profile; run with no `SPRING_PROFILES_ACTIVE` at all.
   CSRF for the admin SPA, which requires taking over the security filter chains explicitly).
 - **Admin REST API** (`/api/admin/**`, session-cookie auth, `ROLE_ADMIN` via `@PreAuthorize`):
   - `GET/POST /api/admin/oauth-clients` — list/register OAuth clients
+  - `PUT /api/admin/oauth-clients/{id}` — edit name, redirect URIs, scopes, enabled.
+    `clientId` is deliberately immutable: relying apps are configured with it, so changing it
+    would break every one of them with no migration path.
+  - `DELETE /api/admin/oauth-clients/{id}` — delete the client **and revoke its grants**. The
+    authorization tables reference a client by a plain column with no foreign key, so nothing
+    cascades; `OAuth2GrantRevoker` removes them explicitly.
   - `GET/POST /api/admin/users`, `PATCH /api/admin/users/{id}` — list, create, enable/disable
   - `POST /api/admin/users/{id}/unlock` — clear a lockout from failed sign-ins
   - `GET /api/admin/me` — current session's identity, used by the SPA to bootstrap auth state

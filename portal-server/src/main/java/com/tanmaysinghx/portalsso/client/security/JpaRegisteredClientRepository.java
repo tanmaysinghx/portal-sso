@@ -69,14 +69,30 @@ public class JpaRegisteredClientRepository implements RegisteredClientRepository
         oAuthClientRepository.save(entity);
     }
 
+    /**
+     * Both lookups skip disabled clients, so Spring Authorization Server behaves exactly as if the
+     * client were never registered: the authorization and token endpoints reject it.
+     *
+     * <p>Previously {@code enabled} was stored and displayed but never consulted, which meant a
+     * client shown as "Disabled" in the admin console could still complete a full OAuth2 flow — a
+     * control that looked like it worked and didn't. Filtering in {@code findById} as well as
+     * {@code findByClientId} matters: the former is how the server resolves the client behind an
+     * already-issued authorization, so disabling also stops existing refresh tokens.
+     */
     @Override
     public RegisteredClient findById(String id) {
-        return oAuthClientRepository.findById(UUID.fromString(id)).map(this::toRegisteredClient).orElse(null);
+        return oAuthClientRepository.findById(UUID.fromString(id))
+                .filter(OAuthClient::isEnabled)
+                .map(this::toRegisteredClient)
+                .orElse(null);
     }
 
     @Override
     public RegisteredClient findByClientId(String clientId) {
-        return oAuthClientRepository.findByClientId(clientId).map(this::toRegisteredClient).orElse(null);
+        return oAuthClientRepository.findByClientId(clientId)
+                .filter(OAuthClient::isEnabled)
+                .map(this::toRegisteredClient)
+                .orElse(null);
     }
 
     private RegisteredClient toRegisteredClient(OAuthClient entity) {

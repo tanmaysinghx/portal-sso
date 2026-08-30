@@ -54,6 +54,7 @@
               <th class="px-5 py-3">Redirect URIs</th>
               <th class="px-5 py-3">Scopes</th>
               <th class="px-5 py-3">Status</th>
+              <th class="px-5 py-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-ink-100">
@@ -89,6 +90,24 @@
                     <app-badge tone="danger">Disabled</app-badge>
                   }
                 </td>
+                <td class="px-5 py-3.5 text-right">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <button
+                      type="button"
+                      (click)="openEdit(client)"
+                      class="rounded-md border border-ink-300 px-2 py-1 text-[11px] font-medium text-ink-600 transition hover:border-ink-400 hover:text-ink-900"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      (click)="openDelete(client)"
+                      class="rounded-md border border-red-200 px-2 py-1 text-[11px] font-medium text-red-600 transition hover:border-red-300 hover:bg-red-50"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </td>
               </tr>
             }
           </tbody>
@@ -97,3 +116,150 @@
     }
   </div>
 </div>
+
+<!-- Edit modal. clientId is shown read-only: it is immutable server-side because every relying
+     app is configured with it. -->
+@if (editing(); as client) {
+  <div class="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto p-4 sm:p-6">
+    <div class="fixed inset-0 bg-ink-950/70 backdrop-blur-sm" (click)="closeModals()" aria-hidden="true"></div>
+
+    <form
+      class="animate-fade-in-up relative z-10 w-full max-w-lg rounded-2xl border border-ink-200 bg-white shadow-2xl"
+      [formGroup]="editForm"
+      (ngSubmit)="saveEdit()"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="edit-client-title"
+    >
+      <div class="flex items-start justify-between gap-4 border-b border-ink-100 px-6 py-4">
+        <div>
+          <h3 id="edit-client-title" class="text-base font-semibold text-ink-900">Edit client</h3>
+          <code class="mt-0.5 block font-mono text-[11px] text-ink-500">{{ client.clientId }}</code>
+        </div>
+        <button
+          type="button"
+          (click)="closeModals()"
+          class="rounded-lg p-1.5 text-ink-400 transition hover:bg-ink-100 hover:text-ink-600"
+          aria-label="Close"
+        >
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="space-y-5 px-6 py-5">
+        @if (modalError()) {
+          <div class="rounded-lg border border-red-200 bg-red-50 px-3.5 py-3 text-sm text-red-700">{{ modalError() }}</div>
+        }
+
+        <div>
+          <label for="editClientName" class="mb-1.5 block text-[13px] font-medium text-ink-800">Display name</label>
+          <input id="editClientName" type="text" formControlName="clientName" autocomplete="off" [class]="inputClasses" />
+        </div>
+
+        <div>
+          <label for="editRedirectUris" class="mb-1.5 block text-[13px] font-medium text-ink-800">Redirect URIs</label>
+          <textarea
+            id="editRedirectUris"
+            formControlName="redirectUris"
+            rows="3"
+            class="block w-full resize-y rounded-lg border border-ink-300 px-3.5 py-2.5 font-mono text-[13px] text-ink-900 shadow-sm transition-colors placeholder:text-ink-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+          ></textarea>
+          <p class="mt-1.5 text-xs text-ink-500">One per line. Must match exactly what your app sends.</p>
+        </div>
+
+        <div>
+          <span class="mb-2 block text-[13px] font-medium text-ink-800">Scopes</span>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2.5 rounded-lg border border-ink-200 bg-ink-50 px-3.5 py-2.5">
+              <input type="checkbox" checked disabled class="h-4 w-4 rounded border-ink-300 accent-brand-600" />
+              <span class="text-[13px] text-ink-600">openid</span>
+              <span class="ml-auto text-[11px] text-ink-400">Always required</span>
+            </label>
+            <label class="flex cursor-pointer items-center gap-2.5 rounded-lg border border-ink-200 px-3.5 py-2.5 transition hover:bg-ink-50">
+              <input type="checkbox" formControlName="profileScope" class="h-4 w-4 rounded border-ink-300 accent-brand-600" />
+              <span class="text-[13px] text-ink-800">profile</span>
+            </label>
+            <label class="flex cursor-pointer items-center gap-2.5 rounded-lg border border-ink-200 px-3.5 py-2.5 transition hover:bg-ink-50">
+              <input type="checkbox" formControlName="emailScope" class="h-4 w-4 rounded border-ink-300 accent-brand-600" />
+              <span class="text-[13px] text-ink-800">email</span>
+            </label>
+          </div>
+        </div>
+
+        <label class="flex cursor-pointer items-start gap-2.5 rounded-lg border border-ink-200 px-3.5 py-3 transition hover:bg-ink-50">
+          <input type="checkbox" formControlName="enabled" class="mt-0.5 h-4 w-4 rounded border-ink-300 accent-brand-600" />
+          <span>
+            <span class="block text-[13px] font-medium text-ink-800">Enabled</span>
+            <span class="block text-xs text-ink-500">
+              Disabling immediately stops new sign-ins and invalidates existing refresh tokens.
+            </span>
+          </span>
+        </label>
+      </div>
+
+      <div class="flex items-center justify-end gap-2.5 border-t border-ink-100 bg-ink-50/60 px-6 py-4">
+        <button type="button" (click)="closeModals()" class="rounded-lg px-4 py-2.5 text-[13px] font-medium text-ink-600 transition hover:text-ink-900">
+          Cancel
+        </button>
+        <button
+          type="submit"
+          [disabled]="submitting()"
+          class="rounded-lg bg-brand-600 px-4 py-2.5 text-[13px] font-semibold text-white shadow-sm transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {{ submitting() ? 'Saving…' : 'Save changes' }}
+        </button>
+      </div>
+    </form>
+  </div>
+}
+
+<!-- Delete confirmation. Deletion also revokes issued tokens, so it names the consequence
+     explicitly rather than asking a generic "are you sure?". -->
+@if (deleting(); as client) {
+  <div class="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto p-4 sm:p-6">
+    <div class="fixed inset-0 bg-ink-950/70 backdrop-blur-sm" (click)="closeModals()" aria-hidden="true"></div>
+
+    <div
+      class="animate-fade-in-up relative z-10 w-full max-w-md rounded-2xl border border-ink-200 bg-white p-6 shadow-2xl"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="delete-client-title"
+    >
+      <div class="flex items-start gap-3">
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600 ring-1 ring-inset ring-red-600/15">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <h3 id="delete-client-title" class="text-base font-semibold text-ink-900">Delete {{ client.clientName }}?</h3>
+          <p class="mt-1.5 text-[13px] leading-relaxed text-ink-600">
+            Every access token, refresh token and consent issued under
+            <code class="rounded bg-ink-100 px-1 py-0.5 font-mono text-[11px]">{{ client.clientId }}</code>
+            will be revoked, signing its users out. This cannot be undone.
+          </p>
+        </div>
+      </div>
+
+      @if (modalError()) {
+        <div class="mt-4 rounded-lg border border-red-200 bg-red-50 px-3.5 py-3 text-sm text-red-700">{{ modalError() }}</div>
+      }
+
+      <div class="mt-6 flex items-center justify-end gap-2.5">
+        <button type="button" (click)="closeModals()" class="rounded-lg px-4 py-2.5 text-[13px] font-medium text-ink-600 transition hover:text-ink-900">
+          Cancel
+        </button>
+        <button
+          type="button"
+          (click)="confirmDelete()"
+          [disabled]="submitting()"
+          class="rounded-lg bg-red-600 px-4 py-2.5 text-[13px] font-semibold text-white shadow-sm transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {{ submitting() ? 'Deleting…' : 'Delete client' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

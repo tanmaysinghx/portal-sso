@@ -14,3 +14,11 @@ export interface CreateOAuthClientRequest {
   redirectUris: string[];
   scopes: string[];
 }
+
+/** No `clientId`: it is immutable server-side, since relying apps are configured with it. */
+export interface UpdateOAuthClientRequest {
+  clientName: string;
+  redirectUris: string[];
+  scopes: string[];
+  enabled: boolean;
+}
