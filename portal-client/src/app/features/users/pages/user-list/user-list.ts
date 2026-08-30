@@ -1,14 +1,15 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, HostListener, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../../core/services/auth.service';
+import { SnackbarService } from '../../../../core/services/snackbar.service';
 import { Badge } from '../../../../shared/components/badge/badge';
 import { CreateUserRequest, PortalUser } from '../../models/portal-user.model';
 import { UserService } from '../../services/user.service';
 
 const INPUT_BASE_CLASSES =
-  'block w-full rounded-lg border px-3.5 py-2 text-sm text-ink-900 shadow-sm transition-colors placeholder:text-ink-400 focus:outline-none focus:ring-2';
+  'block w-full rounded-lg border px-3.5 py-2.5 text-sm text-ink-900 shadow-sm transition-colors placeholder:text-ink-400 focus:outline-none focus:ring-2';
 const INPUT_VALID_CLASSES = 'border-ink-300 focus:border-brand-500 focus:ring-brand-500/25';
 const INPUT_INVALID_CLASSES = 'border-red-400 focus:border-red-400 focus:ring-red-400/25';
 
@@ -21,6 +22,7 @@ const INPUT_INVALID_CLASSES = 'border-red-400 focus:border-red-400 focus:ring-re
 export class UserList {
   private readonly userService = inject(UserService);
   private readonly authService = inject(AuthService);
+  private readonly snackbarService = inject(SnackbarService);
   private readonly fb = inject(FormBuilder);
 
   readonly users = signal<PortalUser[]>([]);
@@ -47,6 +49,13 @@ export class UserList {
     this.loadUsers();
   }
 
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.showCreateModal()) {
+      this.closeCreateModal();
+    }
+  }
+
   loadUsers(): void {
     this.loading.set(true);
     this.userService.list().subscribe({
@@ -57,6 +66,7 @@ export class UserList {
       error: () => {
         this.error.set('Could not load users.');
         this.loading.set(false);
+        this.snackbarService.error('Error Loading Users', 'Unable to retrieve user directory from backend.', 'PRTL-5000');
       },
     });
   }
@@ -109,15 +119,28 @@ export class UserList {
         this.submitting.set(false);
         this.showCreateModal.set(false);
         this.users.update((list) => [newUser, ...list]);
+        this.snackbarService.success(
+          'User Created Successfully',
+          `Created account for ${newUser.email} with ${newUser.roles.join(', ')} privileges.`
+        );
       },
       error: (err: HttpErrorResponse) => {
         this.submitting.set(false);
+        const serverCode = err.error?.code;
+        const serverMsg = err.error?.message;
+
         if (err.status === 409) {
-          this.createError.set('A user with that email already exists.');
+          const msg = serverMsg || 'A user with that email already exists.';
+          this.createError.set(msg);
+          this.snackbarService.error('Email Conflict', msg, serverCode || 'PRTL-2003');
         } else if (err.status === 400) {
-          this.createError.set('Please check form fields and password requirements.');
+          const msg = serverMsg || 'Please check form fields and password requirements.';
+          this.createError.set(msg);
+          this.snackbarService.warning('Validation Failed', msg, serverCode || 'PRTL-4001');
         } else {
-          this.createError.set('An error occurred creating the user.');
+          const msg = 'An unexpected error occurred while creating the user.';
+          this.createError.set(msg);
+          this.snackbarService.error('Creation Failed', msg, serverCode || 'PRTL-5000');
         }
       },
     });
@@ -133,10 +156,16 @@ export class UserList {
       next: (updated) => {
         this.users.update((list) => list.map((u) => (u.id === updated.id ? updated : u)));
         this.updatingId.set(null);
+        this.snackbarService.info(
+          'User Status Updated',
+          `${updated.email} is now ${updated.enabled ? 'Enabled' : 'Disabled'}.`
+        );
       },
-      error: () => {
-        this.error.set('Could not update that user — please try again.');
+      error: (err: HttpErrorResponse) => {
+        const msg = err.error?.message || 'Could not update that user — please try again.';
+        this.error.set(msg);
         this.updatingId.set(null);
+        this.snackbarService.error('Update Failed', msg, err.error?.code);
       },
     });
   }
