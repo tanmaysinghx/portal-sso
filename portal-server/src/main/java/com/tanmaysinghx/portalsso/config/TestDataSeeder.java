@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
@@ -29,6 +30,9 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Component
 @ConditionalOnProperty(prefix = "app.seed", name = "test-data", havingValue = "true")
+// Pinned ahead of AdminBootstrapper (@Order(100)) so that in development the admin this seeds
+// already exists by the time the bootstrapper checks whether the server is administrable.
+@Order(0)
 public class TestDataSeeder implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(TestDataSeeder.class);

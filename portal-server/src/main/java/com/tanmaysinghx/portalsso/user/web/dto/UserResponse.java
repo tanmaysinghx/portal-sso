@@ -13,6 +13,7 @@ public record UserResponse(
         String lastName,
         boolean enabled,
         boolean accountLocked,
+        boolean mfaEnabled,
         List<String> roles,
         Instant lastLoginAt,
         Instant createdAt) {
@@ -25,6 +26,7 @@ public record UserResponse(
                 user.getLastName(),
                 user.isEnabled(),
                 user.isAccountLocked(),
+                user.isMfaEnabled(),
                 user.getRoles().stream().map(Role::getName).sorted().toList(),
                 user.getLastLoginAt(),
                 user.getCreatedAt());

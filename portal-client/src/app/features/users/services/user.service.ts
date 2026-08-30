@@ -24,4 +24,17 @@ export class UserService {
   unlock(id: string): Observable<PortalUser> {
     return this.http.post<PortalUser>(`${this.baseUrl}/${id}/unlock`, null);
   }
+
+  /**
+   * Replaces the user's roles with this complete set, not a delta. The server refuses a change that
+   * would remove your own admin role or the last remaining administrator.
+   */
+  setRoles(id: string, roles: string[]): Observable<PortalUser> {
+    return this.http.put<PortalUser>(`${this.baseUrl}/${id}/roles`, { roles });
+  }
+
+  /** Disables/resets MFA for a user who lost their device. */
+  resetMfa(id: string): Observable<PortalUser> {
+    return this.http.post<PortalUser>(`${this.baseUrl}/${id}/mfa/reset`, null);
+  }
 }

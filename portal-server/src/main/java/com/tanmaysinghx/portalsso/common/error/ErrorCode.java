@@ -17,6 +17,8 @@ public enum ErrorCode {
     ACCOUNT_LOCKED("PRTL-1004", "The user account is locked.", HttpStatus.FORBIDDEN),
     ACCOUNT_DISABLED("PRTL-1005", "The user account is disabled.", HttpStatus.FORBIDDEN),
     SESSION_EXPIRED("PRTL-1006", "The current session has expired.", HttpStatus.UNAUTHORIZED),
+    INVALID_MFA_CODE("PRTL-1007", "Invalid or expired multi-factor authentication code.", HttpStatus.BAD_REQUEST),
+    MFA_REQUIRED("PRTL-1008", "Multi-factor authentication challenge required.", HttpStatus.UNAUTHORIZED),
 
     // =========================================================================
     // 2000 Series: User Management
@@ -26,6 +28,11 @@ public enum ErrorCode {
     USER_ALREADY_EXISTS("PRTL-2003", "A user with the specified email already exists.", HttpStatus.CONFLICT),
     INVALID_USER_DATA("PRTL-2004", "Provided user data is invalid.", HttpStatus.BAD_REQUEST),
     REGISTRATION_DISABLED("PRTL-2005", "Self-registration is not enabled on this server.", HttpStatus.FORBIDDEN),
+    ROLE_NOT_FOUND("PRTL-2006", "The requested role was not found.", HttpStatus.NOT_FOUND),
+    ROLE_ALREADY_EXISTS("PRTL-2007", "A role with that name already exists.", HttpStatus.CONFLICT),
+    ROLE_PROTECTED("PRTL-2008", "This role is required by the platform and cannot be deleted.", HttpStatus.BAD_REQUEST),
+    LAST_ADMIN_PROHIBITED("PRTL-2009", "This would leave the server with no administrator.", HttpStatus.BAD_REQUEST),
+    SELF_DEMOTION_PROHIBITED("PRTL-2010", "You cannot remove your own administrator role.", HttpStatus.BAD_REQUEST),
 
     // =========================================================================
     // 3000 Series: OAuth2 Client Management

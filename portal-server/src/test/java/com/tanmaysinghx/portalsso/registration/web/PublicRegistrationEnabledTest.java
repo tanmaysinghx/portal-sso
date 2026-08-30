@@ -9,6 +9,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.tanmaysinghx.portalsso.audit.entity.AuditAction;
+import com.tanmaysinghx.portalsso.audit.entity.AuditEvent;
+import com.tanmaysinghx.portalsso.audit.repository.AuditEventRepository;
 import com.tanmaysinghx.portalsso.user.entity.Role;
 import com.tanmaysinghx.portalsso.user.entity.User;
 import com.tanmaysinghx.portalsso.user.repository.UserRepository;
@@ -33,6 +36,32 @@ class PublicRegistrationEnabledTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private AuditEventRepository auditEventRepository;
+
+    /**
+     * An account that appears without an administrator creating it is precisely what someone
+     * reviewing the audit log needs to be able to account for, so self-registration is recorded too
+     * — with "anonymous" as the actor, because that is the truth about who made the call.
+     */
+    @Test
+    void selfRegistrationIsAuditedWithNoAdministratorAsActor() throws Exception {
+        String email = uniqueEmail();
+
+        mockMvc.perform(post("/api/public/register").with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON).content(body(email)))
+                .andExpect(status().isCreated());
+
+        AuditEvent event = auditEventRepository.findAll().stream()
+                .filter(e -> e.getAction() == AuditAction.USER_SELF_REGISTERED && email.equals(e.getTargetLabel()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("self-registration was not audited"));
+
+        assertThat(event.getActorEmail()).isEqualTo("anonymous");
+        assertThat(event.getTargetId()).isNotBlank();
+        assertThat(event.getDetails()).contains("ROLE_USER");
+    }
 
     @Test
     void anyoneCanRegisterAndTheAccountIsUsable() throws Exception {

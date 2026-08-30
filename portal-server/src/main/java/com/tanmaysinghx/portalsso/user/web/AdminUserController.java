@@ -1,5 +1,7 @@
 package com.tanmaysinghx.portalsso.user.web;
 
+import com.tanmaysinghx.portalsso.audit.entity.AuditAction;
+import com.tanmaysinghx.portalsso.audit.service.AuditService;
 import com.tanmaysinghx.portalsso.common.error.BusinessRuleViolationException;
 import com.tanmaysinghx.portalsso.common.error.ErrorCode;
 import com.tanmaysinghx.portalsso.common.error.ResourceConflictException;
@@ -8,8 +10,10 @@ import com.tanmaysinghx.portalsso.user.entity.Role;
 import com.tanmaysinghx.portalsso.user.entity.User;
 import com.tanmaysinghx.portalsso.user.repository.RoleRepository;
 import com.tanmaysinghx.portalsso.user.repository.UserRepository;
+import com.tanmaysinghx.portalsso.user.service.RoleService;
 import com.tanmaysinghx.portalsso.user.web.dto.CreateUserRequest;
 import com.tanmaysinghx.portalsso.user.web.dto.SetUserEnabledRequest;
+import com.tanmaysinghx.portalsso.user.web.dto.SetUserRolesRequest;
 import com.tanmaysinghx.portalsso.user.web.dto.UserResponse;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -24,6 +28,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -37,14 +42,23 @@ public class AdminUserController {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final com.tanmaysinghx.portalsso.security.mfa.MfaService mfaService;
+    private final AuditService auditService;
+    private final RoleService roleService;
 
     public AdminUserController(
             UserRepository userRepository,
             RoleRepository roleRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            com.tanmaysinghx.portalsso.security.mfa.MfaService mfaService,
+            AuditService auditService,
+            RoleService roleService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
+        this.mfaService = mfaService;
+        this.auditService = auditService;
+        this.roleService = roleService;
     }
 
     @GetMapping
@@ -78,6 +92,15 @@ public class AdminUserController {
         }
 
         User saved = userRepository.save(user);
+
+        // Roles and the enabled flag are recorded because they are the parts of this call that
+        // grant access. The password is deliberately absent — not even its length.
+        auditService.record(
+                AuditAction.USER_CREATED,
+                saved.getId(),
+                saved.getEmail(),
+                "roles=%s, enabled=%s".formatted(String.join(" ", roleNames), saved.isEnabled()));
+
         return UserResponse.from(saved);
     }
 
@@ -98,7 +121,34 @@ public class AdminUserController {
         }
 
         user.setEnabled(request.enabled());
-        return UserResponse.from(userRepository.save(user));
+        User saved = userRepository.save(user);
+
+        // Two actions rather than one "USER_ENABLED_CHANGED" with a flag: locking an account out is
+        // the event someone investigating an outage searches for, and it should be one filter away.
+        auditService.record(
+                request.enabled() ? AuditAction.USER_ENABLED : AuditAction.USER_DISABLED,
+                saved.getId(),
+                saved.getEmail(),
+                null);
+
+        return UserResponse.from(saved);
+    }
+
+    /**
+     * Replaces a user's roles. This is the endpoint that makes a second administrator possible:
+     * roles could previously only be set at creation time, so an existing account could never be
+     * promoted or demoted through the product.
+     *
+     * <p>The guards that stop this locking everyone out live in {@link RoleService#setUserRoles} —
+     * the acting user's email is passed down because the self-demotion check needs it.
+     */
+    @PutMapping("/{id}/roles")
+    // Same reason as setEnabled above: the response mapping reads user.getRoles(), which needs the
+    // session still open.
+    @Transactional
+    public UserResponse setRoles(
+            @PathVariable UUID id, @Valid @RequestBody SetUserRolesRequest request, Authentication authentication) {
+        return UserResponse.from(roleService.setUserRoles(id, request.roles(), authentication.getName()));
     }
 
     /**
@@ -115,8 +165,31 @@ public class AdminUserController {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND, "No user found with ID: " + id));
 
+        int clearedAttempts = user.getFailedLoginAttempts();
         user.setAccountLocked(false);
         user.setFailedLoginAttempts(0);
-        return UserResponse.from(userRepository.save(user));
+        User saved = userRepository.save(user);
+
+        auditService.record(
+                AuditAction.USER_UNLOCKED,
+                saved.getId(),
+                saved.getEmail(),
+                "clearedFailedAttempts=" + clearedAttempts);
+
+        return UserResponse.from(saved);
+    }
+
+    /**
+     * Resets/disables Multi-Factor Authentication for a user who has lost their device.
+     */
+    @PostMapping("/{id}/mfa/reset")
+    @Transactional
+    public UserResponse resetMfa(@PathVariable UUID id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND, "No user found with ID: " + id));
+
+        mfaService.adminResetMfa(user);
+        auditService.record(AuditAction.USER_MFA_RESET, user.getId(), user.getEmail(), null);
+        return UserResponse.from(user);
     }
 }

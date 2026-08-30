@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title th:text="${clientName} != null ? 'Two-Factor Authentication · ' + ${clientName} : 'Two-Factor Authentication · Portal SSO'">Two-Factor Authentication</title>
+  <link rel="icon" type="image/svg+xml" href="/logo.svg">
+  <th:block th:replace="~{_styles :: styles}"></th:block>
+</head>
+<body>
+  <div class="glow"></div>
+
+  <main class="shell">
+    <div class="brandmark">
+      <div th:if="${clientLogoUrl != null}" class="lockup">
+        <img src="/logo.svg" alt="Portal SSO">
+        <span class="divider"></span>
+        <img th:src="${clientLogoUrl}" th:alt="${clientName}">
+      </div>
+      <img th:if="${clientLogoUrl == null}" class="logo" src="/logo.svg" alt="Portal SSO">
+
+      <h1>Two-factor authentication</h1>
+      <p class="sub" th:text="${email != null ? 'Enter the code from your authenticator app for ' + email : 'Enter the code from your authenticator app'}">
+        Enter the 6-digit verification code from your authenticator app
+      </p>
+    </div>
+
+    <form class="card" method="post" th:action="@{/mfa-challenge}">
+      <div th:if="${error}" class="alert error" role="alert">
+        <span>Invalid verification code or recovery code. Please check your authenticator app and try again.</span>
+      </div>
+
+      <div class="field" style="margin-bottom:1.5rem">
+        <label for="code">Security code or recovery code</label>
+        <input id="code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code"
+               required autofocus placeholder="123456 or XXXXX-XXXXX"
+               style="letter-spacing: 0.15em; font-family: ui-monospace, monospace; font-size: 1.15rem; text-align: center;">
+      </div>
+
+      <button class="primary" type="submit">Verify & Sign in</button>
+    </form>
+
+    <p class="foot">
+      <a href="/login" style="color: inherit; text-decoration: underline;">Cancel and return to sign in</a>
+    </p>
+  </main>
+</body>
+</html>

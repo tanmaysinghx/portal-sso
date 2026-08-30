@@ -1,0 +1,102 @@
+databaseChangeLog:
+  - changeSet:
+      id: 010-create-audit-events-table
+      author: tanmaysinghx
+      comment: >-
+        Append-only record of privileged administrative changes. login_events (008) already covers
+        authentication, but everything an administrator *does* afterwards — creating a user,
+        disabling an account, registering or deleting an OAuth client — left no trace at all. For an
+        identity product that is normally a compliance requirement, and it is also the only way to
+        answer "who granted this account admin rights, and when" after the fact.
+      changes:
+        - createTable:
+            tableName: audit_events
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              # Nullable: self-registration is performed by an unauthenticated caller, so there is
+              # no actor account to point at. actor_email carries a placeholder in that case.
+              - column:
+                  name: actor_id
+                  type: VARCHAR(36)
+              - column:
+                  name: actor_email
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: action
+                  type: VARCHAR(60)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: target_type
+                  type: VARCHAR(40)
+                  constraints:
+                    nullable: false
+              # The row this action changed. Deliberately not a foreign key: the audit trail has to
+              # outlive the thing it describes, and a cascade would erase the record of a deletion
+              # at exactly the moment it becomes interesting.
+              - column:
+                  name: target_id
+                  type: VARCHAR(36)
+              # A human-readable name captured at the time — an email, a client_id. Kept alongside
+              # target_id so a deleted target is still identifiable in the log.
+              - column:
+                  name: target_label
+                  type: VARCHAR(255)
+              - column:
+                  name: details
+                  type: VARCHAR(1000)
+              - column:
+                  name: ip_address
+                  type: VARCHAR(45)
+              - column:
+                  name: user_agent
+                  type: VARCHAR(512)
+              - column:
+                  name: occurred_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        # The log is read newest-first and filtered by actor, action or target; without these the
+        # admin screen degrades into a full scan of a table that only ever grows.
+        - createIndex:
+            indexName: ix_audit_events_occurred_at
+            tableName: audit_events
+            columns:
+              - column:
+                  name: occurred_at
+        - createIndex:
+            indexName: ix_audit_events_actor_email
+            tableName: audit_events
+            columns:
+              - column:
+                  name: actor_email
+        - createIndex:
+            indexName: ix_audit_events_action
+            tableName: audit_events
+            columns:
+              - column:
+                  name: action
+        - createIndex:
+            indexName: ix_audit_events_target_id
+            tableName: audit_events
+            columns:
+              - column:
+                  name: target_id

@@ -1,0 +1,46 @@
+databaseChangeLog:
+  - changeSet:
+      id: 009-create-recovery-codes-table
+      author: tanmaysinghx
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: last_mfa_time_step
+                  type: BIGINT
+        - createTable:
+            tableName: user_recovery_codes
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: VARCHAR(36)
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_recovery_codes_user
+                    references: users(id)
+                    deleteCascade: true
+              - column:
+                  name: code_hash
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: used_at
+                  type: TIMESTAMP
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false

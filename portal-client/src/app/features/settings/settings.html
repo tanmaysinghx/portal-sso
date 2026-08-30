@@ -205,61 +205,115 @@
 
   <!-- TAB 2: Security & Token Policies -->
   @if (activeTab() === 'security') {
-    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-      <div class="rounded-2xl border border-ink-200 bg-white p-6 shadow-sm space-y-4">
-        <div class="flex items-center gap-3">
-          <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600 ring-1 ring-inset ring-amber-500/20">
-            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+    <div class="space-y-6">
+      <!-- Multi-Factor Authentication (TOTP) Card -->
+      <div class="rounded-2xl border border-ink-200 bg-white p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 ring-1 ring-inset ring-brand-500/20">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+              </svg>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-sm font-semibold text-ink-900">Two-Factor Authentication (TOTP)</h2>
+                @if (mfaEnabled()) {
+                  <span class="rounded bg-emerald-50 text-emerald-700 font-semibold px-2 py-0.5 text-[11px] ring-1 ring-emerald-600/20">
+                    Active & Enforced
+                  </span>
+                } @else {
+                  <span class="rounded bg-ink-100 text-ink-600 font-medium px-2 py-0.5 text-[11px]">
+                    Not Enabled
+                  </span>
+                }
+              </div>
+              <p class="text-xs text-ink-500 mt-0.5">Protect your account with Time-Based One-Time Passwords (RFC 6238) and single-use emergency recovery codes.</p>
+            </div>
           </div>
-          <div>
-            <h2 class="text-sm font-semibold text-ink-900">Token Lifecycles</h2>
-            <p class="text-xs text-ink-500">Configured time-to-live settings for JWT tokens</p>
-          </div>
-        </div>
 
-        <div class="space-y-3 pt-2 text-xs divide-y divide-ink-100">
-          <div class="flex justify-between py-2">
-            <span class="text-ink-600 font-medium">Access Token TTL</span>
-            <span class="font-semibold text-ink-900">15 minutes (900s)</span>
-          </div>
-          <div class="flex justify-between py-2">
-            <span class="text-ink-600 font-medium">Refresh Token TTL</span>
-            <span class="font-semibold text-ink-900">30 days</span>
-          </div>
-          <div class="flex justify-between py-2">
-            <span class="text-ink-600 font-medium">Refresh Token Reuse</span>
-            <span class="rounded bg-emerald-50 text-emerald-700 font-semibold px-2 py-0.5 ring-1 ring-emerald-600/20">Disabled (One-Time Rotation)</span>
+          <div>
+            @if (mfaEnabled()) {
+              <button
+                type="button"
+                (click)="openDisableModal()"
+                class="rounded-lg border border-red-200 bg-red-50 px-3.5 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-100"
+              >
+                Disable 2FA
+              </button>
+            } @else {
+              <button
+                type="button"
+                (click)="startMfaEnrollment()"
+                [disabled]="mfaSubmitting()"
+                class="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-brand-700 disabled:opacity-50 transition"
+              >
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                <span>Enable Two-Factor Authentication</span>
+              </button>
+            }
           </div>
         </div>
       </div>
 
-      <div class="rounded-2xl border border-ink-200 bg-white p-6 shadow-sm space-y-4">
-        <div class="flex items-center gap-3">
-          <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-inset ring-emerald-500/20">
-            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
-            </svg>
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div class="rounded-2xl border border-ink-200 bg-white p-6 shadow-sm space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600 ring-1 ring-inset ring-amber-500/20">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-sm font-semibold text-ink-900">Token Lifecycles</h2>
+              <p class="text-xs text-ink-500">Configured time-to-live settings for JWT tokens</p>
+            </div>
           </div>
-          <div>
-            <h2 class="text-sm font-semibold text-ink-900">Cryptographic Signing Keys</h2>
-            <p class="text-xs text-ink-500">Persistent RSA 2048-bit keystore status</p>
+
+          <div class="space-y-3 pt-2 text-xs divide-y divide-ink-100">
+            <div class="flex justify-between py-2">
+              <span class="text-ink-600 font-medium">Access Token TTL</span>
+              <span class="font-semibold text-ink-900">15 minutes (900s)</span>
+            </div>
+            <div class="flex justify-between py-2">
+              <span class="text-ink-600 font-medium">Refresh Token TTL</span>
+              <span class="font-semibold text-ink-900">30 days</span>
+            </div>
+            <div class="flex justify-between py-2">
+              <span class="text-ink-600 font-medium">Refresh Token Reuse</span>
+              <span class="rounded bg-emerald-50 text-emerald-700 font-semibold px-2 py-0.5 ring-1 ring-emerald-600/20">Disabled (One-Time Rotation)</span>
+            </div>
           </div>
         </div>
 
-        <div class="space-y-3 pt-2 text-xs divide-y divide-ink-100">
-          <div class="flex justify-between py-2">
-            <span class="text-ink-600 font-medium">Algorithm</span>
-            <span class="font-semibold font-mono text-ink-900">RS256 (2048-bit RSA)</span>
+        <div class="rounded-2xl border border-ink-200 bg-white p-6 shadow-sm space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-inset ring-emerald-500/20">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-sm font-semibold text-ink-900">Cryptographic Signing Keys</h2>
+              <p class="text-xs text-ink-500">Persistent RSA 2048-bit keystore status</p>
+            </div>
           </div>
-          <div class="flex justify-between py-2">
-            <span class="text-ink-600 font-medium">Key Persistence</span>
-            <span class="rounded bg-emerald-50 text-emerald-700 font-semibold px-2 py-0.5 ring-1 ring-emerald-600/20">Database Stored (JPA / Liquibase)</span>
-          </div>
-          <div class="flex justify-between py-2">
-            <span class="text-ink-600 font-medium">Zero-Downtime Rotation</span>
-            <span class="font-semibold text-ink-900">Supported (Multi-key JWKS)</span>
+
+          <div class="space-y-3 pt-2 text-xs divide-y divide-ink-100">
+            <div class="flex justify-between py-2">
+              <span class="text-ink-600 font-medium">Algorithm</span>
+              <span class="font-semibold font-mono text-ink-900">RS256 (2048-bit RSA)</span>
+            </div>
+            <div class="flex justify-between py-2">
+              <span class="text-ink-600 font-medium">Key Persistence</span>
+              <span class="rounded bg-emerald-50 text-emerald-700 font-semibold px-2 py-0.5 ring-1 ring-emerald-600/20">Database Stored (JPA / Liquibase)</span>
+            </div>
+            <div class="flex justify-between py-2">
+              <span class="text-ink-600 font-medium">Zero-Downtime Rotation</span>
+              <span class="font-semibold text-ink-900">Supported (Multi-key JWKS)</span>
+            </div>
           </div>
         </div>
       </div>
@@ -297,12 +351,12 @@
                 <svg class="h-3.5 w-3.5 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                 </svg>
-                <span class="text-emerald-700 font-semibold">Copied URL</span>
+                <span class="text-emerald-700">Copied!</span>
               } @else {
-                <svg class="h-3.5 w-3.5 text-ink-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
+                <svg class="h-3.5 w-3.5 text-ink-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" />
                 </svg>
-                <span>Copy Full URL</span>
+                <span>Copy URL</span>
               }
             </button>
           </div>
@@ -311,11 +365,11 @@
     </div>
   }
 
-  <!-- TAB 4: System & Diagnostics -->
+  <!-- TAB 4: System Stack & Diagnostics -->
   @if (activeTab() === 'system') {
     <div class="overflow-hidden rounded-2xl border border-ink-200 bg-white p-6 shadow-sm space-y-6">
       <div>
-        <h2 class="text-sm font-semibold text-ink-900">System Environment & Runtime Diagnostics</h2>
+        <h2 class="text-sm font-semibold text-ink-900">System Information & Engine</h2>
         <p class="text-xs text-ink-500">Platform versions and persistence stack summary</p>
       </div>
 
@@ -347,3 +401,181 @@
     </div>
   }
 </div>
+
+<!-- Two-Factor Authentication Setup Modal Dialog -->
+@if (showMfaModal()) {
+  <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+    <div class="fixed inset-0 bg-ink-950/70 backdrop-blur-sm transition-opacity" (click)="closeMfaModal()"></div>
+
+    <div class="relative z-10 w-full max-w-lg rounded-2xl border border-ink-200 bg-white p-6 shadow-2xl transition-all" (click)="$event.stopPropagation()">
+      @if (mfaStep() === 'setup') {
+        <div class="flex items-center justify-between border-b border-ink-100 pb-4">
+          <div>
+            <h3 class="text-base font-semibold text-ink-900">Set Up Two-Factor Authentication</h3>
+            <p class="text-xs text-ink-500 mt-0.5">Scan the QR code with your authenticator app (Google Authenticator, 1Password, Authy)</p>
+          </div>
+          <button type="button" (click)="closeMfaModal()" class="rounded-lg p-1.5 text-ink-400 hover:bg-ink-100 hover:text-ink-700">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="py-5 space-y-4 text-center">
+          <div class="mx-auto flex h-48 w-48 items-center justify-center rounded-xl border border-ink-200 bg-ink-50 p-2 shadow-inner">
+            <img [src]="mfaQrUrl()" alt="Authenticator QR Code" class="h-44 w-44 rounded-lg object-contain" />
+          </div>
+
+          <div class="rounded-lg bg-ink-50 p-3 text-left">
+            <span class="block text-[10px] font-semibold uppercase tracking-wider text-ink-500">Manual Setup Key</span>
+            <code class="mt-0.5 block font-mono text-xs font-bold text-ink-900 select-all break-all">{{ mfaSecret() }}</code>
+          </div>
+
+          @if (mfaConfirmError()) {
+            <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-left text-xs text-red-700">
+              {{ mfaConfirmError() }}
+            </div>
+          }
+
+          <div class="text-left">
+            <label for="mfa-verify-code" class="block text-xs font-semibold text-ink-700 mb-1">Enter 6-Digit Code from App</label>
+            <input
+              id="mfa-verify-code"
+              type="text"
+              inputmode="numeric"
+              maxlength="6"
+              [ngModel]="mfaConfirmCode()"
+              (ngModelChange)="mfaConfirmCode.set($event)"
+              placeholder="123456"
+              class="block w-full text-center font-mono text-lg tracking-widest rounded-xl border border-ink-300 py-2.5 text-ink-900 shadow-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25"
+            />
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 border-t border-ink-100 pt-4">
+          <button type="button" (click)="closeMfaModal()" class="rounded-lg border border-ink-200 px-4 py-2 text-xs font-medium text-ink-700 hover:bg-ink-50">
+            Cancel
+          </button>
+          <button
+            type="button"
+            (click)="submitMfaConfirmation()"
+            [disabled]="mfaSubmitting() || mfaConfirmCode().length !== 6"
+            class="rounded-lg bg-brand-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-brand-700 disabled:opacity-50"
+          >
+            {{ mfaSubmitting() ? 'Verifying...' : 'Verify & Enable 2FA' }}
+          </button>
+        </div>
+      } @else {
+        <!-- Recovery Codes Display -->
+        <div class="flex items-center justify-between border-b border-ink-100 pb-4">
+          <div class="flex items-center gap-2">
+            <div class="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-base font-semibold text-ink-900">Save Your Recovery Codes</h3>
+              <p class="text-xs text-ink-500">Emergency access if you ever lose your authenticator device</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="py-4 space-y-4">
+          <div class="rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 text-xs text-amber-900">
+            <span class="font-bold">⚠️ Warning:</span> These codes will only be shown <strong>once</strong>. Store them in a secure password manager or safe place. Each code can be used once to sign in if you lose your phone.
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 rounded-xl border border-ink-200 bg-ink-50 p-4 font-mono text-xs font-bold text-ink-900">
+            @for (code of mfaRecoveryCodes(); track code) {
+              <div class="rounded bg-white px-2.5 py-1.5 text-center shadow-xs border border-ink-200">{{ code }}</div>
+            }
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between border-t border-ink-100 pt-4">
+          <button
+            type="button"
+            (click)="copyRecoveryCodes()"
+            class="flex items-center gap-1.5 rounded-lg border border-ink-200 bg-white px-3.5 py-2 text-xs font-semibold text-ink-700 shadow-sm hover:bg-ink-50"
+          >
+            @if (recoveryCodesCopied()) {
+              <svg class="h-3.5 w-3.5 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+              <span class="text-emerald-700">Copied!</span>
+            } @else {
+              <svg class="h-3.5 w-3.5 text-ink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" />
+              </svg>
+              <span>Copy All Codes</span>
+            }
+          </button>
+
+          <button
+            type="button"
+            (click)="closeMfaModal()"
+            class="rounded-lg bg-brand-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-brand-700"
+          >
+            I Have Saved My Codes
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<!-- Disable 2FA Password Modal Dialog -->
+@if (showDisableModal()) {
+  <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+    <div class="fixed inset-0 bg-ink-950/70 backdrop-blur-sm transition-opacity" (click)="closeDisableModal()"></div>
+
+    <div class="relative z-10 w-full max-w-md rounded-2xl border border-ink-200 bg-white p-6 shadow-2xl transition-all" (click)="$event.stopPropagation()">
+      <div class="flex items-center justify-between border-b border-ink-100 pb-4">
+        <div>
+          <h3 class="text-base font-semibold text-ink-900">Disable Two-Factor Authentication</h3>
+          <p class="text-xs text-ink-500 mt-0.5">Please confirm your current password to proceed.</p>
+        </div>
+        <button type="button" (click)="closeDisableModal()" class="rounded-lg p-1.5 text-ink-400 hover:bg-ink-100 hover:text-ink-700">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="py-4 space-y-3">
+        @if (disableError()) {
+          <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+            {{ disableError() }}
+          </div>
+        }
+
+        <div>
+          <label for="disable-mfa-pwd" class="block text-xs font-semibold text-ink-700 mb-1">Current Password</label>
+          <input
+            id="disable-mfa-pwd"
+            type="password"
+            [ngModel]="disablePassword()"
+            (ngModelChange)="disablePassword.set($event)"
+            placeholder="••••••••••"
+            class="block w-full rounded-xl border border-ink-300 px-3.5 py-2 text-xs text-ink-900 shadow-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25"
+          />
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 border-t border-ink-100 pt-4">
+        <button type="button" (click)="closeDisableModal()" class="rounded-lg border border-ink-200 px-4 py-2 text-xs font-medium text-ink-700 hover:bg-ink-50">
+          Cancel
+        </button>
+        <button
+          type="button"
+          (click)="submitDisableMfa()"
+          [disabled]="disableSubmitting() || !disablePassword()"
+          class="rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-red-700 disabled:opacity-50"
+        >
+          {{ disableSubmitting() ? 'Disabling...' : 'Confirm & Disable' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

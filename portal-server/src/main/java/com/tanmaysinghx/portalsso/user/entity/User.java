@@ -44,6 +44,9 @@ public class User extends BaseEntity {
     @Column(name = "mfa_secret", length = 255)
     private String mfaSecret;
 
+    @Column(name = "last_mfa_time_step")
+    private Long lastMfaTimeStep;
+
     @Column(name = "last_login_at")
     private Instant lastLoginAt;
 
@@ -133,6 +136,14 @@ public class User extends BaseEntity {
 
     public void setMfaSecret(String mfaSecret) {
         this.mfaSecret = mfaSecret;
+    }
+
+    public Long getLastMfaTimeStep() {
+        return lastMfaTimeStep;
+    }
+
+    public void setLastMfaTimeStep(Long lastMfaTimeStep) {
+        this.lastMfaTimeStep = lastMfaTimeStep;
     }
 
     public Instant getLastLoginAt() {

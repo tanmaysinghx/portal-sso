@@ -35,9 +35,15 @@ class SchemaValidationTest {
     @Autowired
     private OAuthClientRepository oAuthClientRepository;
 
+    /**
+     * Uses the role seeded by migration 011 rather than inserting one. That is not just to avoid
+     * the unique-constraint clash: reading the seeded row back is what proves the literal UUID in
+     * the changelog parses through {@code BaseEntity}'s {@code UUID} mapping, which a
+     * VARCHAR(36) column will happily store and only fail on read.
+     */
     @Test
     void persistsUserWithRoles() {
-        Role role = roleRepository.save(new Role("ROLE_ADMIN", "Administrator"));
+        Role role = roleRepository.findByName("ROLE_ADMIN").orElseThrow();
 
         User user = new User("admin@example.com", "hashed-password");
         user.addRole(role);
@@ -46,6 +52,14 @@ class SchemaValidationTest {
         User found = userRepository.findByEmail("admin@example.com").orElseThrow();
         assertThat(found.getId()).isEqualTo(saved.getId());
         assertThat(found.getRoles()).extracting(Role::getName).containsExactly("ROLE_ADMIN");
+    }
+
+    @Test
+    void theSeededPlatformRolesAreReadableThroughTheEntityMapping() {
+        assertThat(roleRepository.findAllByOrderByNameAsc())
+                .extracting(Role::getName)
+                .contains("ROLE_ADMIN", "ROLE_USER");
+        assertThat(roleRepository.findByName("ROLE_USER").orElseThrow().getId()).isNotNull();
     }
 
     @Test

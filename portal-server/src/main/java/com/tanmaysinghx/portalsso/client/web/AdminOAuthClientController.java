@@ -1,5 +1,7 @@
 package com.tanmaysinghx.portalsso.client.web;
 
+import com.tanmaysinghx.portalsso.audit.entity.AuditAction;
+import com.tanmaysinghx.portalsso.audit.service.AuditService;
 import com.tanmaysinghx.portalsso.client.entity.OAuthClient;
 import com.tanmaysinghx.portalsso.client.repository.OAuthClientRepository;
 import com.tanmaysinghx.portalsso.client.security.OAuth2GrantRevoker;
@@ -11,7 +13,9 @@ import com.tanmaysinghx.portalsso.common.error.ResourceConflictException;
 import com.tanmaysinghx.portalsso.common.error.ResourceNotFoundException;
 import jakarta.validation.Valid;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -45,14 +49,17 @@ public class AdminOAuthClientController {
     private final OAuthClientRepository oAuthClientRepository;
     private final RegisteredClientRepository registeredClientRepository;
     private final OAuth2GrantRevoker grantRevoker;
+    private final AuditService auditService;
 
     public AdminOAuthClientController(
             OAuthClientRepository oAuthClientRepository,
             RegisteredClientRepository registeredClientRepository,
-            OAuth2GrantRevoker grantRevoker) {
+            OAuth2GrantRevoker grantRevoker,
+            AuditService auditService) {
         this.oAuthClientRepository = oAuthClientRepository;
         this.registeredClientRepository = registeredClientRepository;
         this.grantRevoker = grantRevoker;
+        this.auditService = auditService;
     }
 
     @GetMapping
@@ -62,6 +69,10 @@ public class AdminOAuthClientController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    // Transactional so the registration, the logoUrl write and the audit entry commit together.
+    // Without it a failure after registeredClientRepository.save() leaves a client that exists but
+    // has no record of who created it — the one thing the audit trail is supposed to rule out.
+    @Transactional
     public OAuthClientResponse create(@Valid @RequestBody CreateOAuthClientRequest request) {
         if (oAuthClientRepository.findByClientId(request.clientId()).isPresent()) {
             throw new ResourceConflictException(ErrorCode.CLIENT_ALREADY_EXISTS, "client_id already exists: " + request.clientId());
@@ -97,6 +108,15 @@ public class AdminOAuthClientController {
             saved.setLogoUrl(request.logoUrl().trim());
             saved = oAuthClientRepository.save(saved);
         }
+
+        // Redirect URIs are recorded verbatim: adding one is how a registered client is turned into
+        // a token-exfiltration path, so "who added that URI" has to be answerable after the fact.
+        auditService.record(
+                AuditAction.CLIENT_CREATED,
+                saved.getId(),
+                saved.getClientId(),
+                "redirectUris=%s, scopes=%s".formatted(saved.getRedirectUris(), saved.getScopes()));
+
         return OAuthClientResponse.from(saved);
     }
 
@@ -114,6 +134,10 @@ public class AdminOAuthClientController {
         OAuthClient client = oAuthClientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.CLIENT_NOT_FOUND, "No OAuth client found with ID: " + id));
 
+        // Read before mutating: the entity is managed, so after the setters below the "before"
+        // values are gone and the log could only say that something changed, not what.
+        String changes = describeChanges(client, request);
+
         client.setClientName(request.clientName());
         client.setRedirectUris(String.join(",", request.redirectUris()));
         client.setScopes(String.join(",", request.scopes()));
@@ -121,7 +145,30 @@ public class AdminOAuthClientController {
         client.setLogoUrl(request.logoUrl() == null || request.logoUrl().isBlank() ? null : request.logoUrl().trim());
         client.setClientSettings(withConsent(client.getClientSettings(), Boolean.TRUE.equals(request.requireConsent())));
 
-        return OAuthClientResponse.from(oAuthClientRepository.save(client));
+        OAuthClient saved = oAuthClientRepository.save(client);
+        auditService.record(AuditAction.CLIENT_UPDATED, saved.getId(), saved.getClientId(), changes);
+
+        return OAuthClientResponse.from(saved);
+    }
+
+    /**
+     * A {@code field: old -> new} summary of the security-relevant fields only. Logging the whole
+     * request on every edit would bury the one line that matters — an added redirect URI, or a
+     * disabled client quietly re-enabled — under fields nobody is auditing.
+     */
+    private static String describeChanges(OAuthClient before, UpdateOAuthClientRequest request) {
+        List<String> changes = new ArrayList<>();
+        appendIfChanged(changes, "redirectUris", before.getRedirectUris(), String.join(",", request.redirectUris()));
+        appendIfChanged(changes, "scopes", before.getScopes(), String.join(",", request.scopes()));
+        appendIfChanged(changes, "enabled", String.valueOf(before.isEnabled()), String.valueOf(request.enabled()));
+        appendIfChanged(changes, "clientName", before.getClientName(), request.clientName());
+        return changes.isEmpty() ? "no security-relevant fields changed" : String.join("; ", changes);
+    }
+
+    private static void appendIfChanged(List<String> changes, String field, String before, String after) {
+        if (!Objects.equals(before, after)) {
+            changes.add("%s: %s -> %s".formatted(field, before, after));
+        }
     }
 
     /**
@@ -152,7 +199,16 @@ public class AdminOAuthClientController {
         OAuthClient client = oAuthClientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.CLIENT_NOT_FOUND, "No OAuth client found with ID: " + id));
 
-        grantRevoker.revokeAllFor(client.getId().toString());
+        int revokedGrants = grantRevoker.revokeAllFor(client.getId().toString());
         oAuthClientRepository.delete(client);
+
+        // Recorded after the delete so it only lands if the delete did, but with details captured
+        // beforehand — target_label is the whole reason this row is still readable once the client
+        // row is gone.
+        auditService.record(
+                AuditAction.CLIENT_DELETED,
+                client.getId(),
+                client.getClientId(),
+                "revokedGrants=%d, redirectUris=%s".formatted(revokedGrants, client.getRedirectUris()));
     }
 }

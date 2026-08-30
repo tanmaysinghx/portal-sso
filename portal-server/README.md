@@ -84,8 +84,36 @@ configure a real deployment:
 | `DB_URL` | `jdbc:postgresql://localhost:5432/portalsso` | JDBC URL |
 | `DB_USERNAME` / `DB_PASSWORD` | `postgres` / `postgres` | DB credentials |
 | `SERVER_PORT` | `8080` | HTTP port |
+| `APP_BOOTSTRAP_ADMIN_EMAIL` | *(unset)* | The first administrator — see **First run** below. |
+| `APP_BOOTSTRAP_ADMIN_PASSWORD` | *(unset)* | Its password. Minimum 12 characters. |
 | `APP_GEOIP_DATABASE_PATH` | *(unset)* | Path to a MaxMind GeoLite2/GeoIP2 `.mmdb`. Without it, login geography reads "Unknown" and the dashboard map explains why. |
 | `SPRING_PROFILES_ACTIVE` | *(none)* | e.g. `mysql,local` — see below |
+
+### First run
+
+A fresh deployment has no accounts, so set both bootstrap variables on the first start:
+
+```bash
+APP_BOOTSTRAP_ADMIN_EMAIL=ops@acme.com \
+APP_BOOTSTRAP_ADMIN_PASSWORD='choose-something-long' \
+java -jar portal-server.jar
+```
+
+Then sign in and **remove them** — while they are set, anyone who can read your configuration
+knows that account's password.
+
+Both are unset by default and nothing happens unless *both* are set, so this product never ships
+with a default administrator or a password baked into it. The alternatives were rejected on those
+grounds: a generated password printed at startup writes a live credential into a log stream that
+is routinely shipped off-host, and an unauthenticated `/setup` page is the riskiest thing to get
+subtly wrong on an identity server.
+
+The bootstrap acts only when no **enabled** administrator exists, so leaving the variables set is
+harmless on restart — and it doubles as the recovery path if every admin account ends up disabled.
+If the address already has an account, it is granted `ROLE_ADMIN` and re-enabled but its password
+is **never** overwritten, so editing configuration cannot be used to take over someone's account.
+Start with no administrator and no variables set and the server logs a warning saying exactly
+that, because otherwise the only symptom is a sign-in page that rejects every credential.
 
 ### Profiles
 
@@ -114,11 +142,29 @@ Postgres needs neither profile; run with no `SPRING_PROFILES_ACTIVE` at all.
     authorization tables reference a client by a plain column with no foreign key, so nothing
     cascades; `OAuth2GrantRevoker` removes them explicitly.
   - `GET/POST /api/admin/users`, `PATCH /api/admin/users/{id}` — list, create, enable/disable
+  - `PUT /api/admin/users/{id}/roles` — replace a user's roles. The complete set, not a delta.
+    Refuses to remove your own administrator role, or the last **enabled** administrator — a
+    disabled admin cannot sign in, so counting them as cover would strand the server.
   - `POST /api/admin/users/{id}/unlock` — clear a lockout from failed sign-ins
+- **Role registry** (`/api/admin/roles`, admin only): list with per-role user counts, create, edit
+  the description, delete. A role's **name is immutable** — it is the granted authority and it
+  travels in the `roles` claim of every issued JWT, so renaming `ROLE_ADMIN` would sign every
+  administrator out and break authorization in every relying application at once. Names must match
+  `^ROLE_[A-Z0-9_]+$`, because the name becomes the authority verbatim and Spring's `hasRole('X')`
+  looks for `ROLE_X`: a role called `EDITOR` would be assignable, visible and completely inert.
+  `ROLE_ADMIN` and `ROLE_USER` are marked protected and cannot be deleted — `user_roles` cascades
+  on delete, so removing `ROLE_ADMIN` would demote every administrator in one statement.
   - `GET /api/admin/me` — current session's identity, used by the SPA to bootstrap auth state
   - `GET /api/admin/stats?range=day|week|month|year|5y|all` — everything the dashboard renders, in
     one response
   - `GET /api/admin/stats/export?range=…` — the same window as a CSV download
+  - `GET /api/admin/audit?action=&actor=&targetType=&page=&size=` — the administrative audit
+    trail, newest first, in a page envelope. Paginated because it is the one table that only ever
+    grows. An unrecognised `action` is a 400 rather than an ignored filter: silently widening a
+    search that looks narrow is the worst outcome during an investigation.
+  - `GET /api/admin/audit/actions` — the recorded action types, so the console's filter does not
+    hardcode a copy of the enum
+  - `GET /api/admin/audit/export?…` — the same filtered view as a CSV download
 - **Public self-registration** (`/api/public/**`, the only unauthenticated API surface, still
   CSRF-protected):
   - `POST /api/public/register` — create an account. **Off by default**
@@ -146,6 +192,14 @@ Postgres needs neither profile; run with no `SPRING_PROFILES_ACTIVE` at all.
   agent, resolved country and the application it was for. Time buckets are computed in Java rather
   than with SQL date functions, because those differ across MySQL, H2 and Postgres — a chart that
   buckets correctly against the test database and wrongly in production is a very quiet bug.
+- **Administrative audit log.** Every privileged change — user created, enabled, disabled,
+  unlocked, MFA reset; OAuth client registered, updated, deleted; self-registration — is written to
+  `audit_events` with the actor, the target, the source IP and a summary of what changed. Two
+  choices are deliberate and opposite to the analytics recorder: the write **joins the caller's
+  transaction**, so the entry and the change commit together or not at all (an entry describing a
+  change that rolled back would be worse than no entry); and it **does not swallow failures**,
+  because a privileged change with no record of it is worse than one that failed and can be
+  retried. Credentials never reach it — a test asserts no submitted password appears in any field.
 - **Login tracking and lockout** — `LoginAttemptListener` stamps `last_login_at` on success and
   locks an account after `app.security.max-failed-login-attempts` consecutive failures (default 5).
   A successful sign-in resets the counter. Because it listens to authentication *events* rather
@@ -182,10 +236,11 @@ test (`JwtClaimsCustomizerIntegrationTest`).
 - **Registered emails are unverified.** Nothing proves a registrant owns the address they typed,
   because there is no email delivery yet. Set `app.registration.require-admin-approval: true` to
   keep a human in the loop until that lands.
-- **No audit log for administrative actions.** Sign-in attempts are now recorded in
-  `login_events`, but client registration, user creation and enable/disable/unlock still leave no
-  trace.
-- **`login_events` grows without bound.** There is no retention policy or rollup yet, and the
+- **Audit entries have no retention or export-signing story.** The trail is append-only with no
+  endpoint that can edit or delete an entry, but nothing stops an operator with database access
+  from rewriting it, and the CSV export is unsigned. Tamper-evidence (hash chaining, or shipping
+  entries to append-only external storage) is the next step if you need it to stand up to scrutiny.
+- **`login_events` and `audit_events` grow without bound.** There is no retention policy or rollup yet, and the
   dashboard loads one window of rows into memory to bucket them. That is the right trade at this
   size; past it the fix is a rollup table, not dialect-specific SQL.
 - **Login geography needs a database you supply.** MaxMind's licence means the `.mmdb` cannot be

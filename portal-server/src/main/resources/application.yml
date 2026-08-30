@@ -39,6 +39,22 @@ server:
         same-site: lax
 
 app:
+  bootstrap:
+    # The first administrator on a fresh deployment. Both unset by default, and nothing happens
+    # unless BOTH are set — so this product never ships with a default administrator or a known
+    # password. Supply them as environment variables (APP_BOOTSTRAP_ADMIN_EMAIL /
+    # APP_BOOTSTRAP_ADMIN_PASSWORD) or in config/application-local.yml, which is gitignored.
+    #
+    # Acts only when no *enabled* administrator exists, so leaving these set is harmless on
+    # restart — and doubles as the recovery path if every admin account ends up disabled. If the
+    # address already has an account it is granted ROLE_ADMIN and enabled, but its password is
+    # never overwritten. Minimum password length is 12.
+    #
+    # Remove them once you have signed in: while they are set, anyone who can read your
+    # configuration knows this account's password.
+    admin-email:
+    admin-password:
+
   seed:
     # Dev/test convenience only: seeds a test user, an admin user, and a hardcoded PKCE-only
     # OAuth client. Must stay off in real deployments; portal-client is the real

@@ -1,5 +1,7 @@
 package com.tanmaysinghx.portalsso.registration.web;
 
+import com.tanmaysinghx.portalsso.audit.entity.AuditAction;
+import com.tanmaysinghx.portalsso.audit.service.AuditService;
 import com.tanmaysinghx.portalsso.common.error.BusinessRuleViolationException;
 import com.tanmaysinghx.portalsso.common.error.ErrorCode;
 import com.tanmaysinghx.portalsso.common.error.ResourceConflictException;
@@ -56,16 +58,19 @@ public class PublicRegistrationController {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final RegistrationProperties properties;
+    private final AuditService auditService;
 
     public PublicRegistrationController(
             UserRepository userRepository,
             RoleRepository roleRepository,
             PasswordEncoder passwordEncoder,
-            RegistrationProperties properties) {
+            RegistrationProperties properties,
+            AuditService auditService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.properties = properties;
+        this.auditService = auditService;
     }
 
     /** Readable whether or not registration is on — that answer is the whole point of it. */
@@ -104,8 +109,17 @@ public class PublicRegistrationController {
         user.setEnabled(!properties.requireAdminApproval());
         user.addRole(role);
 
-        userRepository.save(user);
+        User saved = userRepository.save(user);
         log.info("Self-registered account '{}' (pendingApproval={})", email, properties.requireAdminApproval());
+
+        // Audited even though no administrator was involved — an account appearing without one is
+        // exactly what someone reviewing the log needs to be able to account for. The actor records
+        // as "anonymous" because that is the truth; the source IP is what identifies the caller.
+        auditService.record(
+                AuditAction.USER_SELF_REGISTERED,
+                saved.getId(),
+                email,
+                "role=%s, pendingApproval=%s".formatted(properties.defaultRole(), properties.requireAdminApproval()));
 
         return new RegistrationResponse(email, properties.requireAdminApproval());
     }

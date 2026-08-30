@@ -1,0 +1,71 @@
+databaseChangeLog:
+
+  # Until now the ONLY thing that created a role was TestDataSeeder, which is dev-only and off by
+  # default (app.seed.test-data). On a production deployment the roles table was therefore empty,
+  # and POST /api/admin/users with roles:["ROLE_ADMIN"] failed with "Role not found: ROLE_ADMIN" —
+  # the role could not be created through the product either, so there was no way out.
+  #
+  # These two are not ordinary data: ROLE_ADMIN is named in @PreAuthorize("hasRole('ADMIN')") and
+  # ROLE_USER is the default for self-registration, so the application does not function without
+  # them. That makes them part of the schema, not seed data, which is why they live here rather
+  # than behind a seeding flag.
+  #
+  # Each is guarded by a precondition so the changeset is a no-op where the role already exists —
+  # every environment that ran the seeder already has both, and re-inserting would violate
+  # uk_roles_name. Fixed UUIDs keep the rows identical across deployments.
+
+  - changeSet:
+      id: 011-seed-role-admin
+      author: tanmaysinghx
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: 0
+            sql: SELECT COUNT(*) FROM roles WHERE name = 'ROLE_ADMIN'
+      changes:
+        - insert:
+            tableName: roles
+            columns:
+              - column:
+                  name: id
+                  value: 1a4f8c60-0000-4000-a000-0000000ad001
+              - column:
+                  name: name
+                  value: ROLE_ADMIN
+              - column:
+                  name: description
+                  value: Full administrative access to the Portal SSO console.
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP
+
+  - changeSet:
+      id: 011-seed-role-user
+      author: tanmaysinghx
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: 0
+            sql: SELECT COUNT(*) FROM roles WHERE name = 'ROLE_USER'
+      changes:
+        - insert:
+            tableName: roles
+            columns:
+              - column:
+                  name: id
+                  value: 1a4f8c60-0000-4000-a000-00000005e001
+              - column:
+                  name: name
+                  value: ROLE_USER
+              - column:
+                  name: description
+                  value: Standard account with no administrative access.
+              - column:
+                  name: created_at
+                  valueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  valueComputed: CURRENT_TIMESTAMP

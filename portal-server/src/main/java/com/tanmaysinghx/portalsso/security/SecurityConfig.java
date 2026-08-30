@@ -81,6 +81,7 @@ public class SecurityConfig {
     SecurityFilterChain defaultSecurityFilterChain(
             HttpSecurity http,
             PortalUserDetailsService userDetailsService,
+            com.tanmaysinghx.portalsso.security.mfa.MfaAuthenticationSuccessHandler mfaSuccessHandler,
             @Value("${app.security.remember-me-key:portal-sso-remember-me-key-3b71e86a}") String rememberMeKey) throws Exception {
         http.csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
@@ -101,6 +102,7 @@ public class SecurityConfig {
                         // lookup the sign-in page uses to decide whether to offer a sign-up link.
                         // It stays CSRF-protected like every other endpoint.
                         .requestMatchers(PathPatternRequestMatcher.pathPattern("/api/public/**")).permitAll()
+                        .requestMatchers(PathPatternRequestMatcher.pathPattern("/mfa-challenge")).permitAll()
                         .requestMatchers(PathPatternRequestMatcher.pathPattern("/api/**")).authenticated()
                         // The consent screen names the application and the signed-in user, so it is
                         // only meaningful — and only safe to render — for an authenticated session.
@@ -109,7 +111,7 @@ public class SecurityConfig {
                 // Naming a login page is what stops DefaultLoginPageGeneratingFilter emitting the
                 // stock unstyled form; AuthPageController serves the branded one at the same path,
                 // so the POST target and CSRF handling are unchanged.
-                .formLogin(form -> form.loginPage("/login").permitAll())
+                .formLogin(form -> form.loginPage("/login").successHandler(mfaSuccessHandler).permitAll())
                 .rememberMe(rememberMe -> rememberMe
                         .userDetailsService(userDetailsService)
                         .key(rememberMeKey)

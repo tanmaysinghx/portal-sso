@@ -70,4 +70,9 @@ portal-client/
 - JWK key persistence and shared session store — see above; blocks real horizontal scaling.
 - OAuth clients registered via the admin API are PKCE-only public clients; confidential
   (client-secret) clients aren't supported yet.
-- No audit log for admin actions (client registration, user enable/disable).
+- Audit entries are append-only through the application, but not tamper-evident against direct
+  database access, and the CSV export is unsigned.
+- The bootstrap administrator's password is not forced to rotate after first sign-in. There is no
+  "must change password" flow anywhere in the product yet, so an operator who leaves
+  `app.bootstrap.*` in place keeps a credential readable by anyone with configuration access. The
+  startup log says so explicitly, but a forced rotation would be better.

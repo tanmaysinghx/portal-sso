@@ -5,6 +5,7 @@ export interface PortalUser {
   lastName: string | null;
   enabled: boolean;
   accountLocked: boolean;
+  mfaEnabled: boolean;
   roles: string[];
   lastLoginAt: string | null;
   createdAt: string;

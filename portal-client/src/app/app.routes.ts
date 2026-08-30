@@ -54,6 +54,16 @@ export const routes: Routes = [
           import('./features/users/pages/user-list/user-list').then((m) => m.UserList),
       },
       {
+        path: 'roles',
+        loadComponent: () =>
+          import('./features/roles/pages/role-list/role-list').then((m) => m.RoleList),
+      },
+      {
+        path: 'audit',
+        loadComponent: () =>
+          import('./features/audit/pages/audit-list/audit-list').then((m) => m.AuditList),
+      },
+      {
         path: 'settings',
         loadComponent: () =>
           import('./features/settings/settings').then((m) => m.Settings),

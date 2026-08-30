@@ -5,6 +5,8 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../../core/services/auth.service';
 import { SnackbarService } from '../../../../core/services/snackbar.service';
 import { Badge } from '../../../../shared/components/badge/badge';
+import { PortalRole } from '../../../roles/models/role.model';
+import { RoleService } from '../../../roles/services/role.service';
 import { CreateUserRequest, PortalUser } from '../../models/portal-user.model';
 import { UserService } from '../../services/user.service';
 
@@ -21,9 +23,19 @@ const INPUT_INVALID_CLASSES = 'border-red-400 focus:border-red-400 focus:ring-re
 })
 export class UserList {
   private readonly userService = inject(UserService);
+  private readonly roleService = inject(RoleService);
   private readonly authService = inject(AuthService);
   private readonly snackbarService = inject(SnackbarService);
   private readonly fb = inject(FormBuilder);
+
+  /** Fetched rather than hardcoded, so a role an operator defines is immediately assignable here. */
+  readonly availableRoles = signal<PortalRole[]>([]);
+
+  /** The user whose roles are being edited, plus the set currently ticked in the dialog. */
+  readonly editingRolesFor = signal<PortalUser | null>(null);
+  readonly draftRoles = signal<Set<string>>(new Set());
+  readonly savingRoles = signal(false);
+  readonly rolesError = signal<string | null>(null);
 
   readonly users = signal<PortalUser[]>([]);
   readonly loading = signal(true);
@@ -47,13 +59,82 @@ export class UserList {
 
   constructor() {
     this.loadUsers();
+    this.roleService.list().subscribe({
+      next: (roles) => this.availableRoles.set(roles),
+      // Losing the list degrades role editing but not the rest of the screen, so it stays quiet.
+      error: () => this.availableRoles.set([]),
+    });
   }
 
   @HostListener('document:keydown.escape')
   onEscape(): void {
-    if (this.showCreateModal()) {
+    if (this.editingRolesFor()) {
+      this.closeRolesModal();
+    } else if (this.showCreateModal()) {
       this.closeCreateModal();
     }
+  }
+
+  openRolesModal(user: PortalUser): void {
+    this.editingRolesFor.set(user);
+    this.draftRoles.set(new Set(user.roles));
+    this.rolesError.set(null);
+  }
+
+  closeRolesModal(): void {
+    this.editingRolesFor.set(null);
+    this.rolesError.set(null);
+  }
+
+  toggleDraftRole(name: string): void {
+    this.draftRoles.update((current) => {
+      const next = new Set(current);
+      if (next.has(name)) {
+        next.delete(name);
+      } else {
+        next.add(name);
+      }
+      return next;
+    });
+  }
+
+  /**
+   * Mirrors the server's refusal so the button explains itself before the request is sent. The
+   * server still enforces it — this is a courtesy, not the control.
+   */
+  wouldDemoteSelf(): boolean {
+    const user = this.editingRolesFor();
+    return (
+      !!user &&
+      user.email === this.currentUserEmail &&
+      user.roles.includes('ROLE_ADMIN') &&
+      !this.draftRoles().has('ROLE_ADMIN')
+    );
+  }
+
+  saveRoles(): void {
+    const user = this.editingRolesFor();
+    if (!user) {
+      return;
+    }
+
+    this.savingRoles.set(true);
+    this.rolesError.set(null);
+
+    this.userService.setRoles(user.id, [...this.draftRoles()]).subscribe({
+      next: (updated) => {
+        this.users.update((list) => list.map((u) => (u.id === updated.id ? updated : u)));
+        this.savingRoles.set(false);
+        this.editingRolesFor.set(null);
+        this.snackbarService.success('Roles Updated', `${updated.email} now holds ${updated.roles.join(', ')}.`);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.savingRoles.set(false);
+        const message = err.error?.message ?? 'Could not update roles.';
+        this.rolesError.set(message);
+        this.snackbarService.error('Update Failed', message, err.error?.code);
+      },
+    });
   }
 
   loadUsers(): void {
@@ -188,6 +269,30 @@ export class UserList {
         this.error.set(msg);
         this.updatingId.set(null);
         this.snackbarService.error('Unlock Failed', msg, err.error?.code);
+      },
+    });
+  }
+
+  /**
+   * Administratively resets and disables MFA for a user who lost their device.
+   */
+  resetMfa(user: PortalUser): void {
+    if (!confirm(`Are you sure you want to reset and disable Two-Factor Authentication for ${user.email}?`)) {
+      return;
+    }
+    this.error.set(null);
+    this.updatingId.set(user.id);
+    this.userService.resetMfa(user.id).subscribe({
+      next: (updated) => {
+        this.users.update((list) => list.map((u) => (u.id === updated.id ? updated : u)));
+        this.updatingId.set(null);
+        this.snackbarService.info('MFA Reset', `Two-Factor Authentication disabled for ${updated.email}.`);
+      },
+      error: (err: HttpErrorResponse) => {
+        const msg = err.error?.message || 'Could not reset MFA for that user.';
+        this.error.set(msg);
+        this.updatingId.set(null);
+        this.snackbarService.error('MFA Reset Failed', msg, err.error?.code);
       },
     });
   }

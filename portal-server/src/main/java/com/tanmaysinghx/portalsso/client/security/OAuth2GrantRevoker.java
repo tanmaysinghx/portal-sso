@@ -32,9 +32,11 @@ public class OAuth2GrantRevoker {
     /**
      * @param registeredClientId the client's primary key (the {@code id} column), which is what
      *     these tables store — not the human-facing {@code client_id}.
+     * @return how many rows were removed in total. The audit entry for a client deletion carries
+     *     this, since "how many live grants did that revoke" is the question asked afterwards.
      */
     @Transactional
-    public void revokeAllFor(String registeredClientId) {
+    public int revokeAllFor(String registeredClientId) {
         int authorizations =
                 jdbcTemplate.update("DELETE FROM oauth2_authorization WHERE registered_client_id = ?", registeredClientId);
         int consents = jdbcTemplate.update(
@@ -47,5 +49,6 @@ public class OAuth2GrantRevoker {
                     authorizations,
                     consents);
         }
+        return authorizations + consents;
     }
 }
