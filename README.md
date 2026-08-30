@@ -1,71 +1,117 @@
-# Portal SSO
+<p align="center">
+  <img src="assets/images/portal-logo.svg" width="96" height="96" alt="Portal SSO Logo" />
+</p>
 
-A self-hosted OAuth2/OIDC Identity Provider — one deployable server, one admin dashboard, built to
-be dropped into other apps' login flows with minimal ceremony.
+<h1 align="center">Portal SSO</h1>
+
+<p align="center">
+  <strong>A self-hosted OAuth2 / OIDC Identity Provider and unified Admin Console.</strong><br />
+  Single deployable jar, persistent RSA signing keys, clustered JDBC sessions, and client-side SPA fallback.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Spring_Boot-4.1.1-6DB33F?logo=springboot&logoColor=white" alt="Spring Boot 4" />
+  <img src="https://img.shields.io/badge/Angular-21-DD0031?logo=angular&logoColor=white" alt="Angular 21" />
+  <img src="https://img.shields.io/badge/Java-25-007396?logo=openjdk&logoColor=white" alt="Java 25" />
+  <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License" />
+</p>
+
+---
+
+## Overview
+
+Portal SSO is a self-hosted identity solution designed to be dropped into application architectures with minimal ceremony:
+
+- **OAuth 2.1 & OpenID Connect**: Full `authorization_code` + PKCE flow, ID/Access tokens carrying `email` and `roles` claims, OIDC Discovery (`/.well-known/openid-configuration`), JWKS (`/oauth2/jwks`), UserInfo (`/userinfo`), and revocation endpoints.
+- **Persistent Key Rotation**: 2048-bit RSA signing keys stored in the database with automatic rotation support; older valid keys continue verifying tokens without downtime.
+- **Clustered Admin Session**: Admin dashboard sessions persisted in the database via Spring Session JDBC.
+- **Embedded Admin Dashboard**: Modern Angular 21 SPA packaged directly inside the Spring Boot JAR with client-side deep linking and Remember Me support.
 
 ```
 portal-sso/
-  portal-server/   Spring Boot 4 — OAuth2/OIDC Authorization Server + admin REST API
-  portal-client/   Angular 21 — admin dashboard (OAuth clients, users)
-  docs/            Architecture notes and decisions
+├── portal-server/   # Spring Boot 4 — OAuth2/OIDC Auth Server, JDBC Session & REST API
+├── portal-client/   # Angular 21 — Admin Console (OAuth clients, users, session)
+├── assets/          # Brand logos and design assets
+└── docs/            # Architecture notes and design decisions
 ```
 
-## Quick start
+---
 
-You need both running — `portal-client`'s dev server proxies API calls to `portal-server`.
+## Quick Start
+
+### Option 1: Standalone JAR (Production / Single-Process)
+
+The entire Angular frontend is packaged into the Spring Boot JAR during build:
 
 ```bash
-# Terminal 1 — backend, http://localhost:8080
+# Build the standalone runnable JAR
 cd portal-server
-./mvnw spring-boot:run -Dspring-boot.run.useTestClasspath=true \
-  -Dspring-boot.run.arguments="--spring.datasource.url=jdbc:h2:mem:portalsso;MODE=PostgreSQL;DB_CLOSE_DELAY=-1 \
-  --spring.datasource.driver-class-name=org.h2.Driver \
-  --spring.datasource.username=sa --spring.datasource.password= \
-  --app.seed.test-data=true"
+./mvnw clean package
 
-# Terminal 2 — frontend, http://localhost:4200
+# Run against MySQL or Postgres
+SPRING_PROFILES_ACTIVE=mysql,local ./mvnw spring-boot:run
+
+# Or run the built JAR directly
+java -jar target/portal-server-0.0.1-SNAPSHOT.jar --spring.profiles.active=mysql,local
+```
+
+Access the unified Admin Console directly at **`http://localhost:8080/`**.
+
+---
+
+### Option 2: Local Development (Hot-Reloading)
+
+Run the backend and frontend development servers concurrently:
+
+```bash
+# Terminal 1 — Backend (http://localhost:8080)
+cd portal-server
+SPRING_PROFILES_ACTIVE=mysql,local ./mvnw spring-boot:run
+
+# Terminal 2 — Frontend Dev Server (http://localhost:4200, proxies /api & /login to :8080)
 cd portal-client
 npm install
 npm start
 ```
 
-Open `http://localhost:4200/sign-in` and sign in with `admin@portalsso.local` / `AdminPassword123!`.
+Open **`http://localhost:4200/`** in your browser.
 
-That backend command uses throwaway in-memory H2 so there's nothing to install. To keep your data,
-point it at MySQL or Postgres instead:
+---
+
+## Seeded Accounts (`app.seed.test-data=true`)
+
+| Role | Email | Password |
+|---|---|---|
+| **Admin** | `admin@portalsso.local` | `AdminPassword123!` |
+| **Standard User** | `testuser@portalsso.local` | `TestPassword123!` |
+
+*Also seeds a sample PKCE public client (`test-client`, redirect URI: `http://127.0.0.1:8080/authorized`).*
+
+---
+
+## Running Tests
 
 ```bash
-cd portal-server
-cp config/application-local.yml.example config/application-local.yml   # add your credentials
-SPRING_PROFILES_ACTIVE=mysql,local ./mvnw spring-boot:run              # drop `mysql` for Postgres
+# Run all backend integration & unit tests
+cd portal-server && ./mvnw test
+
+# Run frontend tests
+cd portal-client && npx ng test --watch=false
 ```
 
-`config/application-local.yml` is gitignored and never packaged into the built jar, so credentials
-stay out of both git and your build artifacts. See [`portal-server/README.md`](portal-server/README.md)
-for the full configuration model, profiles, and seeded accounts, and
-[`portal-client/README.md`](portal-client/README.md) for the frontend's structure and styling.
+---
 
-## What's built
+## Configuration & Credentials
 
-- Full OAuth2/OIDC authorization_code + PKCE flow, ID/access tokens carrying `email` and `roles`
-  claims, OIDC discovery/JWKS/userinfo/logout endpoints.
-- Admin dashboard: sign in, dashboard overview, register/list OAuth clients, list users and
-  enable/disable them — all backed by a real `/api/admin/**` REST API, `ROLE_ADMIN`-gated.
+1. Copy the example configuration template:
+   ```bash
+   cp portal-server/config/application-local.yml.example portal-server/config/application-local.yml
+   ```
+2. Enter your database credentials in `portal-server/config/application-local.yml`.
+3. `config/application-local.yml` is **gitignored** and never packaged into build artifacts, keeping production secrets safe.
 
-## Architecture, at a glance
+---
 
-**One deployable, not microservices** — see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the
-full reasoning. Short version: for a self-hosted product, "easy to run" and "many services" pull in
-opposite directions, and the actual horizontal-scaling blockers (an ephemeral JWK signing key, no
-shared session store) aren't solved by splitting services — they're solved by fixing those two
-specific things. The codebase is organized by feature package (`client/`, `user/`, `security/`) so
-a real split has clean seams if one is ever needed.
+## Architecture & Design Notes
 
-A Go-based SSO sidecar/reverse-proxy (for third-party apps to adopt Portal SSO with near-zero app
-code) is a planned, separate future project — decoupled from `portal-server`'s own architecture.
-
-## Status
-
-Pre-production. See "Known limitations" in [`portal-server/README.md`](portal-server/README.md)
-before deploying anywhere real.
-# portal-sso
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for full design rationale, database schemas, and migration details.

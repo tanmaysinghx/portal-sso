@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/logo.svg" width="80" height="80" alt="Portal SSO Logo" />
+</p>
+
 # portal-client
 
 The admin dashboard for **Portal SSO** — an Angular 21 (standalone components, signals) single-page

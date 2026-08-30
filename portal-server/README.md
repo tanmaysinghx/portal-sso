@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="../assets/images/portal-logo.svg" width="80" height="80" alt="Portal SSO Logo" />
+</p>
+
 # portal-server
 
 The core of **Portal SSO** — a self-hosted OAuth2/OIDC Authorization Server (Spring Boot 4 +
