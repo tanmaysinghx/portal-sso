@@ -1,0 +1,142 @@
+package com.tanmaysinghx.portalsso.security;
+
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationConsentService;
+import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.session.jdbc.config.annotation.web.http.EnableJdbcHttpSession;
+
+/**
+ * Hand-rolled replacement for Boot's autoconfigured authorization-server security ({@code
+ * OAuth2AuthorizationServerWebSecurityConfiguration}, which backs off entirely once any {@link
+ * SecurityFilterChain} bean is defined). Reproduces that default wiring as-is and layers in the
+ * one thing it can't provide: cookie-based CSRF for the admin dashboard SPA — a plain {@code
+ * XSRF-TOKEN} cookie the SPA reads and echoes back as {@code X-XSRF-TOKEN}, which is what
+ * Angular's {@code HttpClient} does automatically.
+ */
+@Configuration
+@EnableMethodSecurity
+@EnableJdbcHttpSession
+public class SecurityConfig {
+
+    @Bean
+    @Order(1)
+    SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+        // getEndpointsMatcher() defers to this exact instance's state, populated only once it is
+        // init()-ed as part of http.build() — it must be the same instance wired in below via
+        // apply(), not a separate one (e.g. from oauth2AuthorizationServer(customizer), which
+        // manages its own instance internally), or the matcher NPEs on first use.
+        OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
+
+        http.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher());
+        http.apply(authorizationServerConfigurer);
+        authorizationServerConfigurer.oidc(Customizer.withDefaults());
+
+        http.authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
+                .exceptionHandling(exceptions -> exceptions.defaultAuthenticationEntryPointFor(
+                        new LoginUrlAuthenticationEntryPoint("/login"), new MediaTypeRequestMatcher(MediaType.TEXT_HTML)))
+                .oauth2ResourceServer(resourceServer -> resourceServer.jwt(Customizer.withDefaults()));
+
+        return http.build();
+    }
+
+    @Bean
+    @Order(2)
+    SecurityFilterChain defaultSecurityFilterChain(
+            HttpSecurity http,
+            PortalUserDetailsService userDetailsService,
+            @Value("${app.security.remember-me-key:portal-sso-remember-me-key-3b71e86a}") String rememberMeKey) throws Exception {
+        http.csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
+                .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
+                // formLogin's default entry point always redirects to /login, which is wrong for
+                // the admin dashboard's fetch()/XHR calls under /api/** — they need a plain 401
+                // they can branch on, not a redirect silently followed to an HTML page. Adding
+                // this as a scoped default (the same mechanism formLogin() itself registers its
+                // own entry point through) rather than replacing the entry point outright:
+                // .authenticationEntryPoint(single) makes FormLoginConfigurer think the entry
+                // point is fully customized and it silently stops generating the /login page
+                // (DefaultLoginPageGeneratingFilter drops out of the chain), 404-ing /login into
+                // a redirect loop for real browser users of the OAuth2 login flow.
+                .exceptionHandling(exceptions -> exceptions.defaultAuthenticationEntryPointFor(
+                        new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED), PathPatternRequestMatcher.pathPattern("/api/**")))
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(PathPatternRequestMatcher.pathPattern("/api/**")).authenticated()
+                        .anyRequest().permitAll())
+                .formLogin(Customizer.withDefaults())
+                .rememberMe(rememberMe -> rememberMe
+                        .userDetailsService(userDetailsService)
+                        .key(rememberMeKey)
+                        .tokenValiditySeconds(30 * 24 * 60 * 60)
+                        .rememberMeParameter("remember-me"));
+
+        return http.build();
+    }
+
+    @Bean
+    public OAuth2AuthorizationService authorizationService(
+            JdbcOperations jdbcOperations, RegisteredClientRepository registeredClientRepository) {
+        return new JdbcOAuth2AuthorizationService(jdbcOperations, registeredClientRepository);
+    }
+
+    @Bean
+    public OAuth2AuthorizationConsentService authorizationConsentService(
+            JdbcOperations jdbcOperations, RegisteredClientRepository registeredClientRepository) {
+        return new JdbcOAuth2AuthorizationConsentService(jdbcOperations, registeredClientRepository);
+    }
+
+    @Bean
+    public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
+        return NimbusJwtDecoder.withJwkSource(jwkSource).build();
+    }
+
+    /**
+     * The CSRF token is loaded lazily; nothing reads it (and so nothing writes the cookie) on a
+     * request that isn't rendering the server-side login form. This forces that read on every
+     * request so the SPA always has a fresh {@code XSRF-TOKEN} cookie to send back.
+     */
+    private static final class CsrfCookieFilter extends OncePerRequestFilter {
+
+        @Override
+        protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+                throws ServletException, IOException {
+            CsrfToken csrfToken = (CsrfToken) request.getAttribute("_csrf");
+            if (csrfToken != null) {
+                csrfToken.getToken();
+            }
+            filterChain.doFilter(request, response);
+        }
+    }
+}

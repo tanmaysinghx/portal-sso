@@ -1,0 +1,118 @@
+# =============================================================================
+# Portal SSO - Root .gitignore
+# Prevents accidental commits of passwords, credentials, keys, database files,
+# build artifacts, and IDE configurations.
+# =============================================================================
+
+### 1. Credentials, Passwords & Secrets (NEVER COMMIT) ###
+*.env
+*.env.*
+!.env.example
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Spring Boot local configs & credentials
+**/config/application-local.yml
+**/config/application-local.yaml
+**/config/application-*.local.yml
+**/config/application-*.local.yaml
+application-local.yml
+application-local.yaml
+!**/config/*.example
+!**/config/*.example.yml
+!**/config/*.example.yaml
+
+# Keys, Certificates & Tokens
+*.pem
+*.key
+*.pkcs12
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.crt
+*.der
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+!**/src/test/resources/**/*.pem
+!**/src/test/resources/**/*.key
+
+### 2. Database Files & Local Stores ###
+*.db
+*.sqlite
+*.sqlite3
+*.h2.db
+*.mv.db
+*.trace.db
+livedb*
+target/livedb*
+
+### 3. Build & Compilation Artifacts ###
+target/
+**/target/
+dist/
+**/dist/
+out/
+**/out/
+build/
+**/build/
+.angular/
+**/.angular/
+node_modules/
+**/node_modules/
+.mvn/wrapper/maven-wrapper.jar
+
+### 4. Logs, Dumps & Temporary Files ###
+*.log
+logs/
+**/logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.dump
+*.dumpstream
+hs_err_pid*.log
+replay_pid*.log
+tmp/
+**/tmp/
+.temp/
+**/.temp/
+
+### 5. IDE & Editor Files ###
+.idea/
+**/.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+**/.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.settings/
+**/.settings/
+.classpath
+**/.classpath
+.project
+**/.project
+.factorypath
+**/.factorypath
+.apt_generated
+.springBeans
+.sts4-cache
+
+### 6. Operating System Files ###
+.DS_Store
+**/.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

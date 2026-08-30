@@ -1,0 +1,95 @@
+<div class="animate-fade-in-up">
+  <div class="mb-7">
+    <h1 class="text-[22px] font-semibold tracking-tight text-ink-900">Users</h1>
+    <p class="mt-1 text-sm text-ink-500">Everyone who can sign in through this portal.</p>
+  </div>
+
+  @if (error()) {
+    <div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ error() }}</div>
+  }
+
+  <div class="overflow-hidden rounded-xl border border-ink-200 bg-white shadow-sm">
+    @if (loading()) {
+      <div class="divide-y divide-ink-100">
+        @for (row of [1, 2, 3]; track row) {
+          <div class="flex items-center gap-4 px-5 py-4">
+            <div class="h-8 w-8 animate-pulse rounded-full bg-ink-200"></div>
+            <div class="h-4 w-44 animate-pulse rounded bg-ink-200"></div>
+            <div class="ml-auto h-6 w-11 animate-pulse rounded-full bg-ink-100"></div>
+          </div>
+        }
+      </div>
+    } @else if (users().length === 0) {
+      <div class="px-6 py-16 text-center text-sm text-ink-500">No users yet.</div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead class="border-b border-ink-200 bg-ink-50/60">
+            <tr class="text-[11px] font-semibold uppercase tracking-wider text-ink-500">
+              <th class="px-5 py-3">User</th>
+              <th class="px-5 py-3">Roles</th>
+              <th class="px-5 py-3">Last login</th>
+              <th class="px-5 py-3">Status</th>
+              <th class="px-5 py-3 text-right">Enabled</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-ink-100">
+            @for (user of users(); track user.id) {
+              <tr class="transition-colors hover:bg-ink-50/60">
+                <td class="px-5 py-3.5">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white"
+                      [class]="user.roles.includes('ROLE_ADMIN') ? 'bg-gradient-to-br from-brand-500 to-red-500' : 'bg-ink-400'"
+                    >
+                      {{ displayName(user).charAt(0).toUpperCase() }}
+                    </div>
+                    <div class="min-w-0">
+                      <div class="truncate text-[13px] font-medium text-ink-900">{{ displayName(user) }}</div>
+                      <div class="truncate text-[11px] text-ink-500">{{ user.email }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-5 py-3.5">
+                  <div class="flex flex-wrap gap-1">
+                    @for (role of user.roles; track role) {
+                      <app-badge [tone]="role === 'ROLE_ADMIN' ? 'brand' : 'neutral'">{{ role }}</app-badge>
+                    }
+                  </div>
+                </td>
+                <td class="px-5 py-3.5 text-[13px] text-ink-600">
+                  {{ user.lastLoginAt ? (user.lastLoginAt | date: 'MMM d, y, h:mm a') : 'Never' }}
+                </td>
+                <td class="px-5 py-3.5">
+                  @if (user.enabled) {
+                    <app-badge tone="success">Enabled</app-badge>
+                  } @else {
+                    <app-badge tone="danger">Disabled</app-badge>
+                  }
+                </td>
+                <td class="px-5 py-3.5 text-right">
+                  <button
+                    type="button"
+                    role="switch"
+                    [attr.aria-checked]="user.enabled"
+                    [attr.aria-label]="'Toggle ' + user.email"
+                    [disabled]="user.email === currentUserEmail || updatingId() === user.id"
+                    (click)="toggleEnabled(user)"
+                    [title]="user.email === currentUserEmail ? 'You can\'t disable your own account' : ''"
+                    class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+                    [class]="user.enabled ? 'bg-brand-600' : 'bg-ink-300'"
+                  >
+                    <span
+                      class="pointer-events-none inline-block h-5 w-5 translate-y-0.5 rounded-full bg-white shadow ring-0 transition-transform"
+                      [class]="user.enabled ? 'translate-x-5' : 'translate-x-0.5'"
+                    ></span>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>

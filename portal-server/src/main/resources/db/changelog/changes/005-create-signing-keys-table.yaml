@@ -1,0 +1,52 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-create-signing-keys-table
+      author: tanmaysinghx
+      changes:
+        - createTable:
+            tableName: signing_keys
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: key_id
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uk_signing_keys_key_id
+              - column:
+                  name: algorithm
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: public_key_pem
+                  type: VARCHAR(4000)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: private_key_pem
+                  type: VARCHAR(4000)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: active
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false

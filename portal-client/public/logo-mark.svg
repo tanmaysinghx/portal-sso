@@ -1,0 +1,18 @@
+<!-- Same mark as logo.svg but without the dark rounded tile, so it sits on any background
+     (the full logo.svg is for light surfaces and the favicon). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="prismGradMark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#EF4444" />
+    </linearGradient>
+  </defs>
+
+  <polygon points="256,110 376,180 376,320 256,390 136,320 136,180"
+           fill="none" stroke="url(#prismGradMark)" stroke-width="26" stroke-linejoin="round"/>
+
+  <path d="M256 250 V390 M256 250 L136 180 M256 250 L376 180"
+        fill="none" stroke="#71717A" stroke-width="16" stroke-linejoin="round"/>
+
+  <circle cx="256" cy="250" r="28" fill="#FFFFFF"/>
+</svg>

@@ -1,0 +1,66 @@
+// Global SCSS: the handful of things Tailwind utilities don't cover cleanly — keyframes, the
+// styled scrollbar, and shared mixins for component-level .scss files. Everything else (layout,
+// spacing, color, typography) is Tailwind utility classes directly in templates.
+
+@use 'sass:color';
+
+$brand: #f59e0b; // logo amber
+$ink: #18181b; // logo tile
+
+@mixin focus-ring {
+  outline: 2px solid $brand;
+  outline-offset: 2px;
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+// Staggered entrance for grids/lists — set on a wrapper, children fade in one after another.
+.stagger > * {
+  animation: fade-in-up 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+
+  @for $i from 1 through 8 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{($i - 1) * 45}ms;
+    }
+  }
+}
+
+// Firefox
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color.adjust($ink, $lightness: 62%) transparent;
+}
+
+// WebKit
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: color.adjust($ink, $lightness: 62%);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+
+  &:hover {
+    background-color: color.adjust($ink, $lightness: 48%);
+  }
+}

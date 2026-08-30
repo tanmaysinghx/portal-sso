@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: portal-server
+
+  security:
+    oauth2:
+      authorizationserver:
+        issuer: ${ISSUER_URL:http://localhost:8080}
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/portalsso}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      # Liquibase owns the schema; Hibernate only ever validates against it.
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+  session:
+    store-type: jdbc
+    jdbc:
+      initialize-schema: never
+
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        secure: true
+        same-site: lax
+
+app:
+  seed:
+    # Dev/test convenience only: seeds a test user, an admin user, and a hardcoded PKCE-only
+    # OAuth client. Must stay off in real deployments; portal-client is the real
+    # client-registration path.
+    test-data: false

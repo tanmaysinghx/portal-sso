@@ -1,0 +1,84 @@
+<div class="relative flex min-h-screen items-center justify-center overflow-hidden bg-ink-950 px-4">
+  <!-- Warm glow picked from the logo gradient, so the page reads as the logo's own environment. -->
+  <div class="pointer-events-none absolute -top-32 left-1/2 h-[28rem] w-[46rem] -translate-x-1/2 rounded-full bg-gradient-to-br from-brand-500 to-red-500 opacity-[0.18] blur-[110px]"></div>
+  <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,transparent_0%,#09090b_72%)]"></div>
+
+  <div class="animate-fade-in-up relative w-full max-w-[26rem]">
+    <div class="mb-7 flex flex-col items-center text-center">
+      <img src="logo.svg" alt="Portal SSO" class="h-20 w-20 rounded-[19px] shadow-xl shadow-black/50" />
+      <h1 class="mt-4 text-[22px] font-semibold tracking-tight text-white">Welcome back</h1>
+      <p class="mt-1.5 text-sm text-ink-400">Sign in to the Portal SSO admin console</p>
+    </div>
+
+    <form class="rounded-2xl border border-ink-800 bg-ink-900/70 p-7 shadow-2xl shadow-black/50 backdrop-blur" (ngSubmit)="submit()">
+      @if (error()) {
+        <div class="mb-5 flex items-start gap-2.5 rounded-lg border border-red-500/20 bg-red-500/10 px-3.5 py-3 text-sm text-red-300">
+          <svg class="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+          <span>{{ error() }}</span>
+        </div>
+      }
+
+      <div class="mb-4">
+        <label for="email" class="mb-1.5 block text-xs font-medium text-ink-300">Email address</label>
+        <input
+          id="email"
+          type="email"
+          name="email"
+          autocomplete="username"
+          required
+          [ngModel]="email()"
+          (ngModelChange)="email.set($event)"
+          placeholder="you@company.com"
+          class="block w-full rounded-lg border border-ink-700 bg-ink-950/60 px-3.5 py-2.5 text-sm text-white shadow-sm transition-colors placeholder:text-ink-600 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+        />
+      </div>
+
+      <div class="mb-4">
+        <label for="password" class="mb-1.5 block text-xs font-medium text-ink-300">Password</label>
+        <input
+          id="password"
+          type="password"
+          name="password"
+          autocomplete="current-password"
+          required
+          [ngModel]="password()"
+          (ngModelChange)="password.set($event)"
+          placeholder="••••••••••"
+          class="block w-full rounded-lg border border-ink-700 bg-ink-950/60 px-3.5 py-2.5 text-sm text-white shadow-sm transition-colors placeholder:text-ink-600 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+        />
+      </div>
+
+      <div class="mb-6 flex items-center justify-between">
+        <label class="group flex cursor-pointer items-center gap-2">
+          <input
+            id="remember-me"
+            type="checkbox"
+            name="remember-me"
+            [ngModel]="rememberMe()"
+            (ngModelChange)="rememberMe.set($event)"
+            class="h-4 w-4 rounded border-ink-700 bg-ink-950/60 text-brand-600 accent-brand-500 transition-colors focus:ring-2 focus:ring-brand-500/25 focus:ring-offset-0"
+          />
+          <span class="text-xs text-ink-400 transition-colors group-hover:text-ink-300">Remember me</span>
+        </label>
+      </div>
+
+      <button
+        type="submit"
+        [disabled]="submitting()"
+        class="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/25 transition-all hover:bg-brand-700 hover:shadow-brand-600/35 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:ring-offset-2 focus:ring-offset-ink-900 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        @if (submitting()) {
+          <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+          </svg>
+        }
+        {{ submitting() ? 'Signing in…' : 'Sign in' }}
+      </button>
+    </form>
+
+    <p class="mt-6 text-center text-xs text-ink-600">Self-hosted identity provider</p>
+  </div>
+</div>

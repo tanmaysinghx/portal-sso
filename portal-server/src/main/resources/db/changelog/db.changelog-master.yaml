@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/changes/001-create-users-table.yaml
+  - include:
+      file: db/changelog/changes/002-create-roles-table.yaml
+  - include:
+      file: db/changelog/changes/003-create-user-roles-table.yaml
+  - include:
+      file: db/changelog/changes/004-create-oauth-clients-table.yaml
+  - include:
+      file: db/changelog/changes/005-create-signing-keys-table.yaml
+  - include:
+      file: db/changelog/changes/006-create-oauth2-authorization-tables.yaml
+  - include:
+      file: db/changelog/changes/007-create-spring-session-tables.yaml

@@ -1,0 +1,127 @@
+databaseChangeLog:
+  - changeSet:
+      id: 007-create-spring-session-table
+      author: tanmaysinghx
+      changes:
+        - createTable:
+            tableName: SPRING_SESSION
+            columns:
+              - column:
+                  name: PRIMARY_ID
+                  type: VARCHAR(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: SESSION_ID
+                  type: VARCHAR(36)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uk_spring_session_session_id
+              - column:
+                  name: CREATION_TIME
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: LAST_ACCESS_TIME
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: MAX_INACTIVE_INTERVAL
+                  type: INT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: EXPIRY_TIME
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: PRINCIPAL_NAME
+                  type: VARCHAR(100)
+
+        - createIndex:
+            indexName: SPRING_SESSION_IX1
+            tableName: SPRING_SESSION
+            columns:
+              - column:
+                  name: EXPIRY_TIME
+
+        - createIndex:
+            indexName: SPRING_SESSION_IX2
+            tableName: SPRING_SESSION
+            columns:
+              - column:
+                  name: PRINCIPAL_NAME
+
+        - createIndex:
+            indexName: SPRING_SESSION_IX3
+            tableName: SPRING_SESSION
+            columns:
+              - column:
+                  name: LAST_ACCESS_TIME
+
+  - changeSet:
+      id: 007-create-spring-session-attributes-table-mysql
+      author: tanmaysinghx
+      dbms: mysql
+      changes:
+        - createTable:
+            tableName: SPRING_SESSION_ATTRIBUTES
+            columns:
+              - column:
+                  name: SESSION_PRIMARY_ID
+                  type: VARCHAR(36)
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_spring_session_attributes
+                    nullable: false
+                    foreignKeyName: fk_spring_session_attributes_session
+                    references: SPRING_SESSION(PRIMARY_ID)
+                    deleteCascade: true
+              - column:
+                  name: ATTRIBUTE_NAME
+                  type: VARCHAR(200)
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_spring_session_attributes
+                    nullable: false
+              - column:
+                  name: ATTRIBUTE_BYTES
+                  type: BLOB
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 007-create-spring-session-attributes-table
+      author: tanmaysinghx
+      dbms: "!mysql"
+      changes:
+        - createTable:
+            tableName: SPRING_SESSION_ATTRIBUTES
+            columns:
+              - column:
+                  name: SESSION_PRIMARY_ID
+                  type: VARCHAR(36)
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_spring_session_attributes
+                    nullable: false
+                    foreignKeyName: fk_spring_session_attributes_session
+                    references: SPRING_SESSION(PRIMARY_ID)
+                    deleteCascade: true
+              - column:
+                  name: ATTRIBUTE_NAME
+                  type: VARCHAR(200)
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_spring_session_attributes
+                    nullable: false
+              - column:
+                  name: ATTRIBUTE_BYTES
+                  type: BYTEA
+                  constraints:
+                    nullable: false

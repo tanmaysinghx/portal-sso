@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+/* Design tokens, anchored on the logo (logo.svg): the #F59E0B → #EF4444 gradient and the #18181B
+   tile. Available both as utilities (bg-brand-500, text-ink-900, …) and as plain custom
+   properties (var(--color-brand-500)) from the SCSS side. */
+@theme {
+  /* Brand ramp. 500 is the logo's exact amber; 600/700 are deepened toward orange so that white
+     text on a brand-filled button actually clears contrast — #F59E0B under white is ~2:1, which
+     is unreadable, so it is used for accents and never as a text background. */
+  --color-brand-50: #fff8ed;
+  --color-brand-100: #ffefd4;
+  --color-brand-200: #fedba8;
+  --color-brand-300: #fdc071;
+  --color-brand-400: #fba338;
+  --color-brand-500: #f59e0b;
+  --color-brand-600: #ea580c;
+  --color-brand-700: #c2410c;
+  --color-brand-800: #9a3412;
+  --color-brand-900: #7c2d12;
+
+  /* Neutral ramp = zinc, to match the logo's #18181B tile and #52525B inner lines. Warmer than
+     slate, which keeps the orange from looking out of place. */
+  --color-ink-50: #fafafa;
+  --color-ink-100: #f4f4f5;
+  --color-ink-200: #e4e4e7;
+  --color-ink-300: #d4d4d8;
+  --color-ink-400: #a1a1aa;
+  --color-ink-500: #71717a;
+  --color-ink-600: #52525b;
+  --color-ink-700: #3f3f46;
+  --color-ink-800: #27272a;
+  --color-ink-900: #18181b;
+  --color-ink-950: #09090b;
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-ink-50 text-ink-900 antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}

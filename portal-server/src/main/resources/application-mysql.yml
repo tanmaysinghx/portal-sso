@@ -1,0 +1,25 @@
+# MySQL-specific behaviour. Applies to any MySQL deployment (managed or self-hosted) and holds no
+# credentials — those belong in config/application-local.yml, which is gitignored.
+#
+# Activate alongside your credentials profile:  SPRING_PROFILES_ACTIVE=mysql,local
+
+spring:
+  datasource:
+    hikari:
+      # Liquibase's own DATABASECHANGELOG bookkeeping table doesn't define a primary key, which
+      # trips managed MySQL providers (Aiven, RDS, ...) that enforce sql_require_primary_key by
+      # default. Every one of our own entity tables already has a real primary key (BaseEntity +
+      # each changeSet's primaryKey constraint) — this only relaxes the check for Liquibase's
+      # internal tables, on this profile only.
+      connection-init-sql: SET SESSION sql_require_primary_key=0
+
+  jpa:
+    properties:
+      hibernate:
+        type:
+          # MySQL has no native BOOLEAN — it's an alias for TINYINT(1), so that's what Liquibase's
+          # `type: BOOLEAN` columns physically become. Without this, Hibernate's schema validation
+          # expects `bit` and fails on every boolean column (users.enabled, account_locked,
+          # mfa_enabled, oauth_clients.enabled). Postgres has a real BOOLEAN, so it needs no such
+          # override and this stays scoped to the MySQL profile.
+          preferred_boolean_jdbc_type: TINYINT

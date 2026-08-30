@@ -1,0 +1,25 @@
+<div class="relative flex min-h-screen items-center justify-center overflow-hidden bg-ink-950 px-4">
+  <div class="pointer-events-none absolute -top-32 left-1/2 h-[28rem] w-[46rem] -translate-x-1/2 rounded-full bg-gradient-to-br from-brand-500 to-red-500 opacity-[0.12] blur-[110px]"></div>
+
+  <div class="animate-fade-in-up relative w-full max-w-[26rem] rounded-2xl border border-ink-800 bg-ink-900/70 p-8 text-center shadow-2xl shadow-black/50 backdrop-blur">
+    <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-brand-500/10 ring-1 ring-inset ring-brand-500/25">
+      <svg class="h-6 w-6 text-brand-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+      </svg>
+    </div>
+
+    <h1 class="mt-5 text-lg font-semibold tracking-tight text-white">Access denied</h1>
+    <p class="mt-2 text-sm leading-relaxed text-ink-400">
+      <span class="font-medium text-ink-200">{{ currentUser()?.email }}</span> is signed in, but this console
+      requires the administrator role.
+    </p>
+
+    <button
+      type="button"
+      (click)="signOut()"
+      class="mt-6 w-full rounded-lg border border-ink-700 px-4 py-2.5 text-[13px] font-semibold text-ink-300 transition-colors hover:border-ink-600 hover:text-white"
+    >
+      Sign out
+    </button>
+  </div>
+</div>

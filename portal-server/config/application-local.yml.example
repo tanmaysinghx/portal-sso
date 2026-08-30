@@ -1,0 +1,24 @@
+# Template for local developer credentials.
+#
+#   cp config/application-local.yml.example config/application-local.yml
+#
+# then fill in real values. The real application-local.yml is gitignored and is never packaged
+# into the jar (Spring Boot loads ./config/ from the working directory at runtime, not from the
+# classpath), so secrets stay off both git and your build artifacts.
+#
+# Run with:  SPRING_PROFILES_ACTIVE=mysql,local ./mvnw spring-boot:run
+#   mysql -> MySQL-specific behaviour that applies to any MySQL deployment
+#   local -> your own credentials
+#
+# For Postgres, drop the `mysql` profile and use a jdbc:postgresql:// URL instead.
+
+spring:
+  datasource:
+    url: jdbc:mysql://<host>:<port>/<database>?sslMode=REQUIRED
+    username: <username>
+    password: <password>
+
+app:
+  seed:
+    # Seeds admin/test users and a sample OAuth client on first boot. Dev only.
+    test-data: true
