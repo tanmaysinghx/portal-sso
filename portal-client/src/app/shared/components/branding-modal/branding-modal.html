@@ -1,0 +1,167 @@
+@if (brandingService.showModal()) {
+  <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+    <!-- Backdrop -->
+    <div
+      class="fixed inset-0 bg-ink-950/70 backdrop-blur-sm transition-opacity"
+      (click)="close()"
+      aria-hidden="true"
+    ></div>
+
+    <!-- Modal Card -->
+    <div
+      class="relative z-10 w-full max-w-lg rounded-2xl border border-ink-200 bg-white p-6 shadow-2xl transition-all"
+      (click)="$event.stopPropagation()"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="branding-modal-title"
+    >
+      <div class="flex items-center justify-between border-b border-ink-100 pb-4 mb-5">
+        <div class="flex items-center gap-3">
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600 ring-1 ring-inset ring-amber-500/20">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
+            </svg>
+          </div>
+          <div>
+            <h3 id="branding-modal-title" class="text-base font-semibold text-ink-900">Custom Organization Branding</h3>
+            <p class="text-xs text-ink-500">Configure your company logo to appear alongside Portal SSO.</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          (click)="close()"
+          class="rounded-lg p-1.5 text-ink-400 hover:bg-ink-100 hover:text-ink-600 transition"
+          aria-label="Close modal"
+        >
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Live Logo Preview Box -->
+      <div class="mb-5 rounded-xl border border-ink-800 bg-ink-950 p-4 text-white">
+        <p class="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-ink-400">Live Header Preview</p>
+        <div class="flex items-center gap-3 rounded-lg border border-ink-800/80 bg-ink-900/80 px-4 py-3">
+          @if (companyLogoUrlInput()) {
+            <!-- Sleek paired logo lockup badge -->
+            <div class="flex items-center gap-2 rounded-xl bg-ink-950 p-1.5 ring-1 ring-ink-800 shrink-0">
+              <img src="logo-mark.svg" alt="Portal SSO" class="h-6 w-6 shrink-0" />
+              <div class="h-4 w-px bg-ink-700"></div>
+              <img
+                [src]="companyLogoUrlInput()"
+                alt="Custom Company Logo"
+                class="h-6 max-w-[48px] object-contain rounded shrink-0"
+              />
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-[13px] font-semibold tracking-tight text-white">
+                {{ companyNameInput() || 'Your Organization' }}
+              </p>
+              <p class="text-[10px] font-medium tracking-wide text-amber-500 uppercase">Single Sign-On</p>
+            </div>
+          } @else {
+            <div class="flex items-center gap-2.5">
+              <img src="logo-mark.svg" alt="Portal SSO" class="h-7 w-7" />
+              <div class="flex flex-col leading-none">
+                <span class="text-sm font-semibold tracking-tight text-white">Portal SSO</span>
+                <span class="mt-0.5 text-[9px] font-medium uppercase tracking-widest text-ink-500">Identity</span>
+              </div>
+            </div>
+            <span class="ml-auto text-[11px] text-ink-500 italic">Default branding</span>
+          }
+        </div>
+      </div>
+
+      @if (uploadError()) {
+        <div class="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+          <svg class="h-4 w-4 shrink-0 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+          <span>{{ uploadError() }}</span>
+        </div>
+      }
+
+      <div class="space-y-4">
+        <div>
+          <label for="company-name" class="mb-1 block text-xs font-medium text-ink-700">Organization / Company Name</label>
+          <input
+            id="company-name"
+            type="text"
+            [ngModel]="companyNameInput()"
+            (ngModelChange)="companyNameInput.set($event)"
+            placeholder="e.g. Acme Corp"
+            class="block w-full rounded-lg border border-ink-300 px-3.5 py-2 text-sm text-ink-900 shadow-sm placeholder:text-ink-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+          />
+        </div>
+
+        <div>
+          <label class="mb-1 block text-xs font-medium text-ink-700">Upload Company Logo (PNG, SVG, JPG)</label>
+          <div class="mt-1 flex items-center gap-3">
+            <label class="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-ink-300 bg-ink-50 px-4 py-2 text-xs font-medium text-ink-700 hover:bg-ink-100 transition shadow-sm">
+              <svg class="h-4 w-4 text-ink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+              </svg>
+              <span>Choose image file</span>
+              <input
+                type="file"
+                accept="image/png, image/jpeg, image/svg+xml, image/webp"
+                (change)="onFileSelected($event)"
+                class="hidden"
+              />
+            </label>
+            @if (companyLogoUrlInput()) {
+              <button
+                type="button"
+                (click)="companyLogoUrlInput.set('')"
+                class="text-xs text-red-600 hover:text-red-700 font-medium"
+              >
+                Remove logo
+              </button>
+            }
+          </div>
+          <p class="mt-1 text-[11px] text-ink-500">Recommended: Transparent PNG or SVG, max 2MB.</p>
+        </div>
+
+        <div>
+          <label for="company-logo-url" class="mb-1 block text-xs font-medium text-ink-700">Or Paste Image URL</label>
+          <input
+            id="company-logo-url"
+            type="url"
+            [ngModel]="companyLogoUrlInput()"
+            (ngModelChange)="companyLogoUrlInput.set($event)"
+            placeholder="https://example.com/logo.svg"
+            class="block w-full rounded-lg border border-ink-300 px-3.5 py-2 text-sm text-ink-900 shadow-sm placeholder:text-ink-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+          />
+        </div>
+      </div>
+
+      <div class="mt-6 flex items-center justify-between border-t border-ink-100 pt-4">
+        <button
+          type="button"
+          (click)="reset()"
+          class="text-xs font-medium text-ink-500 hover:text-red-600 transition"
+        >
+          Reset to Default
+        </button>
+
+        <div class="flex items-center gap-2.5">
+          <button
+            type="button"
+            (click)="close()"
+            class="rounded-lg border border-ink-300 bg-white px-4 py-2 text-xs font-medium text-ink-700 shadow-sm hover:bg-ink-50 transition"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            (click)="save()"
+            class="rounded-lg bg-brand-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-brand-600/20 hover:bg-brand-700 transition"
+          >
+            Save Branding
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

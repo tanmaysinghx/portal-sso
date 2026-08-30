@@ -5,9 +5,26 @@
 
   <div class="animate-fade-in-up relative w-full max-w-[26rem]">
     <div class="mb-7 flex flex-col items-center text-center">
-      <img src="logo.svg" alt="Portal SSO" class="h-20 w-20 rounded-[19px] shadow-xl shadow-black/50" />
-      <h1 class="mt-4 text-[22px] font-semibold tracking-tight text-white">Welcome back</h1>
-      <p class="mt-1.5 text-sm text-ink-400">Sign in to the Portal SSO admin console</p>
+      @if (brandingService.hasCustomLogo()) {
+        <!-- Elegant co-branded lockup card -->
+        <div class="inline-flex items-center gap-3 rounded-2xl border border-ink-800 bg-ink-900/80 px-4 py-2.5 shadow-2xl backdrop-blur mb-3">
+          <img src="logo.svg" alt="Portal SSO" class="h-10 w-10 rounded-xl shrink-0" />
+          <div class="h-6 w-px bg-ink-700"></div>
+          <img
+            [src]="brandingService.companyLogoUrl()!"
+            alt="Company Logo"
+            class="h-10 max-w-[100px] object-contain rounded-lg shrink-0"
+          />
+        </div>
+        <h1 class="text-xl font-bold tracking-tight text-white">
+          Sign in to {{ brandingService.companyName() || 'Portal SSO' }}
+        </h1>
+        <p class="mt-1 text-xs text-ink-400">Single Sign-On powered by Portal SSO</p>
+      } @else {
+        <img src="logo.svg" alt="Portal SSO" class="h-20 w-20 rounded-[19px] shadow-xl shadow-black/50" />
+        <h1 class="mt-4 text-[22px] font-semibold tracking-tight text-white">Welcome back</h1>
+        <p class="mt-1.5 text-sm text-ink-400">Sign in to the Portal SSO admin console</p>
+      }
     </div>
 
     <form class="rounded-2xl border border-ink-800 bg-ink-900/70 p-7 shadow-2xl shadow-black/50 backdrop-blur" (ngSubmit)="submit()">

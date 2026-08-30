@@ -1,6 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { BrandingService } from '../../core/services/branding.service';
 
 @Component({
   selector: 'app-shell',
@@ -10,6 +11,7 @@ import { AuthService } from '../../core/services/auth.service';
 export class Shell {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  readonly brandingService = inject(BrandingService);
 
   readonly currentUser = this.authService.currentUser;
   readonly initial = computed(() => (this.currentUser()?.email ?? '?').charAt(0).toUpperCase());
