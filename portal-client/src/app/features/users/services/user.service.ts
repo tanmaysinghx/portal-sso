@@ -19,4 +19,9 @@ export class UserService {
   setEnabled(id: string, enabled: boolean): Observable<PortalUser> {
     return this.http.patch<PortalUser>(`${this.baseUrl}/${id}`, { enabled });
   }
+
+  /** Clears a lockout applied after too many failed sign-ins, and resets the attempt counter. */
+  unlock(id: string): Observable<PortalUser> {
+    return this.http.post<PortalUser>(`${this.baseUrl}/${id}/unlock`, null);
+  }
 }

@@ -73,11 +73,28 @@
                   {{ user.lastLoginAt ? (user.lastLoginAt | date: 'MMM d, y, h:mm a') : 'Never' }}
                 </td>
                 <td class="px-5 py-3.5">
-                  @if (user.enabled) {
-                    <app-badge tone="success">Enabled</app-badge>
-                  } @else {
-                    <app-badge tone="danger">Disabled</app-badge>
-                  }
+                  <div class="flex items-center gap-1.5">
+                    @if (user.enabled) {
+                      <app-badge tone="success">Enabled</app-badge>
+                    } @else {
+                      <app-badge tone="danger">Disabled</app-badge>
+                    }
+
+                    <!-- Locked is independent of enabled: an enabled account can still be locked
+                         out by failed sign-ins, so both states have to be visible at once. -->
+                    @if (user.accountLocked) {
+                      <app-badge tone="danger">Locked</app-badge>
+                      <button
+                        type="button"
+                        (click)="unlock(user)"
+                        [disabled]="updatingId() === user.id"
+                        title="Clear the lockout from failed sign-in attempts"
+                        class="rounded-md border border-ink-300 px-1.5 py-0.5 text-[11px] font-medium text-ink-600 transition hover:border-ink-400 hover:text-ink-900 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Unlock
+                      </button>
+                    }
+                  </div>
                 </td>
                 <td class="px-5 py-3.5 text-right">
                   <button

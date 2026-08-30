@@ -169,4 +169,26 @@ export class UserList {
       },
     });
   }
+
+  /**
+   * Clears a lockout applied after too many failed sign-ins. Without this, a locked-out user could
+   * only be recovered by editing the database directly.
+   */
+  unlock(user: PortalUser): void {
+    this.error.set(null);
+    this.updatingId.set(user.id);
+    this.userService.unlock(user.id).subscribe({
+      next: (updated) => {
+        this.users.update((list) => list.map((u) => (u.id === updated.id ? updated : u)));
+        this.updatingId.set(null);
+        this.snackbarService.info('Account Unlocked', `${updated.email} can sign in again.`);
+      },
+      error: (err: HttpErrorResponse) => {
+        const msg = err.error?.message || 'Could not unlock that user — please try again.';
+        this.error.set(msg);
+        this.updatingId.set(null);
+        this.snackbarService.error('Unlock Failed', msg, err.error?.code);
+      },
+    });
+  }
 }

@@ -1,118 +1,101 @@
-# =============================================================================
-# Portal SSO - Root .gitignore
-# Prevents accidental commits of passwords, credentials, keys, database files,
-# build artifacts, and IDE configurations.
-# =============================================================================
+# ─────────────────────────────────────────────────────────────────────────────
+# SECRETS — never commit
+# Repo-wide net. Sub-project .gitignore files repeat some of these on purpose:
+# if one of those is ever deleted, this file still catches the credential.
+# ─────────────────────────────────────────────────────────────────────────────
 
-### 1. Credentials, Passwords & Secrets (NEVER COMMIT) ###
-*.env
-*.env.*
-!.env.example
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Spring Boot local configs & credentials
+# Spring Boot runtime config. ./config/ is loaded at runtime and is NOT packaged
+# into the jar, which is exactly why real credentials live there.
 **/config/application-local.yml
-**/config/application-local.yaml
-**/config/application-*.local.yml
-**/config/application-*.local.yaml
-application-local.yml
-application-local.yaml
-!**/config/*.example
-!**/config/*.example.yml
-!**/config/*.example.yaml
+**/application-local.yml
+**/application-secret*.yml
+**/application-prod*.yml
+**/application-staging*.yml
 
-# Keys, Certificates & Tokens
+# Environment files
+.env
+.env.*
+*.env
+
+# Key material — signing keys, TLS certs, keystores. The JWK-persistence work
+# may start writing these; ignore them before that happens, not after.
 *.pem
 *.key
-*.pkcs12
 *.p12
 *.pfx
 *.jks
 *.keystore
-*.crt
-*.der
-id_rsa
-id_rsa.pub
-id_ed25519
-id_ed25519.pub
-!**/src/test/resources/**/*.pem
-!**/src/test/resources/**/*.key
+*.truststore
+id_rsa*
+secrets/
+credentials.json
+service-account*.json
 
-### 2. Database Files & Local Stores ###
-*.db
-*.sqlite
-*.sqlite3
-*.h2.db
-*.mv.db
-*.trace.db
-livedb*
-target/livedb*
+# Templates and samples must stay committed — this must be the LAST rule in
+# this section so it wins over the patterns above.
+!**/*.example
+!**/*.sample
+!**/*.template
 
-### 3. Build & Compilation Artifacts ###
+# ─────────────────────────────────────────────────────────────────────────────
+# Build output
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Java / Maven
 target/
-**/target/
-dist/
-**/dist/
-out/
-**/out/
 build/
-**/build/
-.angular/
-**/.angular/
-node_modules/
-**/node_modules/
+!**/src/**/target/
+!**/src/**/build/
+*.class
+*.jar
+*.war
+!**/.mvn/wrapper/maven-wrapper.jar
 .mvn/wrapper/maven-wrapper.jar
+dependency-reduced-pom.xml
 
-### 4. Logs, Dumps & Temporary Files ###
-*.log
-logs/
-**/logs/
+# Node / Angular
+node_modules/
+dist/
+.angular/
 npm-debug.log*
-yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
-*.dump
-*.dumpstream
-hs_err_pid*.log
-replay_pid*.log
-tmp/
-**/tmp/
-.temp/
-**/.temp/
+.pnpm-debug.log*
 
-### 5. IDE & Editor Files ###
+# ─────────────────────────────────────────────────────────────────────────────
+# Editors and OS
+# ─────────────────────────────────────────────────────────────────────────────
+
 .idea/
-**/.idea/
-*.iws
 *.iml
+*.iws
 *.ipr
-.vscode/
-**/.vscode/
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-.settings/
-**/.settings/
 .classpath
-**/.classpath
 .project
-**/.project
+.settings/
 .factorypath
-**/.factorypath
-.apt_generated
+.apt_generated/
 .springBeans
-.sts4-cache
+.sts4-cache/
+*.swp
+*~
 
-### 6. Operating System Files ###
+# Keep shared VS Code project settings, drop personal state.
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
 .DS_Store
-**/.DS_Store
 .DS_Store?
 ._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
+desktop.ini
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Logs and scratch
+# ─────────────────────────────────────────────────────────────────────────────
+
+*.log
+logs/
+tmp/
+.cache/
+*.pid

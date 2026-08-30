@@ -106,8 +106,13 @@ Postgres needs neither profile; run with no `SPRING_PROFILES_ACTIVE` at all.
   CSRF for the admin SPA, which requires taking over the security filter chains explicitly).
 - **Admin REST API** (`/api/admin/**`, session-cookie auth, `ROLE_ADMIN` via `@PreAuthorize`):
   - `GET/POST /api/admin/oauth-clients` — list/register OAuth clients
-  - `GET /api/admin/users`, `PATCH /api/admin/users/{id}` — list users, enable/disable
+  - `GET/POST /api/admin/users`, `PATCH /api/admin/users/{id}` — list, create, enable/disable
+  - `POST /api/admin/users/{id}/unlock` — clear a lockout from failed sign-ins
   - `GET /api/admin/me` — current session's identity, used by the SPA to bootstrap auth state
+- **Login tracking and lockout** — `LoginAttemptListener` stamps `last_login_at` on success and
+  locks an account after `app.security.max-failed-login-attempts` consecutive failures (default 5).
+  A successful sign-in resets the counter. Because it listens to authentication *events* rather
+  than hooking the form-login filter, it covers the OAuth2 flows and remember-me too.
 - **ID tokens / access tokens** carry `email` and `roles` claims (scope-gated per OIDC convention),
   not just `sub` — see `security/JwtClaimsCustomizerConfig.java`.
 
@@ -123,10 +128,19 @@ test (`JwtClaimsCustomizerIntegrationTest`).
 
 ## Known limitations (not yet production-hardened)
 
-- **JWK signing key regenerates on every restart.** Fine for one instance; breaks token
-  verification across a restart or multiple instances. Needs to be generated once and persisted.
-- **No shared session store.** The admin dashboard's login session is in-memory; won't survive
-  running more than one instance without sticky sessions or an external session store (e.g. Spring
-  Session JDBC, given Postgres is already a dependency).
+- **Tests only exercise the non-MySQL migration path.** `007-create-spring-session-tables.yaml`
+  ships two variants of `SPRING_SESSION_ATTRIBUTES` — `BLOB` for MySQL, `BYTEA` for everything
+  else — selected by Liquibase's `dbms` attribute. The suite runs on H2, so it validates the
+  `!mysql` branch while production runs the `mysql` one. Both have been verified by hand against a
+  real MySQL instance, but nothing stops that branch regressing silently. Testcontainers would
+  close this gap.
 - **OAuth clients are PKCE-only public clients.** Confidential clients (client-secret auth) aren't
   supported by the admin API yet — deliberately deferred, not an oversight.
+- **MFA is schema-only.** `mfa_enabled` and `mfa_secret` exist on the user table but nothing reads
+  or writes them — no enrolment, challenge, or recovery codes.
+- **No rate limiting.** Account lockout caps failed attempts per user, but nothing caps request
+  volume per IP, so the login endpoint is still open to distributed guessing.
+- **No audit log.** Client registration, user creation, and enable/disable/unlock leave no trace.
+
+Fixed since the first draft of this list: the JWK signing key is now persisted
+(`security/key/`), and OAuth2 authorizations, consents, and admin sessions all survive a restart.

@@ -44,3 +44,8 @@ app:
     # OAuth client. Must stay off in real deployments; portal-client is the real
     # client-registration path.
     test-data: false
+
+  security:
+    # Consecutive failed sign-ins before an account is locked. The counter resets on any
+    # successful sign-in. Unlock via POST /api/admin/users/{id}/unlock.
+    max-failed-login-attempts: 5

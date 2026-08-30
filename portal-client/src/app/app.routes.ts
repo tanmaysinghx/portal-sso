@@ -1,30 +1,50 @@
 import { Routes } from '@angular/router';
 import { adminGuard } from './core/guards/admin.guard';
-import { Forbidden } from './features/auth/forbidden/forbidden';
-import { Login } from './features/auth/login/login';
-import { Product } from './features/product/product';
-import { ClientCreate } from './features/clients/pages/client-create/client-create';
-import { ClientList } from './features/clients/pages/client-list/client-list';
-import { Dashboard } from './features/dashboard/dashboard';
-import { UserList } from './features/users/pages/user-list/user-list';
-import { Shell } from './layout/shell/shell';
 
+// Every route is lazily loaded. Eagerly importing these put the whole admin console — plus the
+// public product page — into the initial bundle, so an unauthenticated visitor landing on
+// /sign-in downloaded screens they had no access to and might never open. The guard stays a
+// static import: it has to run before any chunk is fetched, and it is tiny.
 export const routes: Routes = [
   // Not "/login" — that path is portal-server's own POST endpoint (proxied straight through
   // in dev, see proxy.conf.json); a client-side route there would never be reachable.
-  { path: 'product', component: Product },
-  { path: 'sign-in', component: Login },
-  { path: 'forbidden', component: Forbidden },
+  {
+    path: 'product',
+    loadComponent: () => import('./features/product/product').then((m) => m.Product),
+  },
+  {
+    path: 'sign-in',
+    loadComponent: () => import('./features/auth/login/login').then((m) => m.Login),
+  },
+  {
+    path: 'forbidden',
+    loadComponent: () => import('./features/auth/forbidden/forbidden').then((m) => m.Forbidden),
+  },
   {
     path: '',
-    component: Shell,
+    loadComponent: () => import('./layout/shell/shell').then((m) => m.Shell),
     canActivate: [adminGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-      { path: 'dashboard', component: Dashboard },
-      { path: 'clients', component: ClientList },
-      { path: 'clients/new', component: ClientCreate },
-      { path: 'users', component: UserList },
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
+      },
+      {
+        path: 'clients',
+        loadComponent: () =>
+          import('./features/clients/pages/client-list/client-list').then((m) => m.ClientList),
+      },
+      {
+        path: 'clients/new',
+        loadComponent: () =>
+          import('./features/clients/pages/client-create/client-create').then((m) => m.ClientCreate),
+      },
+      {
+        path: 'users',
+        loadComponent: () =>
+          import('./features/users/pages/user-list/user-list').then((m) => m.UserList),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

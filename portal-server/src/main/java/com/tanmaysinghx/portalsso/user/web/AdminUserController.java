@@ -100,4 +100,23 @@ public class AdminUserController {
         user.setEnabled(request.enabled());
         return UserResponse.from(userRepository.save(user));
     }
+
+    /**
+     * Clears a lockout applied by {@link com.tanmaysinghx.portalsso.security.LoginAttemptListener}
+     * after too many failed sign-ins. Without this an administrator's only recovery path would be
+     * editing the database by hand, so the lockout feature is not safe to ship without it.
+     *
+     * <p>Resets the counter as well as the flag — leaving it at the threshold would re-lock the
+     * account on the very next mistyped password.
+     */
+    @PostMapping("/{id}/unlock")
+    @Transactional
+    public UserResponse unlock(@PathVariable UUID id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND, "No user found with ID: " + id));
+
+        user.setAccountLocked(false);
+        user.setFailedLoginAttempts(0);
+        return UserResponse.from(userRepository.save(user));
+    }
 }
