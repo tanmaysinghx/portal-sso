@@ -51,7 +51,7 @@ export class Product {
       name: 'User Management',
       badge: 'Directory & RBAC',
       description: 'Manage users, assign admin roles, lock or disable accounts, and audit login activity securely.',
-      imageSrc: 'dashboard-preview.jpg',
+      imageSrc: 'users-preview.jpg',
       imageAlt: 'Portal SSO User Management Interface',
     },
     {

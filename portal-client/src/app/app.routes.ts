@@ -13,8 +13,16 @@ export const routes: Routes = [
     loadComponent: () => import('./features/product/product').then((m) => m.Product),
   },
   {
+    path: 'docs',
+    loadComponent: () => import('./features/docs/docs').then((m) => m.Docs),
+  },
+  {
     path: 'sign-in',
     loadComponent: () => import('./features/auth/login/login').then((m) => m.Login),
+  },
+  {
+    path: 'sign-up',
+    loadComponent: () => import('./features/auth/register/register').then((m) => m.Register),
   },
   {
     path: 'forbidden',
@@ -44,6 +52,11 @@ export const routes: Routes = [
         path: 'users',
         loadComponent: () =>
           import('./features/users/pages/user-list/user-list').then((m) => m.UserList),
+      },
+      {
+        path: 'settings',
+        loadComponent: () =>
+          import('./features/settings/settings').then((m) => m.Settings),
       },
     ],
   },

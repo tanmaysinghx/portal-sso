@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title th:text="'Authorize ' + ${clientName}">Authorize</title>
+  <link rel="icon" type="image/svg+xml" href="/logo.svg">
+  <th:block th:replace="~{_styles :: styles}"></th:block>
+</head>
+<body>
+  <div class="glow"></div>
+
+  <main class="shell">
+    <div class="brandmark">
+      <div class="lockup">
+        <img src="/logo.svg" alt="Portal SSO">
+        <span class="divider"></span>
+        <img th:if="${clientLogoUrl != null}" th:src="${clientLogoUrl}" th:alt="${clientName}">
+        <span th:if="${clientLogoUrl == null}" style="font-weight:600;font-size:.9rem" th:text="${clientName}">App</span>
+      </div>
+      <h1 th:text="${clientName} + ' wants access'">Authorize</h1>
+      <p class="sub">
+        Signed in as <strong style="color:#e4e4e7" th:text="${principalName}">you</strong>
+      </p>
+    </div>
+
+    <form class="card" method="post" th:action="@{/oauth2/authorize}">
+      <p style="margin:0 0 1rem;font-size:.8125rem;color:var(--text-2)">
+        This will let <span th:text="${clientName}">the app</span>:
+      </p>
+
+      <ul class="scopes">
+        <li th:each="s : ${scopes}">
+          <label class="scope">
+            <input type="checkbox" name="scope" th:value="${s.scope}" checked>
+            <span>
+              <span class="name" th:text="${s.description}">Scope</span>
+              <span class="desc" th:text="${s.scope}">scope</span>
+            </span>
+          </label>
+        </li>
+      </ul>
+
+      <!-- The authorization endpoint needs these back verbatim to resume the flow. -->
+      <input type="hidden" name="client_id" th:value="${clientId}">
+      <input type="hidden" name="state" th:value="${state}">
+      <input type="hidden" th:if="${userCode != null}" name="user_code" th:value="${userCode}">
+
+      <button class="primary" type="submit">Allow</button>
+    </form>
+
+    <!-- Denial is a separate form on purpose: the authorization endpoint reads "no scope
+         parameters" as a refusal, so it must not carry the ticked boxes from the Allow form. -->
+    <form method="post" th:action="@{/oauth2/authorize}" style="margin-top:.6rem">
+      <input type="hidden" name="client_id" th:value="${clientId}">
+      <input type="hidden" name="state" th:value="${state}">
+      <input type="hidden" th:if="${userCode != null}" name="user_code" th:value="${userCode}">
+      <button class="secondary" type="submit">Cancel</button>
+    </form>
+
+    <p class="foot">You can revoke this access at any time.</p>
+  </main>
+</body>
+</html>

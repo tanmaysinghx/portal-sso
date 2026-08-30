@@ -1,102 +1,266 @@
 <div class="animate-fade-in-up">
-  <div class="mb-7">
-    <h1 class="text-[22px] font-semibold tracking-tight text-ink-900">Overview</h1>
-    <p class="mt-1 text-sm text-ink-500">Signed in as {{ currentUser()?.email }}</p>
+  <!-- Header: title, range filter and export in one row above the charts. -->
+  <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="text-[22px] font-semibold tracking-tight text-ink-900">Overview</h1>
+      <p class="mt-1 text-sm text-ink-500">Signed in as {{ currentUser()?.email }}</p>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <div class="flex rounded-lg border border-ink-200 bg-white p-0.5 shadow-sm" role="group" aria-label="Time range">
+        @for (option of rangeOptions; track option.value) {
+          <button
+            type="button"
+            (click)="setRange(option.value)"
+            [attr.aria-pressed]="range() === option.value"
+            class="rounded-md px-2.5 py-1.5 text-[12px] font-medium transition-colors"
+            [class]="range() === option.value ? 'bg-ink-900 text-white' : 'text-ink-500 hover:text-ink-900'"
+          >
+            {{ option.label }}
+          </button>
+        }
+      </div>
+
+      <button
+        type="button"
+        (click)="exportCsv()"
+        [disabled]="exporting()"
+        class="inline-flex items-center gap-1.5 rounded-lg border border-ink-200 bg-white px-3 py-2 text-[12px] font-medium text-ink-700 shadow-sm transition-colors hover:border-ink-300 hover:text-ink-900 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+        </svg>
+        {{ exporting() ? 'Preparing…' : 'Export CSV' }}
+      </button>
+    </div>
   </div>
 
   @if (error()) {
-    <div class="mb-6 flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-      <svg class="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-      </svg>
-      <span>{{ error() }}</span>
-    </div>
+    <div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{{ error() }}</div>
   }
 
-  <div class="stagger grid grid-cols-1 gap-4 sm:grid-cols-3">
-    <a
-      routerLink="/clients"
-      class="group rounded-xl border border-ink-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-ink-300 hover:shadow-md"
-    >
-      <div class="flex items-start justify-between">
-        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 text-brand-600 ring-1 ring-inset ring-brand-500/15">
-          <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
-          </svg>
-        </div>
-        <svg class="h-4 w-4 text-ink-300 transition-transform group-hover:translate-x-0.5 group-hover:text-ink-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-        </svg>
+  <!-- KPI row. Headline numbers belong in stat tiles, not one-bar charts. -->
+  <div class="stagger grid grid-cols-2 gap-4 lg:grid-cols-4">
+    @for (tile of [
+      { label: 'Total users', value: stats()?.totals?.totalUsers, hint: 'all time' },
+      { label: 'New users', value: stats()?.totals?.newUsers, hint: 'in range' },
+      { label: 'Sign-ins', value: stats()?.totals?.logins, hint: 'in range' },
+      { label: 'Failed attempts', value: stats()?.totals?.failedLogins, hint: 'in range' }
+    ]; track tile.label) {
+      <div class="rounded-xl border border-ink-200 bg-white p-5 shadow-sm">
+        @if (loading()) {
+          <div class="h-8 w-14 animate-pulse rounded bg-ink-200"></div>
+        } @else {
+          <div class="text-[28px] font-semibold leading-none tracking-tight text-ink-900 tabular-nums">{{ tile.value ?? 0 }}</div>
+        }
+        <div class="mt-2 text-[13px] font-medium text-ink-700">{{ tile.label }}</div>
+        <div class="text-[11px] text-ink-400">{{ tile.hint }}</div>
       </div>
-      @if (loading()) {
-        <div class="mt-4 h-8 w-12 animate-pulse rounded bg-ink-200"></div>
-      } @else {
-        <div class="mt-4 text-[28px] font-semibold leading-none tracking-tight text-ink-900">{{ clientCount() ?? '—' }}</div>
-      }
-      <div class="mt-1.5 text-[13px] text-ink-500">OAuth clients</div>
-    </a>
-
-    <a
-      routerLink="/users"
-      class="group rounded-xl border border-ink-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-ink-300 hover:shadow-md"
-    >
-      <div class="flex items-start justify-between">
-        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-ink-100 text-ink-700 ring-1 ring-inset ring-ink-900/10">
-          <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-          </svg>
-        </div>
-        <svg class="h-4 w-4 text-ink-300 transition-transform group-hover:translate-x-0.5 group-hover:text-ink-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-        </svg>
-      </div>
-      @if (loading()) {
-        <div class="mt-4 h-8 w-12 animate-pulse rounded bg-ink-200"></div>
-      } @else {
-        <div class="mt-4 text-[28px] font-semibold leading-none tracking-tight text-ink-900">{{ userCount() ?? '—' }}</div>
-      }
-      <div class="mt-1.5 text-[13px] text-ink-500">Total users</div>
-    </a>
-
-    <div class="rounded-xl border border-ink-200 bg-white p-5 shadow-sm">
-      <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 ring-1 ring-inset ring-emerald-600/15">
-        <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      </div>
-      @if (loading()) {
-        <div class="mt-4 h-8 w-12 animate-pulse rounded bg-ink-200"></div>
-      } @else {
-        <div class="mt-4 text-[28px] font-semibold leading-none tracking-tight text-ink-900">{{ activeUserCount() ?? '—' }}</div>
-      }
-      <div class="mt-1.5 text-[13px] text-ink-500">Active users</div>
-    </div>
+    }
   </div>
 
-  <!-- The endpoint paths are fixed by Spring Authorization Server's configuration, so these are
-       accurate for any deployment; only the origin changes. -->
-  <div class="mt-6 overflow-hidden rounded-xl border border-ink-200 bg-white shadow-sm">
-    <div class="flex items-center justify-between border-b border-ink-100 px-5 py-4">
+  <div class="stagger mt-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
+    @for (tile of [
+      { label: 'Applications', value: stats()?.totals?.totalClients },
+      { label: 'Unique IPs', value: stats()?.totals?.uniqueIps },
+      { label: 'Countries', value: stats()?.totals?.countries },
+      { label: 'Locked accounts', value: stats()?.totals?.lockedUsers }
+    ]; track tile.label) {
+      <div class="rounded-xl border border-ink-200 bg-white px-5 py-4 shadow-sm">
+        <div class="text-[20px] font-semibold leading-none text-ink-900 tabular-nums">{{ tile.value ?? 0 }}</div>
+        <div class="mt-1.5 text-[12px] text-ink-500">{{ tile.label }}</div>
+      </div>
+    }
+  </div>
+
+  <!-- (a) Users added over time -->
+  <section class="mt-6 rounded-xl border border-ink-200 bg-white shadow-sm">
+    <header class="flex items-baseline justify-between border-b border-ink-100 px-5 py-4">
       <div>
-        <h2 class="text-sm font-semibold text-ink-900">Connect an application</h2>
-        <p class="mt-0.5 text-[13px] text-ink-500">Point your app's OIDC client at these endpoints.</p>
+        <h2 class="text-sm font-semibold text-ink-900">Users added</h2>
+        <p class="mt-0.5 text-[12px] text-ink-500">Accounts created per {{ (stats()?.bucket ?? 'day') | lowercase }}</p>
       </div>
-      <a
-        routerLink="/clients/new"
-        class="shrink-0 rounded-lg bg-ink-900 px-3.5 py-2 text-[13px] font-medium text-white transition-colors hover:bg-ink-800"
-      >
-        Register client
-      </a>
+      <span class="text-[11px] text-ink-400">{{ stats()?.totals?.newUsers ?? 0 }} in range</span>
+    </header>
+    <div class="px-2 py-3">
+      @if (loading()) {
+        <div class="mx-3 h-[260px] animate-pulse rounded-lg bg-ink-100"></div>
+      } @else {
+        <app-chart [option]="signupsOption()" [height]="260" />
+      }
     </div>
-    <dl class="divide-y divide-ink-100">
-      @for (ep of endpoints; track ep.label) {
-        <div class="flex items-center justify-between gap-4 px-5 py-3">
-          <dt class="text-[13px] text-ink-600">{{ ep.label }}</dt>
-          <dd class="min-w-0">
-            <code class="block truncate rounded-md bg-ink-50 px-2 py-1 font-mono text-xs text-ink-700 ring-1 ring-inset ring-ink-200">{{ ep.path }}</code>
-          </dd>
+  </section>
+
+  <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+    <!-- Sign-in volume. Single series: failures are reported in the KPI row and the table below,
+         never as a second colour beside this one. -->
+    <section class="rounded-xl border border-ink-200 bg-white shadow-sm">
+      <header class="flex items-baseline justify-between border-b border-ink-100 px-5 py-4">
+        <h2 class="text-sm font-semibold text-ink-900">Sign-in activity</h2>
+        @if (successRate() !== null) {
+          <span class="text-[11px] text-ink-400">{{ successRate() }}% succeeded</span>
+        }
+      </header>
+      <div class="px-2 py-3">
+        @if (loading()) {
+          <div class="mx-3 h-[240px] animate-pulse rounded-lg bg-ink-100"></div>
+        } @else {
+          <app-chart [option]="loginsOption()" [height]="240" />
+        }
+      </div>
+    </section>
+
+    <!-- (b) Last login recency -->
+    <section class="rounded-xl border border-ink-200 bg-white shadow-sm">
+      <header class="border-b border-ink-100 px-5 py-4">
+        <h2 class="text-sm font-semibold text-ink-900">Last sign-in</h2>
+        <p class="mt-0.5 text-[12px] text-ink-500">How recently each account was used</p>
+      </header>
+      <div class="px-2 py-3">
+        @if (loading()) {
+          <div class="mx-3 h-[240px] animate-pulse rounded-lg bg-ink-100"></div>
+        } @else {
+          <app-chart [option]="lastLoginOption()" [height]="240" />
+        }
+      </div>
+    </section>
+  </div>
+
+  <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+    <!-- (c) Application-wise -->
+    <section class="rounded-xl border border-ink-200 bg-white shadow-sm">
+      <header class="border-b border-ink-100 px-5 py-4">
+        <h2 class="text-sm font-semibold text-ink-900">Sign-ins by application</h2>
+        <p class="mt-0.5 text-[12px] text-ink-500">Which registered clients users arrive through</p>
+      </header>
+      <div class="px-2 py-3">
+        @if (loading()) {
+          <div class="mx-3 h-[240px] animate-pulse rounded-lg bg-ink-100"></div>
+        } @else if ((stats()?.byClient ?? []).length === 0) {
+          <div class="px-5 py-16 text-center text-[13px] text-ink-500">No sign-ins in this range yet.</div>
+        } @else {
+          <app-chart [option]="byClientOption()" [height]="240" />
+        }
+      </div>
+    </section>
+
+    <!-- (d) Geography -->
+    <section class="rounded-xl border border-ink-200 bg-white shadow-sm">
+      <header class="flex items-baseline justify-between border-b border-ink-100 px-5 py-4">
+        <div>
+          <h2 class="text-sm font-semibold text-ink-900">Sign-ins by country</h2>
+          <p class="mt-0.5 text-[12px] text-ink-500">Resolved from the source IP</p>
+        </div>
+        <span class="text-[11px] text-ink-400">{{ stats()?.totals?.countries ?? 0 }} countries</span>
+      </header>
+
+      @if (loading()) {
+        <div class="m-5 h-[240px] animate-pulse rounded-lg bg-ink-100"></div>
+      } @else if (hasMappableCountries() && worldGeoJson()) {
+        <div class="px-2 py-3">
+          <app-chart [option]="mapOption()" [mapName]="'world'" [mapGeoJson]="worldGeoJson()" [height]="240" />
+        </div>
+      } @else {
+        <!-- Explains itself rather than showing an empty map: without a GeoIP database no public
+             address can be placed, and loopback traffic has no country to begin with. -->
+        <div class="flex flex-col items-center px-6 py-12 text-center">
+          <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600 ring-1 ring-inset ring-brand-500/15">
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zm0 0c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3 7.5 7.03 7.5 12s2.015 9 4.5 9zM3.6 9h16.8M3.6 15h16.8" />
+            </svg>
+          </div>
+          <h3 class="mt-4 text-[13px] font-semibold text-ink-900">No mapped countries yet</h3>
+          <p class="mt-1 max-w-xs text-[12px] leading-relaxed text-ink-500">
+            @if (!stats()?.geoDatabaseAvailable) {
+              Set <code class="rounded bg-ink-100 px-1 py-0.5 font-mono text-[11px]">app.geoip.database-path</code>
+              to a MaxMind GeoLite2 database to place sign-ins on the map. Local and private
+              addresses never resolve to a country.
+            } @else {
+              Sign-ins so far came from local or private addresses, which have no country.
+            }
+          </p>
         </div>
       }
-    </dl>
+
+      @if ((stats()?.byCountry ?? []).length > 0) {
+        <ul class="divide-y divide-ink-100 border-t border-ink-100">
+          @for (country of (stats()?.byCountry ?? []).slice(0, 5); track country.name) {
+            <li class="flex items-center justify-between px-5 py-2.5">
+              <span class="text-[13px] text-ink-700">{{ country.name }}</span>
+              <span class="text-[13px] font-medium text-ink-900 tabular-nums">{{ country.logins }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </section>
   </div>
+
+  <!-- (e) IP trace -->
+  <section class="mt-4 overflow-hidden rounded-xl border border-ink-200 bg-white shadow-sm">
+    <header class="border-b border-ink-100 px-5 py-4">
+      <h2 class="text-sm font-semibold text-ink-900">Recent sign-in attempts</h2>
+      <p class="mt-0.5 text-[12px] text-ink-500">Source addresses, newest first</p>
+    </header>
+
+    @if (loading()) {
+      <div class="divide-y divide-ink-100">
+        @for (row of [1, 2, 3]; track row) {
+          <div class="flex items-center gap-4 px-5 py-3.5">
+            <div class="h-4 w-48 animate-pulse rounded bg-ink-200"></div>
+            <div class="ml-auto h-4 w-24 animate-pulse rounded bg-ink-100"></div>
+          </div>
+        }
+      </div>
+    } @else if ((stats()?.recentLogins ?? []).length === 0) {
+      <div class="px-6 py-16 text-center text-[13px] text-ink-500">No sign-in attempts recorded yet.</div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead class="border-b border-ink-200 bg-ink-50/60">
+            <tr class="text-[11px] font-semibold uppercase tracking-wider text-ink-500">
+              <th class="px-5 py-3">Result</th>
+              <th class="px-5 py-3">Account</th>
+              <th class="px-5 py-3">IP address</th>
+              <th class="px-5 py-3">Location</th>
+              <th class="px-5 py-3">Application</th>
+              <th class="px-5 py-3 text-right">When</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-ink-100">
+            @for (login of stats()?.recentLogins ?? []; track login.occurredAt + login.email) {
+              <tr class="transition-colors hover:bg-ink-50/60">
+                <!-- Icon + word, never colour alone: green/red are indistinguishable to many
+                     readers, so the shape and the label carry the meaning. -->
+                <td class="px-5 py-3">
+                  <span class="inline-flex items-center gap-1.5 text-[12px] font-medium"
+                        [class]="login.successful ? 'text-emerald-700' : 'text-red-700'">
+                    @if (login.successful) {
+                      <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                      </svg>
+                      Success
+                    } @else {
+                      <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      Failed
+                    }
+                  </span>
+                </td>
+                <td class="px-5 py-3 text-[13px] text-ink-900">{{ login.email }}</td>
+                <td class="px-5 py-3">
+                  <code class="rounded bg-ink-100 px-1.5 py-0.5 font-mono text-[11px] text-ink-700">{{ login.ipAddress ?? '—' }}</code>
+                </td>
+                <td class="px-5 py-3 text-[13px] text-ink-600">{{ login.countryName ?? 'Unknown' }}</td>
+                <td class="px-5 py-3 text-[13px] text-ink-600">{{ login.clientId ?? 'Admin console' }}</td>
+                <td class="px-5 py-3 text-right text-[12px] text-ink-500 tabular-nums">
+                  {{ login.occurredAt | date: 'MMM d, HH:mm' }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
 </div>

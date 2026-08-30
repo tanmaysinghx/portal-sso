@@ -1,0 +1,98 @@
+databaseChangeLog:
+  - changeSet:
+      id: 008-create-login-events-table
+      author: tanmaysinghx
+      comment: >-
+        Append-only record of every sign-in attempt. Until now the only trace of a login was
+        users.last_login_at, a single timestamp overwritten on each sign-in — enough to answer
+        "when did they last log in" and nothing else. Login history, source IPs, geography and
+        per-application activity all need the individual events kept.
+      changes:
+        - createTable:
+            tableName: login_events
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              # Nullable on purpose: a failed sign-in for an address that was never registered
+              # still needs recording, and there is no user row to point at.
+              - column:
+                  name: user_id
+                  type: VARCHAR(36)
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: successful
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              # 45 chars holds a full IPv6 address, including IPv4-mapped form.
+              - column:
+                  name: ip_address
+                  type: VARCHAR(45)
+              - column:
+                  name: user_agent
+                  type: VARCHAR(512)
+              - column:
+                  name: country_code
+                  type: VARCHAR(2)
+              - column:
+                  name: country_name
+                  type: VARCHAR(100)
+              - column:
+                  name: city
+                  type: VARCHAR(100)
+              # Which registered application the sign-in was for, when it came through an
+              # OAuth2 flow rather than the admin console directly.
+              - column:
+                  name: client_id
+                  type: VARCHAR(100)
+              - column:
+                  name: occurred_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        # Every dashboard query filters or groups on one of these. Without them the stats
+        # endpoints degrade into full scans as the table grows, which it does on every login.
+        - createIndex:
+            indexName: ix_login_events_occurred_at
+            tableName: login_events
+            columns:
+              - column:
+                  name: occurred_at
+        - createIndex:
+            indexName: ix_login_events_email
+            tableName: login_events
+            columns:
+              - column:
+                  name: email
+        - createIndex:
+            indexName: ix_login_events_country_code
+            tableName: login_events
+            columns:
+              - column:
+                  name: country_code
+        - createIndex:
+            indexName: ix_login_events_client_id
+            tableName: login_events
+            columns:
+              - column:
+                  name: client_id

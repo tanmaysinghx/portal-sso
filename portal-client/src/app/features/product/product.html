@@ -219,54 +219,23 @@
           }
 
           @if (activeTab() === 'users') {
-            <div class="rounded-xl border border-zinc-800/80 bg-zinc-900/60 p-6">
-              <div class="flex items-center justify-between border-b border-zinc-800 pb-4 mb-4">
-                <div>
-                  <h3 class="text-base font-semibold text-white">User Directory & Permissions</h3>
-                  <p class="text-xs text-zinc-400">Manage user status, roles, and administrative privileges.</p>
-                </div>
-                <span class="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400 border border-emerald-500/20">
-                  Active Directory
-                </span>
+            <div class="space-y-4">
+              <div class="relative overflow-hidden rounded-xl border border-zinc-800">
+                <img
+                  src="users-preview.jpg"
+                  alt="Portal SSO user directory"
+                  class="w-full h-auto object-cover rounded-lg shadow-inner"
+                />
               </div>
-
-              <!-- Mock Table -->
-              <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
-                  <thead>
-                    <tr class="border-b border-zinc-800 text-zinc-400">
-                      <th class="pb-3 font-semibold">User</th>
-                      <th class="pb-3 font-semibold">Email</th>
-                      <th class="pb-3 font-semibold">Roles</th>
-                      <th class="pb-3 font-semibold">Status</th>
-                      <th class="pb-3 font-semibold text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-zinc-800/60 text-zinc-300">
-                    <tr>
-                      <td class="py-3.5 flex items-center gap-2.5">
-                        <div class="h-7 w-7 rounded-full bg-amber-500/20 text-amber-300 flex items-center justify-center font-bold text-[11px]">TS</div>
-                        <span class="font-medium text-white">Tanmay Singh</span>
-                      </td>
-                      <td class="py-3.5 font-mono text-zinc-400">admin@portalsso.local</td>
-                      <td class="py-3.5"><span class="rounded bg-amber-500/20 px-2 py-0.5 text-[10px] font-semibold text-amber-300">ROLE_ADMIN</span></td>
-                      <td class="py-3.5"><span class="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">ENABLED</span></td>
-                      <td class="py-3.5 text-right"><span class="text-[11px] text-zinc-500">(Your Account)</span></td>
-                    </tr>
-                    <tr>
-                      <td class="py-3.5 flex items-center gap-2.5">
-                        <div class="h-7 w-7 rounded-full bg-zinc-800 text-zinc-300 flex items-center justify-center font-bold text-[11px]">TU</div>
-                        <span class="font-medium text-white">Test User</span>
-                      </td>
-                      <td class="py-3.5 font-mono text-zinc-400">testuser@portalsso.local</td>
-                      <td class="py-3.5"><span class="rounded bg-zinc-800 px-2 py-0.5 text-[10px] font-medium text-zinc-400">ROLE_USER</span></td>
-                      <td class="py-3.5"><span class="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">ENABLED</span></td>
-                      <td class="py-3.5 text-right">
-                        <button class="rounded border border-zinc-700 px-2 py-0.5 text-[10px] font-medium text-zinc-300 hover:border-zinc-500">Disable</button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+              <div class="rounded-xl border border-zinc-800/80 bg-zinc-900/60 p-4">
+                <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                  <span class="h-2 w-2 rounded-full bg-amber-400"></span>
+                  User Directory &amp; Access Control
+                </h4>
+                <p class="mt-1 text-xs text-zinc-400">
+                  Create accounts, assign roles, enable or disable access, and clear lockouts left by
+                  failed sign-in attempts. Administrators cannot disable their own account.
+                </p>
               </div>
             </div>
           }

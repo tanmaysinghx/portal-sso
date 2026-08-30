@@ -1,5 +1,6 @@
 package com.tanmaysinghx.portalsso.security;
 
+import com.tanmaysinghx.portalsso.analytics.service.LoginEventRecorder;
 import com.tanmaysinghx.portalsso.user.entity.User;
 import com.tanmaysinghx.portalsso.user.repository.UserRepository;
 import java.time.Instant;
@@ -33,12 +34,15 @@ public class LoginAttemptListener {
     private static final Logger log = LoggerFactory.getLogger(LoginAttemptListener.class);
 
     private final UserRepository userRepository;
+    private final LoginEventRecorder loginEventRecorder;
     private final int maxFailedAttempts;
 
     public LoginAttemptListener(
             UserRepository userRepository,
+            LoginEventRecorder loginEventRecorder,
             @Value("${app.security.max-failed-login-attempts:5}") int maxFailedAttempts) {
         this.userRepository = userRepository;
+        this.loginEventRecorder = loginEventRecorder;
         this.maxFailedAttempts = maxFailedAttempts;
     }
 
@@ -46,7 +50,8 @@ public class LoginAttemptListener {
     @Transactional
     public void onSuccess(AuthenticationSuccessEvent event) {
         String username = event.getAuthentication().getName();
-        userRepository.findByEmail(username).ifPresent(user -> {
+        userRepository.findByEmail(username).ifPresentOrElse(user -> {
+            loginEventRecorder.record(username, true, user.getId().toString());
             user.setLastLoginAt(Instant.now());
             // A successful sign-in clears the streak, so occasional typos never accumulate into a
             // lockout over days.
@@ -54,7 +59,10 @@ public class LoginAttemptListener {
                 user.setFailedLoginAttempts(0);
             }
             userRepository.save(user);
-        });
+        },
+        // A successful authentication with no matching row still belongs in the log — for example
+        // an OAuth2 client authenticating rather than a person.
+        () -> loginEventRecorder.record(username, true, null));
     }
 
     /**
@@ -69,9 +77,10 @@ public class LoginAttemptListener {
             return;
         }
 
-        // Unknown usernames are deliberately ignored: there is no row to count against, and
-        // creating one would hand an attacker a way to probe which addresses exist.
-        userRepository.findByEmail(username).ifPresent(user -> {
+        // The attempt is always recorded, even for an address with no account — those are exactly
+        // the attempts worth seeing in the dashboard. Only the per-user counter needs a row.
+        userRepository.findByEmail(username).ifPresentOrElse(user -> {
+            loginEventRecorder.record(username, false, user.getId().toString());
             if (user.isAccountLocked()) {
                 return;
             }
@@ -85,6 +94,7 @@ public class LoginAttemptListener {
             }
 
             userRepository.save(user);
-        });
+        },
+        () -> loginEventRecorder.record(username, false, null));
     }
 }

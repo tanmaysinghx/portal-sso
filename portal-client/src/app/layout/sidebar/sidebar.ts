@@ -1,0 +1,26 @@
+import { Component, computed, inject } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
+import { BrandingService } from '../../core/services/branding.service';
+
+@Component({
+  selector: 'app-sidebar',
+  standalone: true,
+  imports: [RouterLink, RouterLinkActive],
+  templateUrl: './sidebar.html',
+  host: {
+    class: 'block',
+  },
+})
+export class Sidebar {
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+  readonly brandingService = inject(BrandingService);
+
+  readonly currentUser = this.authService.currentUser;
+  readonly initial = computed(() => (this.currentUser()?.email ?? '?').charAt(0).toUpperCase());
+
+  logout(): void {
+    this.authService.logout().subscribe(() => this.router.navigateByUrl('/sign-in'));
+  }
+}

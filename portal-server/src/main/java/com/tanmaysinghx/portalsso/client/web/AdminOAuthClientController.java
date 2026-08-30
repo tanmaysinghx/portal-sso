@@ -77,7 +77,7 @@ public class AdminOAuthClientController {
                 .scopes(scopes -> scopes.addAll(request.scopes()))
                 .clientSettings(ClientSettings.builder()
                         .requireProofKey(true)
-                        .requireAuthorizationConsent(false)
+                        .requireAuthorizationConsent(Boolean.TRUE.equals(request.requireConsent()))
                         .build())
                 .tokenSettings(TokenSettings.builder()
                         .accessTokenTimeToLive(Duration.ofMinutes(15))
@@ -90,6 +90,13 @@ public class AdminOAuthClientController {
 
         OAuthClient saved = oAuthClientRepository.findByClientId(request.clientId())
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.CLIENT_NOT_FOUND, "OAuth client not found after saving: " + request.clientId()));
+
+        // logoUrl has no representation on RegisteredClient, so it is written straight to the
+        // entity after the registration round-trip rather than through the client settings JSON.
+        if (request.logoUrl() != null && !request.logoUrl().isBlank()) {
+            saved.setLogoUrl(request.logoUrl().trim());
+            saved = oAuthClientRepository.save(saved);
+        }
         return OAuthClientResponse.from(saved);
     }
 
@@ -111,8 +118,26 @@ public class AdminOAuthClientController {
         client.setRedirectUris(String.join(",", request.redirectUris()));
         client.setScopes(String.join(",", request.scopes()));
         client.setEnabled(request.enabled());
+        client.setLogoUrl(request.logoUrl() == null || request.logoUrl().isBlank() ? null : request.logoUrl().trim());
+        client.setClientSettings(withConsent(client.getClientSettings(), Boolean.TRUE.equals(request.requireConsent())));
 
         return OAuthClientResponse.from(oAuthClientRepository.save(client));
+    }
+
+    /**
+     * Flips {@code require-authorization-consent} inside the stored settings JSON, leaving every
+     * other setting untouched. Rebuilding the record through {@code RegisteredClientRepository}
+     * would be the tidier-looking option but resets columns that type does not model — {@code
+     * enabled} and {@code logoUrl} among them.
+     */
+    private static String withConsent(String settingsJson, boolean requireConsent) {
+        String key = "\"settings.client.require-authorization-consent\":";
+        if (settingsJson == null || !settingsJson.contains(key)) {
+            return settingsJson;
+        }
+        return settingsJson
+                .replace(key + "true", key + requireConsent)
+                .replace(key + "false", key + requireConsent);
     }
 
     /**

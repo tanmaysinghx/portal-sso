@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { BrandingService } from '../../../core/services/branding.service';
+import { RegistrationService } from '../../../core/services/registration.service';
 
 @Component({
   selector: 'app-login',
@@ -12,7 +13,11 @@ import { BrandingService } from '../../../core/services/branding.service';
 export class Login {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly registrationService = inject(RegistrationService);
   readonly brandingService = inject(BrandingService);
+
+  /** Drives the "Create one" link — self-registration is off unless the server says otherwise. */
+  readonly registrationPolicy = this.registrationService.policy;
 
   readonly email = signal('');
   readonly password = signal('');
@@ -30,6 +35,10 @@ export class Login {
         this.router.navigateByUrl('/dashboard');
       }
     });
+
+    // Asked rather than assumed: registration is off by default, so linking to /sign-up
+    // unconditionally would send most users to a page that immediately bounces them back.
+    this.registrationService.loadPolicy().subscribe();
   }
 
   submit(): void {

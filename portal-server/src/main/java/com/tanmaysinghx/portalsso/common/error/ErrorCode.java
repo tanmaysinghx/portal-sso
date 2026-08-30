@@ -25,6 +25,7 @@ public enum ErrorCode {
     SELF_DISABLE_PROHIBITED("PRTL-2002", "You cannot disable your own account.", HttpStatus.BAD_REQUEST),
     USER_ALREADY_EXISTS("PRTL-2003", "A user with the specified email already exists.", HttpStatus.CONFLICT),
     INVALID_USER_DATA("PRTL-2004", "Provided user data is invalid.", HttpStatus.BAD_REQUEST),
+    REGISTRATION_DISABLED("PRTL-2005", "Self-registration is not enabled on this server.", HttpStatus.FORBIDDEN),
 
     // =========================================================================
     // 3000 Series: OAuth2 Client Management
@@ -42,6 +43,7 @@ public enum ErrorCode {
     RESOURCE_NOT_FOUND("PRTL-4004", "The requested resource was not found.", HttpStatus.NOT_FOUND),
     METHOD_NOT_ALLOWED("PRTL-4005", "HTTP method is not supported for this endpoint.", HttpStatus.METHOD_NOT_ALLOWED),
     RESOURCE_CONFLICT("PRTL-4009", "A conflict occurred with existing resource state.", HttpStatus.CONFLICT),
+    RATE_LIMIT_EXCEEDED("PRTL-4029", "Too many requests from this address.", HttpStatus.TOO_MANY_REQUESTS),
     UNSUPPORTED_MEDIA_TYPE("PRTL-4015", "Content-Type is not supported.", HttpStatus.UNSUPPORTED_MEDIA_TYPE),
 
     // =========================================================================

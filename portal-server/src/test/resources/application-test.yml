@@ -8,3 +8,10 @@ spring:
 app:
   seed:
     test-data: true
+
+  rate-limit:
+    # Off for the suite so shared-IP MockMvc tests stay deterministic — every request originates
+    # from 127.0.0.1, so one test's sign-ins would otherwise eat another's allowance and fail it
+    # for reasons unrelated to what it asserts.
+    # RateLimitIntegrationTest switches it back on with tiny limits to exercise the real behaviour.
+    enabled: false

@@ -45,6 +45,13 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webmvc</artifactId>
 		</dependency>
+		<!-- Server-rendered sign-in and consent screens. These are the pages END USERS see during
+		     the OAuth2 flow, so they cannot live in the Angular console — the browser is mid-redirect
+		     between the relying app and this server when they render. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.session</groupId>
 			<artifactId>spring-session-jdbc</artifactId>
@@ -59,6 +66,15 @@
 			<groupId>com.mysql</groupId>
 			<artifactId>mysql-connector-j</artifactId>
 			<scope>runtime</scope>
+		</dependency>
+		<!-- Reads a GeoLite2/GeoIP2 .mmdb to turn a login IP into a country. The library is small;
+		     the database file is supplied by the operator (app.geoip.database-path) and is NOT
+		     bundled, since MaxMind's licence requires you to obtain it yourself. Everything
+		     degrades to "Unknown" when no file is configured. -->
+		<dependency>
+			<groupId>com.maxmind.geoip2</groupId>
+			<artifactId>geoip2</artifactId>
+			<version>4.2.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.bouncycastle</groupId>

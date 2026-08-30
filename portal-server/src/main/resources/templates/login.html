@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title th:text="${clientName} != null ? 'Sign in to ' + ${clientName} : 'Sign in · Portal SSO'">Sign in</title>
+  <link rel="icon" type="image/svg+xml" href="/logo.svg">
+  <th:block th:replace="~{_styles :: styles}"></th:block>
+</head>
+<body>
+  <div class="glow"></div>
+
+  <main class="shell">
+    <div class="brandmark">
+      <!-- Co-branded lockup when the sign-in belongs to a specific application, so the user can see
+           what they are signing in to. Falls back to the plain mark for a direct console visit. -->
+      <div th:if="${clientLogoUrl != null}" class="lockup">
+        <img src="/logo.svg" alt="Portal SSO">
+        <span class="divider"></span>
+        <img th:src="${clientLogoUrl}" th:alt="${clientName}">
+      </div>
+      <img th:if="${clientLogoUrl == null}" class="logo" src="/logo.svg" alt="Portal SSO">
+
+      <h1 th:text="${clientName} != null ? 'Sign in to ' + ${clientName} : 'Welcome back'">Welcome back</h1>
+      <p class="sub" th:text="${clientName} != null ? 'Continue with your Portal SSO account' : 'Sign in to continue'">
+        Sign in to continue
+      </p>
+    </div>
+
+    <form class="card" method="post" th:action="@{/login}">
+      <div th:if="${error}" class="alert error" role="alert">
+        <span>That email and password combination isn't right. If you've tried several times, the account may be locked — an administrator can unlock it.</span>
+      </div>
+      <div th:if="${loggedOut}" class="alert ok" role="status">
+        <span>You have been signed out.</span>
+      </div>
+
+      <div class="field">
+        <label for="username">Email address</label>
+        <input id="username" name="username" type="email" autocomplete="username"
+               required autofocus placeholder="you@company.com">
+      </div>
+
+      <div class="field" style="margin-bottom:1.5rem">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password"
+               required placeholder="••••••••••">
+      </div>
+
+      <button class="primary" type="submit">Sign in</button>
+    </form>
+
+    <p class="foot">Secured by Portal SSO</p>
+  </main>
+</body>
+</html>

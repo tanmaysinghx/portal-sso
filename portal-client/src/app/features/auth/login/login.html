@@ -97,6 +97,12 @@
     </form>
 
     <div class="mt-6 flex flex-col items-center gap-2">
+      @if (registrationPolicy().enabled) {
+        <p class="text-xs text-ink-500">
+          Don't have an account?
+          <a routerLink="/sign-up" class="font-medium text-brand-400 transition hover:text-brand-300">Create one</a>
+        </p>
+      }
       <a
         routerLink="/product"
         class="inline-flex items-center gap-1.5 text-xs font-medium text-amber-400/90 transition hover:text-amber-300"

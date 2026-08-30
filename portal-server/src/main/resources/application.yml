@@ -49,3 +49,28 @@ app:
     # Consecutive failed sign-ins before an account is locked. The counter resets on any
     # successful sign-in. Unlock via POST /api/admin/users/{id}/unlock.
     max-failed-login-attempts: 5
+
+  rate-limit:
+    # Per-IP request limits. Complements the per-account lockout, which caps guesses against a
+    # single account but not overall volume — spreading attempts across many usernames, or
+    # hammering the public registration endpoint, never trips it.
+    # capacity = burst allowed back-to-back; per-minute = sustained refill rate.
+    enabled: true
+    max-keys: 50000
+    rules:
+      "[/login]": { capacity: 10, per-minute: 20 }
+      "[/api/public/register]": { capacity: 5, per-minute: 5 }
+      "[/api/public/]": { capacity: 30, per-minute: 60 }
+      "[/oauth2/token]": { capacity: 30, per-minute: 120 }
+
+  registration:
+    # Public self-registration, off by default. A Portal SSO account is global — it grants access
+    # to every application behind this server — so opening it is an explicit decision, not a
+    # default. Relying apps link users to this server's /sign-up page; they never create accounts
+    # themselves.
+    enabled: false
+    # New accounts are created disabled until an administrator enables them. Worth turning on
+    # while email verification does not exist, since nothing yet proves a registrant owns the
+    # address they typed.
+    require-admin-approval: false
+    default-role: ROLE_USER

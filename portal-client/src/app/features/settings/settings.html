@@ -1,0 +1,349 @@
+<div class="animate-fade-in-up">
+  <!-- Page Header -->
+  <div class="mb-7">
+    <h1 class="text-[22px] font-semibold tracking-tight text-ink-900">Settings & Configuration</h1>
+    <p class="mt-1 text-sm text-ink-500">Manage organization branding, security policies, token lifecycles, and discovery endpoints.</p>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="flex items-center gap-2 border-b border-ink-200 pb-3 mb-7 overflow-x-auto">
+    <button
+      type="button"
+      (click)="activeTab.set('branding')"
+      class="flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-all shrink-0"
+      [class]="activeTab() === 'branding' ? 'bg-ink-900 text-white shadow-sm' : 'text-ink-500 hover:text-ink-900 hover:bg-ink-100'"
+    >
+      <svg class="h-4 w-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
+      </svg>
+      <span>Organization Branding</span>
+    </button>
+
+    <button
+      type="button"
+      (click)="activeTab.set('security')"
+      class="flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-all shrink-0"
+      [class]="activeTab() === 'security' ? 'bg-ink-900 text-white shadow-sm' : 'text-ink-500 hover:text-ink-900 hover:bg-ink-100'"
+    >
+      <svg class="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+      </svg>
+      <span>Security & Token Policies</span>
+    </button>
+
+    <button
+      type="button"
+      (click)="activeTab.set('endpoints')"
+      class="flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-all shrink-0"
+      [class]="activeTab() === 'endpoints' ? 'bg-ink-900 text-white shadow-sm' : 'text-ink-500 hover:text-ink-900 hover:bg-ink-100'"
+    >
+      <svg class="h-4 w-4 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+      </svg>
+      <span>OIDC Endpoints</span>
+    </button>
+
+    <button
+      type="button"
+      (click)="activeTab.set('system')"
+      class="flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-all shrink-0"
+      [class]="activeTab() === 'system' ? 'bg-ink-900 text-white shadow-sm' : 'text-ink-500 hover:text-ink-900 hover:bg-ink-100'"
+    >
+      <svg class="h-4 w-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+      </svg>
+      <span>System & Diagnostics</span>
+    </button>
+  </div>
+
+  <!-- TAB 1: Organization & Custom Branding -->
+  @if (activeTab() === 'branding') {
+    <div class="space-y-6">
+      <!-- Live Preview Card -->
+      <div class="overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-sm">
+        <div class="border-b border-ink-100 bg-ink-50/50 px-6 py-4">
+          <h2 class="text-sm font-semibold text-ink-900">Header & Lockup Preview</h2>
+          <p class="text-xs text-ink-500">Live demonstration of how your company logo and name appear across the sidebar and login cards.</p>
+        </div>
+
+        <div class="p-6">
+          <div class="rounded-xl border border-ink-800 bg-ink-950 p-5 text-white shadow-inner">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                @if (companyLogoUrlInput()) {
+                  <!-- Paired Micro-Badge Lockup -->
+                  <div class="flex items-center gap-2 rounded-xl bg-ink-900/90 p-1.5 ring-1 ring-ink-800 shrink-0">
+                    <img src="logo-mark.svg" alt="Portal SSO" class="h-6 w-6 shrink-0" />
+                    <div class="h-4 w-px bg-ink-700"></div>
+                    <img
+                      [src]="companyLogoUrlInput()"
+                      alt="Company Logo"
+                      class="h-6 max-w-[48px] object-contain rounded shrink-0"
+                    />
+                  </div>
+                  <div>
+                    <div class="text-sm font-semibold tracking-tight text-white">{{ companyNameInput() || 'Your Organization' }}</div>
+                    <div class="text-[10px] font-medium tracking-wide text-amber-400 uppercase">Single Sign-On</div>
+                  </div>
+                } @else {
+                  <div class="flex items-center gap-2.5">
+                    <img src="logo-mark.svg" alt="Portal SSO" class="h-8 w-8" />
+                    <div class="flex flex-col leading-none">
+                      <span class="text-sm font-semibold tracking-tight text-white">Portal SSO</span>
+                      <span class="mt-0.5 text-[10px] font-medium uppercase tracking-widest text-ink-500">Identity</span>
+                    </div>
+                  </div>
+                  <span class="ml-auto text-xs text-ink-500 italic">Default Portal SSO branding</span>
+                }
+              </div>
+
+              <div class="flex items-center gap-2">
+                <span class="rounded bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+                  Live Sync Active
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Branding Edit Form -->
+      <div class="overflow-hidden rounded-2xl border border-ink-200 bg-white p-6 shadow-sm space-y-5">
+        <div>
+          <h2 class="text-sm font-semibold text-ink-900">Custom Organization Details</h2>
+          <p class="text-xs text-ink-500">Specify your company name and upload your logo asset.</p>
+        </div>
+
+        @if (uploadError()) {
+          <div class="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+            <svg class="h-4 w-4 shrink-0 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+            <span>{{ uploadError() }}</span>
+          </div>
+        }
+
+        <div class="space-y-4 max-w-xl">
+          <div>
+            <label for="settings-company-name" class="mb-1 block text-xs font-medium text-ink-700">Organization / Company Name</label>
+            <input
+              id="settings-company-name"
+              type="text"
+              [ngModel]="companyNameInput()"
+              (ngModelChange)="companyNameInput.set($event)"
+              placeholder="e.g. Acme Corp / TS Group"
+              class="block w-full rounded-lg border border-ink-300 px-3.5 py-2 text-sm text-ink-900 shadow-sm placeholder:text-ink-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+            />
+            <p class="mt-1 text-[11px] text-ink-500">Updates browser title to "[Company] | Portal SSO" and headers.</p>
+          </div>
+
+          <div>
+            <label class="mb-1 block text-xs font-medium text-ink-700">Upload Company Logo</label>
+            <div class="flex items-center gap-3">
+              <label class="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-ink-300 bg-ink-50 px-4 py-2.5 text-xs font-medium text-ink-700 hover:bg-ink-100 transition shadow-sm">
+                <svg class="h-4 w-4 text-ink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                </svg>
+                <span>Choose Image File</span>
+                <input
+                  type="file"
+                  accept="image/png, image/jpeg, image/svg+xml, image/webp"
+                  (change)="onFileSelected($event)"
+                  class="hidden"
+                />
+              </label>
+
+              @if (companyLogoUrlInput()) {
+                <button
+                  type="button"
+                  (click)="companyLogoUrlInput.set('')"
+                  class="text-xs text-red-600 hover:text-red-700 font-medium"
+                >
+                  Remove Logo
+                </button>
+              }
+            </div>
+            <p class="mt-1.5 text-[11px] text-ink-500">Supported formats: Transparent PNG, SVG, JPG, WebP (max 2MB). Automatically updates the browser tab favicon.</p>
+          </div>
+
+          <div>
+            <label for="settings-logo-url" class="mb-1 block text-xs font-medium text-ink-700">Or Image URL</label>
+            <input
+              id="settings-logo-url"
+              type="url"
+              [ngModel]="companyLogoUrlInput()"
+              (ngModelChange)="companyLogoUrlInput.set($event)"
+              placeholder="https://example.com/logo.svg"
+              class="block w-full rounded-lg border border-ink-300 px-3.5 py-2 text-sm text-ink-900 shadow-sm placeholder:text-ink-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+            />
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between border-t border-ink-100 pt-5 mt-6">
+          <button
+            type="button"
+            (click)="resetBranding()"
+            class="text-xs font-medium text-ink-500 hover:text-red-600 transition"
+          >
+            Reset to Default Branding
+          </button>
+
+          <button
+            type="button"
+            (click)="saveBranding()"
+            class="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2.5 text-xs font-semibold text-white shadow-md shadow-brand-600/20 hover:bg-brand-700 transition"
+          >
+            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+            <span>Save Branding</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- TAB 2: Security & Token Policies -->
+  @if (activeTab() === 'security') {
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+      <div class="rounded-2xl border border-ink-200 bg-white p-6 shadow-sm space-y-4">
+        <div class="flex items-center gap-3">
+          <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600 ring-1 ring-inset ring-amber-500/20">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-sm font-semibold text-ink-900">Token Lifecycles</h2>
+            <p class="text-xs text-ink-500">Configured time-to-live settings for JWT tokens</p>
+          </div>
+        </div>
+
+        <div class="space-y-3 pt-2 text-xs divide-y divide-ink-100">
+          <div class="flex justify-between py-2">
+            <span class="text-ink-600 font-medium">Access Token TTL</span>
+            <span class="font-semibold text-ink-900">15 minutes (900s)</span>
+          </div>
+          <div class="flex justify-between py-2">
+            <span class="text-ink-600 font-medium">Refresh Token TTL</span>
+            <span class="font-semibold text-ink-900">30 days</span>
+          </div>
+          <div class="flex justify-between py-2">
+            <span class="text-ink-600 font-medium">Refresh Token Reuse</span>
+            <span class="rounded bg-emerald-50 text-emerald-700 font-semibold px-2 py-0.5 ring-1 ring-emerald-600/20">Disabled (One-Time Rotation)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-ink-200 bg-white p-6 shadow-sm space-y-4">
+        <div class="flex items-center gap-3">
+          <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-inset ring-emerald-500/20">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-sm font-semibold text-ink-900">Cryptographic Signing Keys</h2>
+            <p class="text-xs text-ink-500">Persistent RSA 2048-bit keystore status</p>
+          </div>
+        </div>
+
+        <div class="space-y-3 pt-2 text-xs divide-y divide-ink-100">
+          <div class="flex justify-between py-2">
+            <span class="text-ink-600 font-medium">Algorithm</span>
+            <span class="font-semibold font-mono text-ink-900">RS256 (2048-bit RSA)</span>
+          </div>
+          <div class="flex justify-between py-2">
+            <span class="text-ink-600 font-medium">Key Persistence</span>
+            <span class="rounded bg-emerald-50 text-emerald-700 font-semibold px-2 py-0.5 ring-1 ring-emerald-600/20">Database Stored (JPA / Liquibase)</span>
+          </div>
+          <div class="flex justify-between py-2">
+            <span class="text-ink-600 font-medium">Zero-Downtime Rotation</span>
+            <span class="font-semibold text-ink-900">Supported (Multi-key JWKS)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- TAB 3: OIDC Endpoints -->
+  @if (activeTab() === 'endpoints') {
+    <div class="overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-sm">
+      <div class="border-b border-ink-100 bg-ink-50/50 px-6 py-4 flex items-center justify-between">
+        <div>
+          <h2 class="text-sm font-semibold text-ink-900">RFC Protocol Endpoints</h2>
+          <p class="text-xs text-ink-500">Use these standard endpoints to connect your applications.</p>
+        </div>
+      </div>
+
+      <div class="divide-y divide-ink-100">
+        @for (ep of endpoints; track ep.path) {
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 hover:bg-ink-50/50 transition">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="rounded px-2 py-0.5 font-mono text-[10px] font-bold" [class]="ep.method === 'GET' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'">{{ ep.method }}</span>
+                <h3 class="text-xs font-semibold text-ink-900">{{ ep.name }}</h3>
+              </div>
+              <p class="mt-1 text-[11px] text-ink-500">{{ ep.description }}</p>
+              <code class="mt-1 block font-mono text-xs text-brand-700">{{ ep.path }}</code>
+            </div>
+
+            <button
+              type="button"
+              (click)="copyToClipboard(ep.path, ep.path)"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-ink-200 bg-white px-3 py-1.5 text-xs font-medium text-ink-700 shadow-sm hover:bg-ink-50 hover:border-ink-300 transition shrink-0"
+            >
+              @if (copiedPath() === ep.path) {
+                <svg class="h-3.5 w-3.5 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+                <span class="text-emerald-700 font-semibold">Copied URL</span>
+              } @else {
+                <svg class="h-3.5 w-3.5 text-ink-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
+                </svg>
+                <span>Copy Full URL</span>
+              }
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- TAB 4: System & Diagnostics -->
+  @if (activeTab() === 'system') {
+    <div class="overflow-hidden rounded-2xl border border-ink-200 bg-white p-6 shadow-sm space-y-6">
+      <div>
+        <h2 class="text-sm font-semibold text-ink-900">System Environment & Runtime Diagnostics</h2>
+        <p class="text-xs text-ink-500">Platform versions and persistence stack summary</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="rounded-xl border border-ink-200 bg-ink-50/50 p-4">
+          <span class="text-[10px] uppercase font-bold tracking-wider text-ink-500">Backend Engine</span>
+          <p class="mt-1 text-sm font-semibold text-ink-900">Spring Boot 4.1.1</p>
+          <span class="text-[11px] text-emerald-600 font-medium">Java 25 Runtime</span>
+        </div>
+
+        <div class="rounded-xl border border-ink-200 bg-ink-50/50 p-4">
+          <span class="text-[10px] uppercase font-bold tracking-wider text-ink-500">Frontend Client</span>
+          <p class="mt-1 text-sm font-semibold text-ink-900">Angular 21 SPA</p>
+          <span class="text-[11px] text-zinc-500">Embedded in JAR</span>
+        </div>
+
+        <div class="rounded-xl border border-ink-200 bg-ink-50/50 p-4">
+          <span class="text-[10px] uppercase font-bold tracking-wider text-ink-500">Session Persistence</span>
+          <p class="mt-1 text-sm font-semibold text-ink-900">Spring Session JDBC</p>
+          <span class="text-[11px] text-emerald-600 font-medium">Clustered High Availability</span>
+        </div>
+
+        <div class="rounded-xl border border-ink-200 bg-ink-50/50 p-4">
+          <span class="text-[10px] uppercase font-bold tracking-wider text-ink-500">Schema Management</span>
+          <p class="mt-1 text-sm font-semibold text-ink-900">Liquibase Migrations</p>
+          <span class="text-[11px] text-emerald-600 font-medium">Postgres / MySQL / H2</span>
+        </div>
+      </div>
+    </div>
+  }
+</div>

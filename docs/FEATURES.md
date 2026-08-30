@@ -20,8 +20,9 @@ Comprehensive status of implemented, in-progress, and planned features for the P
 | **PKCE OAuth Client Registry** | Admin Console | ✅ **Completed** | Create & list public OAuth2 clients (`/api/admin/oauth-clients`) |
 | **User Status Management** | Admin Console | ✅ **Completed** | Enable/disable user accounts with self-disable protection |
 | **User Creation & Role Assignment** | Admin Console | ✅ **Completed** | `POST /api/admin/users` + Create User modal (`ROLE_ADMIN`, `ROLE_USER`) |
-| **Custom Company Logo & Branding** | UI / Branding | ✅ **Completed** | Side-by-side logo pairing (`[Portal SSO] ✕ [Company Logo]`) with live preview modal |
-| **Shared Notification Snackbar** | Shared UI | ✅ **Completed** | Application-wide toast notifications with diagnostic error codes |
+| **Custom Company Logo & Branding** | UI / Branding | ✅ **Completed** | Micro-badge pairing (`[Portal SSO] | [Company Logo]`), dynamic tab favicon & title |
+| **Dedicated Settings Screen (`/settings`)** | Admin Console | ✅ **Completed** | Tabbed dashboard for Branding, Security Policies, OIDC Endpoints & Diagnostics |
+| **Shared High-Contrast Snackbar** | Shared UI | ✅ **Completed** | Dark theme toasts with glow accents & animated auto-dismiss countdowns |
 | **Product Showcase Screen (`/product`)** | UI / Marketing | ✅ **Completed** | Interactive screenshots, mockups, architecture, and specs |
 | **OAuth Client Edit & Deletion** | Admin Console | ⏳ **Planned** | Edit redirect URIs, scopes, or remove clients |
 | **Confidential Clients (`client_secret`)** | Core Auth | ⏳ **Planned** | Hashed client secrets for backend-to-backend relying parties |
@@ -34,6 +35,7 @@ Comprehensive status of implemented, in-progress, and planned features for the P
 
 ## 📈 Release Log
 
-* **v0.1.2-alpha** — Added Custom Company Logo & Organization Branding modal with side-by-side logo rendering on Sidebar and Login screens.
-* **v0.1.1-alpha** — Added User Creation & Role Assignment API + Interactive Admin Modal dialog (`POST /api/admin/users`) and Shared Notification Snackbar.
+* **v0.1.3-alpha** — Added dedicated Settings & Configuration dashboard (`/settings`) with 4 categories (Organization Branding, Security & Token Lifecycles, OIDC Endpoints with 1-click copy, and System Runtime Diagnostics).
+* **v0.1.2-alpha** — Added Custom Company Logo & Organization Branding with dynamic favicon, browser title, and refined paired micro-badge lockup.
+* **v0.1.1-alpha** — Added User Creation & Role Assignment API + Interactive Admin Modal dialog (`POST /api/admin/users`) and High-Contrast Notification Snackbar.
 * **v0.1.0-alpha** — Core OAuth2.1 & OIDC Server with PKCE, Persistent RSA Keystore, Spring Session JDBC, Embedded Angular 21 Console, and Product Showcase Screen.

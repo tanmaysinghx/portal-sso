@@ -62,7 +62,11 @@ public class SecurityConfig {
 
         http.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher());
         http.apply(authorizationServerConfigurer);
-        authorizationServerConfigurer.oidc(Customizer.withDefaults());
+        authorizationServerConfigurer
+                .oidc(Customizer.withDefaults())
+                // Only reached for clients registered with requireAuthorizationConsent(true);
+                // clients without it still skip straight through, as before.
+                .authorizationEndpoint(endpoint -> endpoint.consentPage("/oauth2/consent"));
 
         http.authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
                 .exceptionHandling(exceptions -> exceptions.defaultAuthenticationEntryPointFor(
@@ -81,21 +85,31 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
                 .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
-                // formLogin's default entry point always redirects to /login, which is wrong for
-                // the admin dashboard's fetch()/XHR calls under /api/** — they need a plain 401
-                // they can branch on, not a redirect silently followed to an HTML page. Adding
-                // this as a scoped default (the same mechanism formLogin() itself registers its
-                // own entry point through) rather than replacing the entry point outright:
-                // .authenticationEntryPoint(single) makes FormLoginConfigurer think the entry
-                // point is fully customized and it silently stops generating the /login page
-                // (DefaultLoginPageGeneratingFilter drops out of the chain), 404-ing /login into
-                // a redirect loop for real browser users of the OAuth2 login flow.
+                // formLogin's entry point always redirects to /login, which is wrong for the admin
+                // console's fetch()/XHR calls under /api/** — they need a plain 401 they can branch
+                // on, not a redirect silently followed to an HTML page. This is registered as a
+                // scoped default, the same mechanism formLogin() uses for its own entry point,
+                // rather than replacing the entry point outright: a blanket
+                // .authenticationEntryPoint(single) makes FormLoginConfigurer treat the entry point
+                // as fully customised, and the /login page stops being served at all.
                 .exceptionHandling(exceptions -> exceptions.defaultAuthenticationEntryPointFor(
                         new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED), PathPatternRequestMatcher.pathPattern("/api/**")))
                 .authorizeHttpRequests(authorize -> authorize
+                        // Must precede the /api/** rule — rules match in order, so the broad
+                        // authenticated() below would otherwise swallow these. /api/public/** is
+                        // the only unauthenticated API surface: self-registration and the policy
+                        // lookup the sign-in page uses to decide whether to offer a sign-up link.
+                        // It stays CSRF-protected like every other endpoint.
+                        .requestMatchers(PathPatternRequestMatcher.pathPattern("/api/public/**")).permitAll()
                         .requestMatchers(PathPatternRequestMatcher.pathPattern("/api/**")).authenticated()
+                        // The consent screen names the application and the signed-in user, so it is
+                        // only meaningful — and only safe to render — for an authenticated session.
+                        .requestMatchers(PathPatternRequestMatcher.pathPattern("/oauth2/consent")).authenticated()
                         .anyRequest().permitAll())
-                .formLogin(Customizer.withDefaults())
+                // Naming a login page is what stops DefaultLoginPageGeneratingFilter emitting the
+                // stock unstyled form; AuthPageController serves the branded one at the same path,
+                // so the POST target and CSRF handling are unchanged.
+                .formLogin(form -> form.loginPage("/login").permitAll())
                 .rememberMe(rememberMe -> rememberMe
                         .userDetailsService(userDetailsService)
                         .key(rememberMeKey)
