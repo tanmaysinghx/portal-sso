@@ -132,7 +132,7 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void unsupportedMethodReturnsMethodNotAllowedWithPrtlCode() throws Exception {
-        mockMvc.perform(post("/api/admin/users")
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/api/admin/users")
                         .with(user(TestDataSeeder.TEST_ADMIN_EMAIL).roles("ADMIN"))
                         .with(csrf()))
                 .andExpect(status().isMethodNotAllowed())

@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { PortalUser } from '../models/portal-user.model';
+import { CreateUserRequest, PortalUser } from '../models/portal-user.model';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
@@ -10,6 +10,10 @@ export class UserService {
 
   list(): Observable<PortalUser[]> {
     return this.http.get<PortalUser[]>(this.baseUrl);
+  }
+
+  create(request: CreateUserRequest): Observable<PortalUser> {
+    return this.http.post<PortalUser>(this.baseUrl, request);
   }
 
   setEnabled(id: string, enabled: boolean): Observable<PortalUser> {

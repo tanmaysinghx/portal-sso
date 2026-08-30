@@ -9,3 +9,12 @@ export interface PortalUser {
   lastLoginAt: string | null;
   createdAt: string;
 }
+
+export interface CreateUserRequest {
+  email: string;
+  password: string;
+  firstName?: string;
+  lastName?: string;
+  roles?: string[];
+  enabled?: boolean;
+}
