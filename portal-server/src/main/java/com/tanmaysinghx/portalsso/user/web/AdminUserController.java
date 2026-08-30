@@ -1,5 +1,8 @@
 package com.tanmaysinghx.portalsso.user.web;
 
+import com.tanmaysinghx.portalsso.common.error.BusinessRuleViolationException;
+import com.tanmaysinghx.portalsso.common.error.ErrorCode;
+import com.tanmaysinghx.portalsso.common.error.ResourceNotFoundException;
 import com.tanmaysinghx.portalsso.user.entity.User;
 import com.tanmaysinghx.portalsso.user.repository.UserRepository;
 import com.tanmaysinghx.portalsso.user.web.dto.SetUserEnabledRequest;
@@ -7,7 +10,6 @@ import com.tanmaysinghx.portalsso.user.web.dto.UserResponse;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +19,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/admin/users")
@@ -44,10 +45,11 @@ public class AdminUserController {
     @Transactional
     public UserResponse setEnabled(
             @PathVariable UUID id, @Valid @RequestBody SetUserEnabledRequest request, Authentication authentication) {
-        User user = userRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND, "No user found with ID: " + id));
 
         if (!request.enabled() && user.getEmail().equals(authentication.getName())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You can't disable your own account.");
+            throw new BusinessRuleViolationException(ErrorCode.SELF_DISABLE_PROHIBITED, "You can't disable your own account.");
         }
 
         user.setEnabled(request.enabled());

@@ -4,6 +4,9 @@ import com.tanmaysinghx.portalsso.client.entity.OAuthClient;
 import com.tanmaysinghx.portalsso.client.repository.OAuthClientRepository;
 import com.tanmaysinghx.portalsso.client.web.dto.CreateOAuthClientRequest;
 import com.tanmaysinghx.portalsso.client.web.dto.OAuthClientResponse;
+import com.tanmaysinghx.portalsso.common.error.ErrorCode;
+import com.tanmaysinghx.portalsso.common.error.ResourceConflictException;
+import com.tanmaysinghx.portalsso.common.error.ResourceNotFoundException;
 import jakarta.validation.Valid;
 import java.time.Duration;
 import java.util.List;
@@ -22,7 +25,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Admin-only OAuth client registry. Registers PKCE-only public clients (no client secret) — the
@@ -52,7 +54,7 @@ public class AdminOAuthClientController {
     @ResponseStatus(HttpStatus.CREATED)
     public OAuthClientResponse create(@Valid @RequestBody CreateOAuthClientRequest request) {
         if (oAuthClientRepository.findByClientId(request.clientId()).isPresent()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "client_id already exists: " + request.clientId());
+            throw new ResourceConflictException(ErrorCode.CLIENT_ALREADY_EXISTS, "client_id already exists: " + request.clientId());
         }
 
         RegisteredClient client = RegisteredClient.withId(UUID.randomUUID().toString())
@@ -76,7 +78,8 @@ public class AdminOAuthClientController {
 
         registeredClientRepository.save(client);
 
-        OAuthClient saved = oAuthClientRepository.findByClientId(request.clientId()).orElseThrow();
+        OAuthClient saved = oAuthClientRepository.findByClientId(request.clientId())
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.CLIENT_NOT_FOUND, "OAuth client not found after saving: " + request.clientId()));
         return OAuthClientResponse.from(saved);
     }
 }
