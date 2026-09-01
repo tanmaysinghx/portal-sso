@@ -1,0 +1,208 @@
+name: CI
+
+# Runs on every push and pull request to main. The 162 backend tests previously only ran when
+# someone remembered to run them.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# A new push to the same branch cancels the run still in flight — no value in finishing a build for
+# a commit that has already been superseded.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: temurin
+          cache: maven
+
+      # Node 24 to match the npm that wrote package-lock.json. The Maven build shells out to
+      # `npm run build` at generate-resources, so the frontend toolchain has to be present even for
+      # a backend-only run.
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: portal-client/package-lock.json
+
+      - name: Install console dependencies
+        working-directory: portal-client
+        run: npm ci
+
+      # Docker is present on ubuntu-latest at the standard socket, so the Testcontainers MySQL
+      # test runs here rather than being skipped — which is the point of it. It exercises the
+      # branch of migration 007 that only ever executes on MySQL, and which the H2 suite cannot
+      # reach.
+      - name: Build and test
+        working-directory: portal-server
+        run: ./mvnw -B verify
+
+      - name: Confirm the MySQL migration test was not skipped
+        working-directory: portal-server
+        run: |
+          report=target/surefire-reports/TEST-com.tanmaysinghx.portalsso.schema.MySqlMigrationIntegrationTest.xml
+          if [ ! -f "$report" ]; then
+            echo "::error::The MySQL migration test produced no report."
+            exit 1
+          fi
+          skipped=$(grep -o 'skipped="[0-9]*"' "$report" | grep -o '[0-9]*')
+          tests=$(grep -o 'tests="[0-9]*"' "$report" | grep -o '[0-9]*')
+          echo "MySQL migration test: $tests run, $skipped skipped."
+          if [ "${skipped:-0}" != "0" ]; then
+            echo "::error::The MySQL migration test was skipped — Docker was not detected, so the MySQL-only branch went untested."
+            exit 1
+          fi
+
+      # This project has been bitten by a test class that silently ran zero tests: @Nested with
+      # @SpringBootTest reports success while executing nothing. A green build that ran no tests is
+      # worse than a red one, so the count is asserted rather than assumed.
+      - name: Assert tests actually ran
+        working-directory: portal-server
+        run: |
+          if [ ! -d target/surefire-reports ]; then
+            echo "::error::No surefire reports — the test phase did not run."
+            exit 1
+          fi
+          total=$(grep -ho 'tests="[0-9]*"' target/surefire-reports/*.xml \
+                  | grep -o '[0-9]*' | awk '{s+=$1} END {print s+0}')
+          echo "Executed $total tests."
+          if [ "${total:-0}" -lt 150 ]; then
+            echo "::error::Only $total tests ran; expected at least 150. A suite that shrank silently is a defect."
+            exit 1
+          fi
+          for f in target/surefire-reports/*.xml; do
+            if grep -q 'tests="0"' "$f"; then
+              echo "::error::$(basename "$f") ran zero tests."
+              exit 1
+            fi
+          done
+
+      - name: Publish test report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: surefire-reports
+          path: portal-server/target/surefire-reports/
+          retention-days: 7
+
+      - name: Upload jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: portal-server-jar
+          path: portal-server/target/*.jar
+          retention-days: 7
+
+  frontend:
+    name: Console build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: portal-client/package-lock.json
+
+      # `npm ci` fails outright if package.json and package-lock.json disagree, so this doubles as
+      # the check that the lock file is complete for Linux. It was not, until it was regenerated
+      # there: the macOS-generated lock omitted Tailwind's wasm32 fallback dependencies.
+      - name: Install
+        working-directory: portal-client
+        run: npm ci
+
+      - name: Build
+        working-directory: portal-client
+        run: npx ng build
+
+  image:
+    name: Docker image
+    runs-on: ubuntu-latest
+    # Only after both halves pass — no point proving the image builds if the code is broken.
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      # Built but not pushed: there is no registry configured yet. The value here is catching a
+      # Dockerfile that stopped building, which is otherwise only discovered at deploy time.
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: portal-sso:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Building proves it compiles; this proves it runs. A container that starts and then dies on
+      # a missing migration or a bad entrypoint would otherwise pass.
+      - name: Smoke test the image
+        run: |
+          docker network create ci-net
+          docker run -d --name ci-db --network ci-net \
+            -e POSTGRES_DB=portalsso -e POSTGRES_USER=portal -e POSTGRES_PASSWORD=ci-password \
+            postgres:17-alpine
+          for i in $(seq 1 30); do
+            docker exec ci-db pg_isready -U portal -d portalsso && break
+            sleep 2
+          done
+
+          docker run -d --name ci-app --network ci-net -p 8080:8080 \
+            -e DB_URL=jdbc:postgresql://ci-db:5432/portalsso \
+            -e DB_USERNAME=portal -e DB_PASSWORD=ci-password \
+            -e ISSUER_URL=http://localhost:8080 \
+            -e APP_SECURITY_MFA_ENCRYPTION_KEY=ci-only-not-a-real-key \
+            -e APP_BOOTSTRAP_ADMIN_EMAIL=ci@example.com \
+            -e APP_BOOTSTRAP_ADMIN_PASSWORD=CiAdminPassword1 \
+            -e SERVER_SERVLET_SESSION_COOKIE_SECURE=false \
+            portal-sso:ci
+
+          for i in $(seq 1 40); do
+            status=$(docker inspect -f '{{.State.Health.Status}}' ci-app 2>/dev/null || echo starting)
+            [ "$status" = "healthy" ] && break
+            if [ "$(docker inspect -f '{{.State.Status}}' ci-app)" = "exited" ]; then
+              echo "::error::Container exited during startup."
+              docker logs ci-app
+              exit 1
+            fi
+            sleep 5
+          done
+
+          if [ "$(docker inspect -f '{{.State.Health.Status}}' ci-app)" != "healthy" ]; then
+            echo "::error::Container never became healthy."
+            docker logs ci-app
+            exit 1
+          fi
+
+          # Liquibase migrated an empty database and the bootstrap administrator can sign in — the
+          # two things a self-hoster does first.
+          curl -fsS http://localhost:8080/.well-known/openid-configuration > /dev/null
+          echo "Discovery document served."
+
+          docker logs ci-app 2>&1 | grep -q "Bootstrapped administrator" \
+            || { echo "::error::Bootstrap administrator was not created."; docker logs ci-app; exit 1; }
+          echo "Bootstrap administrator created."
+
+      - name: Container logs on failure
+        if: failure()
+        run: docker logs ci-app || true

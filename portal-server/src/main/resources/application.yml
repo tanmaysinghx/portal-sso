@@ -31,6 +31,14 @@ spring:
 
 server:
   port: ${SERVER_PORT:8080}
+
+  compression:
+    # The console's largest bundle is ~1.1MB uncompressed. Compression is off by default in Spring
+    # Boot, so every visitor was downloading all of it.
+    enabled: true
+    mime-types: text/html,text/css,text/plain,application/javascript,text/javascript,application/json,image/svg+xml
+    # Below this, the CPU and the extra header cost more than the bytes saved.
+    min-response-size: 1024
   servlet:
     session:
       cookie:
@@ -98,6 +106,21 @@ app:
       require-lowercase: true
       require-digit: true
       require-symbol: false
+
+  analytics:
+    retention:
+      # login_events gains a row on every sign-in attempt. Retention is OFF by default (0 keeps
+      # everything): an upgrade that silently deleted an operator's authentication history — the
+      # record they reach for during an incident — would be a worse defect than the growth it fixes.
+      #
+      # 90–365 days suits most deployments. Deleting happens in batches so a first run against a
+      # large backlog does not hold one long lock while sign-ins queue behind it.
+      #
+      # Deliberately not applied to audit_events: that table answers compliance questions and
+      # deleting from it should be a separate, explicit decision.
+      login-events-days: 0
+      batch-size: 1000
+      cron: "0 30 3 * * *"
 
   rate-limit:
     # Per-IP request limits. Complements the per-account lockout, which caps guesses against a

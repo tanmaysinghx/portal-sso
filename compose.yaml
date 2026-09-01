@@ -1,0 +1,73 @@
+# Portal SSO — self-hosting stack.
+#
+#   cp .env.example .env      # then edit it; every value is required
+#   docker compose up -d
+#
+# There are deliberately no default credentials anywhere in this file. Each secret is written
+# ${VAR:?message}, so compose refuses to start and says which value is missing rather than falling
+# back to something guessable. A self-hosted identity server that ships with a known admin password
+# or a known encryption key is worse than one that will not boot.
+
+name: portal-sso
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-portalsso}
+      POSTGRES_USER: ${DB_USERNAME:?set DB_USERNAME in .env}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+    volumes:
+      - portal-db-data:/var/lib/postgresql/data
+    healthcheck:
+      # The app waits on this rather than on the port being open: Postgres accepts connections for
+      # a moment before it is ready to answer, and Liquibase running into that loses the race.
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Not published by default. The database is reachable from the app over the compose network and
+    # has no reason to be exposed on the host; uncomment only if you need a client on your machine.
+    # ports:
+    #   - "5432:5432"
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: portal-sso:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/${DB_NAME:-portalsso}
+      DB_USERNAME: ${DB_USERNAME:?set DB_USERNAME in .env}
+      DB_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env}
+
+      # Must match the URL browsers and relying applications actually use to reach this server —
+      # it is published in the OIDC discovery document, and every client validates tokens against
+      # it. Behind a reverse proxy this is the public https:// address, not localhost.
+      ISSUER_URL: ${ISSUER_URL:?set ISSUER_URL in .env}
+
+      # Protects stored TOTP secrets. Without it MFA enrolment is refused, and if secrets already
+      # exist the server refuses to start. Back it up: losing it means every enrolled user re-enrols.
+      APP_SECURITY_MFA_ENCRYPTION_KEY: ${APP_SECURITY_MFA_ENCRYPTION_KEY:?set APP_SECURITY_MFA_ENCRYPTION_KEY in .env}
+
+      # The first administrator, created on first boot only. Remove both from .env once you have
+      # signed in — while they are set, anyone who can read your configuration knows this password.
+      APP_BOOTSTRAP_ADMIN_EMAIL: ${APP_BOOTSTRAP_ADMIN_EMAIL:?set APP_BOOTSTRAP_ADMIN_EMAIL in .env}
+      APP_BOOTSTRAP_ADMIN_PASSWORD: ${APP_BOOTSTRAP_ADMIN_PASSWORD:?set APP_BOOTSTRAP_ADMIN_PASSWORD in .env}
+
+      # Session cookies are marked Secure by default, which means a browser will not send them over
+      # plain http. For a local trial without TLS, set SERVER_SERVLET_SESSION_COOKIE_SECURE=false in
+      # .env — never in a deployment reachable from anywhere else.
+      SERVER_SERVLET_SESSION_COOKIE_SECURE: ${SERVER_SERVLET_SESSION_COOKIE_SECURE:-true}
+
+      JAVA_OPTS: ${JAVA_OPTS:--XX:MaxRAMPercentage=75.0}
+
+volumes:
+  portal-db-data:

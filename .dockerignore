@@ -1,0 +1,26 @@
+# Build context hygiene. Without this, node_modules alone is hundreds of megabytes shipped to the
+# daemon on every build, and config/application-local.yml — which holds real credentials — would be
+# copied into an image layer.
+
+**/node_modules
+**/dist
+**/target
+**/.angular
+
+# Never build a secret into an image. This file is gitignored for the same reason.
+portal-server/config/application-local.yml
+.env
+
+.git
+.gitignore
+.github
+.vscode
+.claude
+.DS_Store
+**/*.log
+
+# Documentation and marketing assets are not needed to build or run the server.
+docs
+assets
+README.md
+**/README.md

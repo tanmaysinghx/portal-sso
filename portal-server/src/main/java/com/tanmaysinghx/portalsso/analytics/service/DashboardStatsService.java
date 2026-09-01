@@ -39,7 +39,20 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class DashboardStatsService {
 
+    private static final org.slf4j.Logger log =
+            org.slf4j.LoggerFactory.getLogger(DashboardStatsService.class);
+
     private static final int RECENT_LOGIN_LIMIT = 25;
+
+    /**
+     * Ceiling on how many events the in-memory bucketing will load. Bucketing in Java is a
+     * deliberate choice — SQL date functions differ across MySQL, H2 and Postgres and this project
+     * has been bitten by that twice — but "hold one window in memory" is only safe while the window
+     * is bounded. Past this the dashboard reports on the most recent MAX_WINDOW_EVENTS and says so,
+     * rather than trying to load a table that grows on every sign-in. The real fix at that scale is
+     * a rollup table, not a bigger number here.
+     */
+    static final int MAX_WINDOW_EVENTS = 200_000;
     /** Past this, extra slices stop being distinguishable and the tail folds into "Other". */
     private static final int MAX_CLIENT_SLICES = 8;
 
@@ -69,7 +82,14 @@ public class DashboardStatsService {
         Instant from = range.from(now);
 
         List<User> allUsers = userRepository.findAllWithRoles();
-        List<LoginEvent> events = loginEventRepository.findSince(from);
+        List<LoginEvent> events = loginEventRepository.findSinceBounded(
+                from, PageRequest.of(0, MAX_WINDOW_EVENTS));
+        if (events.size() == MAX_WINDOW_EVENTS) {
+            log.warn(
+                    "Dashboard window hit the {} event cap; figures cover the most recent events in "
+                            + "the range, not all of them. Consider enabling app.analytics.retention.",
+                    MAX_WINDOW_EVENTS);
+        }
 
         return new DashboardStats(
                 range.name(),
@@ -321,7 +341,8 @@ public class DashboardStatsService {
     @Transactional(readOnly = true)
     public String exportCsv(StatsRange range) {
         StringBuilder csv = new StringBuilder("occurred_at,email,successful,ip_address,country_code,country_name,client_id,user_agent\n");
-        for (LoginEvent e : loginEventRepository.findSince(range.from(Instant.now()))) {
+        for (LoginEvent e : loginEventRepository.findSinceBounded(
+                range.from(Instant.now()), PageRequest.of(0, MAX_WINDOW_EVENTS))) {
             csv.append(csvCell(e.getOccurredAt() == null ? "" : e.getOccurredAt().toString())).append(',')
                     .append(csvCell(e.getEmail())).append(',')
                     .append(e.isSuccessful()).append(',')

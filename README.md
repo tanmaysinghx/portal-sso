@@ -39,7 +39,32 @@ portal-sso/
 
 ## Quick Start
 
-### Option 1: Standalone JAR (Production / Single-Process)
+### Option 1: Docker Compose (Recommended for Self-Hosting)
+
+The fastest way to a running server. Brings up Postgres and Portal SSO together; Liquibase creates
+the schema on first boot and the first administrator is created from your `.env`.
+
+```bash
+cp .env.example .env
+# Fill in every value — compose refuses to start rather than invent a default.
+#   openssl rand -base64 24   # DB_PASSWORD
+#   openssl rand -base64 32   # APP_SECURITY_MFA_ENCRYPTION_KEY
+docker compose up -d
+```
+
+Then open http://localhost:8080 and sign in with the bootstrap administrator you set. **Remove
+`APP_BOOTSTRAP_ADMIN_*` from `.env` afterwards** — while they are set, anyone who can read the file
+knows that account's password.
+
+There are deliberately no default credentials in `compose.yaml`. Every secret is `${VAR:?...}`, so a
+missing value stops the stack with a message naming it. A self-hosted identity server that ships
+with a known admin password or a known encryption key is worse than one that will not boot.
+
+For a local trial without TLS, set `SERVER_SERVLET_SESSION_COOKIE_SECURE=false` — session cookies
+are `Secure` by default and a browser will not send them over plain http. Never do this on anything
+reachable from elsewhere.
+
+### Option 2: Standalone JAR (Production / Single-Process)
 
 The entire Angular frontend is packaged into the Spring Boot JAR during build:
 
@@ -59,7 +84,7 @@ Access the unified Admin Console directly at **`http://localhost:8080/`**.
 
 ---
 
-### Option 2: Local Development (Hot-Reloading)
+### Option 3: Local Development (Hot-Reloading)
 
 Run the backend and frontend development servers concurrently:
 
@@ -88,6 +113,25 @@ Open **`http://localhost:4200/`** in your browser.
 *Also seeds a sample PKCE public client (`test-client`, redirect URI: `http://127.0.0.1:8080/authorized`).*
 
 ---
+
+## Continuous Integration
+
+`.github/workflows/ci.yml` runs on every push and pull request to `main`:
+
+| Job | What it does |
+|---|---|
+| **Backend tests** | JDK 25 + Node 24, `./mvnw verify`, uploads the jar and the surefire reports. Includes a Testcontainers run against real MySQL 8.0, and fails if that test was *skipped* — a skipped test proves nothing |
+| **Console build** | `npm ci` + `ng build`; `npm ci` also proves the lock file is complete on Linux |
+| **Docker image** | Builds the image, then **runs** it against a real Postgres and asserts it becomes healthy, serves OIDC discovery, and creates its bootstrap administrator |
+
+The backend job additionally asserts that the suite actually executed — the count must be at least
+150 and no class may report zero tests. This project has been bitten by `@Nested` with
+`@SpringBootTest` silently running nothing while reporting success, and a green build that ran no
+tests is worse than a red one.
+
+Node is pinned to 24 in both CI and the Dockerfile to match the npm major that wrote
+`package-lock.json`; on Node 22 (npm 10) `npm ci` fails on the platform-specific optional
+dependency tree.
 
 ## Running Tests
 

@@ -16,6 +16,12 @@ import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
+import org.springframework.security.config.annotation.web.configurers.RequestCacheConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.context.NullSecurityContextRepository;
+import org.springframework.security.web.header.writers.StaticHeadersWriter;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
@@ -50,6 +56,47 @@ import org.springframework.session.jdbc.config.annotation.web.http.EnableJdbcHtt
 @EnableMethodSecurity
 @EnableJdbcHttpSession
 public class SecurityConfig {
+
+    /**
+     * Static console assets, ahead of everything else.
+     *
+     * <p>Without this chain every request for a JavaScript bundle went through the full security
+     * filter chain, which reads the {@code SecurityContext} from the session — and with Spring
+     * Session JDBC that is a database round-trip, plus a write-back, <em>per asset</em>. Measured
+     * against a remote database that was <strong>four SQL statements and ~770ms to serve one .js
+     * file</strong>, which is most of why first paint took over five seconds.
+     *
+     * <p>Nothing here is protected content: it is the same bundle every visitor downloads before
+     * authenticating. A {@link NullSecurityContextRepository} plus {@code STATELESS} guarantees no
+     * session is read or created, while still applying the standard security response headers —
+     * which is why this is a filter chain rather than {@code web.ignoring()}.
+     */
+    @Bean
+    @Order(0)
+    SecurityFilterChain staticResourceSecurityFilterChain(HttpSecurity http) throws Exception {
+        http.securityMatcher(
+                        "/*.js", "/*.css", "/*.svg", "/*.png", "/*.jpg", "/*.webp",
+                        "/*.ico", "/*.json", "/*.txt", "/*.woff2", "/media/**")
+                .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll())
+                // No session read, no session write, no session created.
+                .securityContext(context -> context.securityContextRepository(new NullSecurityContextRepository()))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Nothing here is state-changing, and a CSRF token load would itself touch the session.
+                .csrf(AbstractHttpConfigurer::disable)
+                .requestCache(RequestCacheConfigurer::disable)
+                .anonymous(AbstractHttpConfigurer::disable)
+                // Spring Security stamps "no-cache, no-store, max-age=0, must-revalidate" on every
+                // response by default. That is right for an authenticated page and wrong for a
+                // content-hashed bundle: it made the browser re-download every chunk on every
+                // navigation. Angular puts a content hash in each filename, so a changed file is a
+                // different URL and these can be cached indefinitely.
+                .headers(headers -> headers
+                        .cacheControl(HeadersConfigurer.CacheControlConfig::disable)
+                        .addHeaderWriter(new StaticHeadersWriter(
+                                "Cache-Control", "public, max-age=31536000, immutable")));
+
+        return http.build();
+    }
 
     @Bean
     @Order(1)

@@ -8,6 +8,17 @@ The core of **Portal SSO** — a self-hosted OAuth2/OIDC Authorization Server (S
 Spring Authorization Server) with a small admin REST API bolted on for managing OAuth clients and
 users. Ships as a single deployable jar; [`portal-client`](../portal-client) is its admin UI.
 
+## Running with Docker
+
+The repository root holds a `Dockerfile` and `compose.yaml` that package this server with the
+Angular console inside a single image. See the [root README](../README.md#option-1-docker-compose-recommended-for-self-hosting).
+
+The image builds the console and the jar in separate stages, runs as an unprivileged user, and
+carries a `HEALTHCHECK` against `/actuator/health/readiness` — readiness rather than the aggregate
+health group, because on first boot the server accepts connections while Liquibase is still
+migrating. Tests are skipped in the image build on purpose; CI runs the full suite against a real
+database instead.
+
 ## Prerequisites
 
 - Java 25, Maven (or use the bundled `./mvnw`)
@@ -147,6 +158,15 @@ their existing authenticator entries. **Rotating:** set the new key, put the old
 Losing the key means every enrolled user must re-enrol (an admin can clear them with
 `POST /api/admin/users/{id}/mfa/reset`), so back it up alongside your database credentials.
 
+### MySQL privileges
+
+The `mysql` profile issues `SET SESSION sql_require_primary_key=0` on every connection, so the
+database user **must hold `SESSION_VARIABLES_ADMIN`** (or `SYSTEM_VARIABLES_ADMIN`/`SUPER`).
+Without it the application fails to start with *"Access denied; you need (at least one of) the
+SUPER, SYSTEM_VARIABLES_ADMIN or SESSION_VARIABLES_ADMIN privilege(s)"*. Aiven's `avnadmin` and
+RDS's master user both have it; a hand-made restricted account may not. This surfaced only once the
+migration path was tested against a real MySQL.
+
 ### Profiles
 
 - **`mysql`** — activate for any MySQL deployment. Handles two MySQL-specific quirks, both
@@ -276,6 +296,9 @@ test (`JwtClaimsCustomizerIntegrationTest`).
   effective ceiling is the configured rate times the instance count. That is a deliberate trade
   against putting a shared store on the hot path of every sign-in; the per-account lockout is the
   hard stop, and a reverse proxy sees all traffic if you need a global limit.
+- **`audit_events` has no retention.** `login_events` does (below), but the audit trail is left
+  alone deliberately: it answers compliance questions, and deleting from it should be a separate
+  explicit decision rather than a side effect of a convenience setting.
 - **Password policy has no breach-list check.** `app.security.password` enforces length and
   composition at every entry point, but composition rules are a weak control on their own — they
   mostly produce `Password1!`. NIST 800-63B advises checking candidates against a breach corpus
@@ -291,9 +314,15 @@ test (`JwtClaimsCustomizerIntegrationTest`).
   endpoint that can edit or delete an entry, but nothing stops an operator with database access
   from rewriting it, and the CSV export is unsigned. Tamper-evidence (hash chaining, or shipping
   entries to append-only external storage) is the next step if you need it to stand up to scrutiny.
-- **`login_events` and `audit_events` grow without bound.** There is no retention policy or rollup yet, and the
-  dashboard loads one window of rows into memory to bucket them. That is the right trade at this
-  size; past it the fix is a rollup table, not dialect-specific SQL.
+- **`login_events` retention is off by default.** Set `app.analytics.retention.login-events-days`
+  to enable it (90–365 is typical); `0` keeps everything. It defaults to off because an upgrade
+  that silently deleted an operator's authentication history would be a worse defect than the
+  growth it fixes. Deletion runs in batches on a nightly cron so a first run against a large
+  backlog does not hold one long lock.
+- **The dashboard still buckets a window in memory**, now capped at 200,000 events per range. Past
+  that it reports on the most recent events and logs a warning. Bucketing in Java rather than with
+  SQL date functions remains deliberate — those differ across MySQL, H2 and Postgres — but at real
+  scale the answer is a rollup table, not a larger cap.
 - **Login geography needs a database you supply.** MaxMind's licence means the `.mmdb` cannot be
   bundled. Private and loopback addresses are labelled "Local network" and never resolve to a
   country, which is why the map is empty in local development.
