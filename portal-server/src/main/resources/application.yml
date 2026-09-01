@@ -32,6 +32,20 @@ spring:
 server:
   port: ${SERVER_PORT:8080}
 
+  # Behind a reverse proxy or load balancer (nginx, AWS ALB, Traefik, Cloudflare), set this to
+  # FRAMEWORK. Spring then resolves the real client IP and scheme from the X-Forwarded-* headers
+  # once, centrally, and getRemoteAddr() returns the caller rather than the proxy.
+  #
+  # It matters more than it looks. Three things key off the client address:
+  #   - rate limiting buckets per IP — behind a proxy, every visitor would share one bucket
+  #   - login_events records the source of each sign-in attempt
+  #   - audit_events records who made each administrative change
+  # All three would otherwise record the load balancer.
+  #
+  # Left NONE by default on purpose: trusting X-Forwarded-* when nothing strips it lets any caller
+  # forge their own source address. Turn it on only when a proxy you control sets those headers.
+  forward-headers-strategy: ${FORWARD_HEADERS_STRATEGY:NONE}
+
   compression:
     # The console's largest bundle is ~1.1MB uncompressed. Compression is off by default in Spring
     # Boot, so every visitor was downloading all of it.

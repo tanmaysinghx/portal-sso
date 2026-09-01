@@ -37,54 +37,171 @@ portal-sso/
 
 ---
 
-## Quick Start
+## Setting up for the first time
 
-### Option 1: Docker Compose (Recommended for Self-Hosting)
+Every command below was run end to end against a clean checkout; the output shown is what it
+actually printed.
 
-The fastest way to a running server. Brings up Postgres and Portal SSO together; Liquibase creates
-the schema on first boot and the first administrator is created from your `.env`.
+### 1. Prerequisites
+
+Docker and Docker Compose. Nothing else — no Java, no Node, no database to install. The image
+builds both halves of the project itself.
 
 ```bash
+docker --version && docker compose version
+```
+
+### 2. Get the code and create your configuration
+
+```bash
+git clone https://github.com/tanmaysinghx/portal-sso.git
+cd portal-sso
 cp .env.example .env
-# Fill in every value — compose refuses to start rather than invent a default.
-#   openssl rand -base64 24   # DB_PASSWORD
-#   openssl rand -base64 32   # APP_SECURITY_MFA_ENCRYPTION_KEY
+```
+
+### 3. Fill in `.env`
+
+Every value is required. Compose refuses to start rather than invent a default, and tells you
+which one is missing — a self-hosted identity server with guessable credentials is worse than one
+that will not boot.
+
+```bash
+openssl rand -base64 24   # paste as DB_PASSWORD
+openssl rand -base64 32   # paste as APP_SECURITY_MFA_ENCRYPTION_KEY
+```
+
+Then edit `.env`:
+
+| Variable | Set it to |
+|---|---|
+| `DB_PASSWORD` | the first generated value |
+| `APP_SECURITY_MFA_ENCRYPTION_KEY` | the second. **Back this up** — losing it means every user with 2FA must re-enrol |
+| `ISSUER_URL` | the address browsers will actually use, e.g. `https://sso.example.com`. It is published in the OIDC discovery document and every client validates against it |
+| `APP_BOOTSTRAP_ADMIN_EMAIL` | your admin address |
+| `APP_BOOTSTRAP_ADMIN_PASSWORD` | 12+ characters, with upper, lower and a digit |
+
+Trying it locally without TLS? Also uncomment `SERVER_SERVLET_SESSION_COOKIE_SECURE=false` —
+session cookies are `Secure` by default and a browser will not send them over plain `http`.
+Never do this on anything reachable from elsewhere.
+
+### 4. Start it
+
+```bash
 docker compose up -d
 ```
 
-Then open http://localhost:8080 and sign in with the bootstrap administrator you set. **Remove
-`APP_BOOTSTRAP_ADMIN_*` from `.env` afterwards** — while they are set, anyone who can read the file
-knows that account's password.
+First run builds the image (a few minutes). After that:
 
-There are deliberately no default credentials in `compose.yaml`. Every secret is `${VAR:?...}`, so a
-missing value stops the stack with a message naming it. A self-hosted identity server that ships
-with a known admin password or a known encryption key is worse than one that will not boot.
-
-For a local trial without TLS, set `SERVER_SERVLET_SESSION_COOKIE_SECURE=false` — session cookies
-are `Secure` by default and a browser will not send them over plain http. Never do this on anything
-reachable from elsewhere.
-
-### Option 2: Standalone JAR (Production / Single-Process)
-
-The entire Angular frontend is packaged into the Spring Boot JAR during build:
-
-```bash
-# Build the standalone runnable JAR
-cd portal-server
-./mvnw clean package
-
-# Run against MySQL or Postgres
-SPRING_PROFILES_ACTIVE=mysql,local ./mvnw spring-boot:run
-
-# Or run the built JAR directly
-java -jar target/portal-server-0.0.1-SNAPSHOT.jar --spring.profiles.active=mysql,local
+```
+ Container portal-sso-db-1   Healthy
+ Container portal-sso-app-1  Started
 ```
 
-Access the unified Admin Console directly at **`http://localhost:8080/`**.
+### 5. Check it came up
+
+```bash
+docker compose ps          # app should read (healthy)
+docker compose logs app | grep Bootstrapped
+```
+
+```
+WARN  c.t.p.bootstrap.AdminBootstrapper : Bootstrapped administrator 'ops@example.com' ...
+```
+
+That line means Liquibase built the schema and your administrator exists. If instead you see
+*"no bootstrap credentials are configured"*, the two `APP_BOOTSTRAP_ADMIN_*` values did not reach
+the container — check `.env` and re-run.
+
+### 6. Sign in
+
+Open `ISSUER_URL` in a browser and sign in with the bootstrap administrator.
+
+**Then remove `APP_BOOTSTRAP_ADMIN_EMAIL` and `APP_BOOTSTRAP_ADMIN_PASSWORD` from `.env`.** While
+they are set, anyone who can read that file knows the password. Removing them changes nothing —
+the account already exists, and the bootstrap only acts when no enabled administrator is found.
+
+### 7. Register your first application
+
+In the console: **OAuth Clients → New client**.
+
+- **Client ID** — what your app will identify itself as, e.g. `my-web-app`
+- **Redirect URI** — where users return after signing in, e.g. `http://localhost:3000/callback`.
+  It must match byte for byte what your app sends
+- **Confidential client** — tick only for a server-side app that can keep a secret. Browser and
+  mobile apps leave it unticked and use PKCE. A confidential client's secret is shown **once**
+
+### 8. Point your application at it
+
+Any standard OIDC library works; there is no SDK to install. Give it the discovery URL and it
+reads everything else:
+
+```
+https://sso.example.com/.well-known/openid-configuration
+```
+
+A complete `authorization_code` + PKCE exchange against a fresh install returns:
+
+```
+token_type:   Bearer
+expires_in:   899
+scope:        openid profile email
+id_token sub: ops@example.com
+id_token iss: https://sso.example.com
+roles claim:  ['ROLE_ADMIN', 'ROLE_USER']
+```
+
+**PKCE is required for every client**, confidential ones included, so your library must send a
+`code_challenge`.
+
+### 9. Before you expose it publicly
+
+- **Put TLS in front of it** and set `ISSUER_URL` to the `https://` address.
+- **Set `FORWARD_HEADERS_STRATEGY=FRAMEWORK`** if anything proxies to it (nginx, an AWS ALB,
+  Cloudflare). Without it, rate limiting treats every visitor as one client and the audit log
+  records the proxy's IP instead of the user's.
+- **Keep the database close to the app.** The same endpoint measured 4&nbsp;ms against a local
+  database and 651&nbsp;ms against one 83&nbsp;ms away. It is the largest single performance factor.
+- **Back up `APP_SECURITY_MFA_ENCRYPTION_KEY`** with your database credentials.
 
 ---
 
-### Option 3: Local Development (Hot-Reloading)
+## Other ways to run it
+
+### Option A: Standalone JAR (existing database)
+
+For an operator who already has PostgreSQL or MySQL — RDS, Aiven, Cloud SQL — and wants the
+process under systemd.
+
+```bash
+cd portal-server && ./mvnw -DskipTests package
+
+ISSUER_URL=https://sso.example.com \
+DB_URL=jdbc:postgresql://db.internal:5432/portalsso \
+DB_USERNAME=portal DB_PASSWORD=... \
+APP_SECURITY_MFA_ENCRYPTION_KEY=... \
+APP_BOOTSTRAP_ADMIN_EMAIL=ops@example.com \
+APP_BOOTSTRAP_ADMIN_PASSWORD=... \
+FORWARD_HEADERS_STRATEGY=FRAMEWORK \
+java -jar target/portal-server-*.jar
+```
+
+For MySQL add `SPRING_PROFILES_ACTIVE=mysql`, and note that the database user needs
+`SESSION_VARIABLES_ADMIN` — see [portal-server/README.md](portal-server/README.md#mysql-privileges).
+
+### Option B: In-memory H2 (no database at all)
+
+Data does not survive a restart. For a five-minute look, not for anything you want to keep.
+
+```bash
+cd portal-server
+./mvnw spring-boot:run -Dspring-boot.run.useTestClasspath=true \
+  -Dspring-boot.run.arguments="--spring.datasource.url=jdbc:h2:mem:portalsso;MODE=PostgreSQL;DB_CLOSE_DELAY=-1 \
+  --spring.datasource.driver-class-name=org.h2.Driver \
+  --spring.datasource.username=sa --spring.datasource.password= \
+  --app.seed.test-data=true"
+```
+
+### Option C: Local development (hot-reloading)
 
 Run the backend and frontend development servers concurrently:
 

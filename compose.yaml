@@ -67,6 +67,10 @@ services:
       # .env — never in a deployment reachable from anywhere else.
       SERVER_SERVLET_SESSION_COOKIE_SECURE: ${SERVER_SERVLET_SESSION_COOKIE_SECURE:-true}
 
+      # FRAMEWORK when a proxy in front of this terminates TLS, so audit entries, login events and
+      # rate-limit buckets record the real client rather than the proxy.
+      FORWARD_HEADERS_STRATEGY: ${FORWARD_HEADERS_STRATEGY:-NONE}
+
       JAVA_OPTS: ${JAVA_OPTS:--XX:MaxRAMPercentage=75.0}
 
 volumes:
