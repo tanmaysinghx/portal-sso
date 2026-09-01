@@ -74,14 +74,6 @@ export class Header {
       icon: 'settings',
     },
     {
-      id: 'nav-product',
-      title: 'Product Showcase',
-      category: 'Navigation',
-      description: 'View architecture specs, mockups, and client guide',
-      route: '/product',
-      icon: 'product',
-    },
-    {
       id: 'act-copy-discovery',
       title: 'Copy OpenID Discovery URL',
       category: 'Action',
