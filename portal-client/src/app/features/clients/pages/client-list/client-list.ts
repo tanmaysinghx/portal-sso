@@ -3,7 +3,7 @@ import { Component, HostListener, computed, inject, signal } from '@angular/core
 import { Subject, debounceTime } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { SnackbarService } from '../../../../core/services/snackbar.service';
 import { Badge } from '../../../../shared/components/badge/badge';
 import { OAuthClientService } from '../../services/oauth-client.service';
@@ -65,7 +65,16 @@ export class ClientList {
     enabled: [true],
   });
 
+  private readonly route = inject(ActivatedRoute);
+
   constructor() {
+    // The command palette links here with ?search=…; without this the list would open unfiltered
+    // and quietly ignore what the user just typed.
+    const initial = this.route.snapshot.queryParamMap.get('search');
+    if (initial) {
+      this.searchTerm.set(initial);
+    }
+
     // Debounced so typing does not fire a query per keystroke; this subscription is the only thing
     // that applies a search change, so a value pushed here supersedes any pending keystroke.
     this.searchInput.pipe(debounceTime(300), takeUntilDestroyed()).subscribe((value) => {

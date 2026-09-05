@@ -64,3 +64,17 @@ $ink: #18181b; // logo tile
     background-color: color.adjust($ink, $lightness: 48%);
   }
 }
+
+// Respect the operating-system preference. Every screen animates in on entry, and route changes
+// fire it again — without this there is no way for someone who finds that uncomfortable to turn it
+// off, and the preference exists precisely so they don't have to ask each product individually.
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

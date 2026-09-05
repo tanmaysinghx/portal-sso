@@ -1,5 +1,17 @@
 <!-- Top Header Bar -->
-<header class="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between border-b border-ink-200/80 bg-white/90 px-8 backdrop-blur-md">
+<header class="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between gap-3 border-b border-ink-200/80 bg-white/90 px-4 backdrop-blur-md sm:px-6 lg:px-8">
+  <!-- Opens the navigation drawer. Only below lg — above it the sidebar is always on screen. -->
+  <button
+    type="button"
+    (click)="menuToggle.emit()"
+    class="-ml-1 shrink-0 rounded-lg p-2 text-ink-600 transition hover:bg-ink-100 hover:text-ink-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 lg:hidden"
+    aria-label="Open navigation"
+  >
+    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+    </svg>
+  </button>
+
   <!-- Inline Search Container (Balanced Width) -->
   <div class="relative w-full max-w-sm sm:max-w-md">
     <div class="relative flex items-center">
@@ -11,7 +23,7 @@
         #searchInput
         type="text"
         [ngModel]="searchQuery()"
-        (ngModelChange)="searchQuery.set($event)"
+        (ngModelChange)="onSearchQueryChange($event)"
         (focus)="onFocus()"
         placeholder="Search clients, users, settings..."
         class="block w-full rounded-xl border border-ink-200 bg-ink-50/70 pl-9 pr-14 py-1.5 text-xs text-ink-900 shadow-xs transition placeholder:text-ink-400 focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20"
@@ -40,12 +52,68 @@
     @if (isDropdownOpen()) {
       <div class="absolute left-0 right-0 top-full mt-1.5 z-30 overflow-hidden rounded-xl border border-ink-200 bg-white shadow-xl transition-all">
         <div class="max-h-80 overflow-y-auto p-1.5 divide-y divide-ink-50">
-          @if (filteredSearchItems().length === 0) {
-            <div class="p-6 text-center">
-              <p class="text-xs font-medium text-ink-700">No results found for "{{ searchQuery() }}"</p>
-              <p class="mt-0.5 text-[11px] text-ink-400">Try searching for "dashboard", "clients", "users", or "settings".</p>
+          <!-- Live results from the API. The static destinations below are the "go to" list; these
+               are the actual users and clients on this server, which is what the placeholder has
+               always promised. -->
+          @if (userResults().length > 0) {
+            <div class="px-2 pt-1.5 pb-1">
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-ink-400">Users</p>
             </div>
-          } @else {
+            @for (u of userResults(); track u.id) {
+              <button
+                type="button"
+                (mousedown)="goToUser()"
+                class="group flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left transition hover:bg-ink-50 focus:bg-ink-50 focus:outline-none"
+              >
+                <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-red-500 text-[11px] font-semibold text-white">
+                  {{ u.email.charAt(0).toUpperCase() }}
+                </div>
+                <div class="min-w-0">
+                  <p class="truncate text-xs font-medium text-ink-900">{{ u.email }}</p>
+                  <p class="truncate text-[10px] text-ink-500">{{ u.roles.join(', ') }}</p>
+                </div>
+              </button>
+            }
+          }
+
+          @if (clientResults().length > 0) {
+            <div class="px-2 pt-1.5 pb-1">
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-ink-400">OAuth clients</p>
+            </div>
+            @for (c of clientResults(); track c.id) {
+              <button
+                type="button"
+                (mousedown)="goToClient()"
+                class="group flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left transition hover:bg-ink-50 focus:bg-ink-50 focus:outline-none"
+              >
+                <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-ink-100 text-ink-700">
+                  <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <p class="truncate font-mono text-xs font-medium text-ink-900">{{ c.clientId }}</p>
+                  <p class="truncate text-[10px] text-ink-500">{{ c.clientName }}</p>
+                </div>
+              </button>
+            }
+          }
+
+          @if (searching() && !hasLiveResults()) {
+            <div class="px-3 py-2 text-[11px] text-ink-400">Searching…</div>
+          }
+
+          @if (noResultsAtAll()) {
+            <div class="p-6 text-center">
+              <p class="text-xs font-medium text-ink-700">Nothing matches "{{ searchQuery() }}"</p>
+              <p class="mt-0.5 text-[11px] text-ink-400">Searches screens, users and OAuth clients.</p>
+            </div>
+          } @else if (filteredSearchItems().length > 0) {
+            @if (hasLiveResults()) {
+              <div class="px-2 pt-1.5 pb-1">
+                <p class="text-[10px] font-semibold uppercase tracking-wider text-ink-400">Go to</p>
+              </div>
+            }
             @for (item of filteredSearchItems(); track item.id) {
               <button
                 type="button"

@@ -43,7 +43,7 @@
         <h2 class="text-lg font-semibold text-white">Quick start</h2>
         <ol class="mt-5 space-y-4">
           @for (step of [
-            { n: 1, t: 'Register your application', d: 'In the console, open OAuth Clients → New client. You get a client ID; no secret is issued, because clients are public and PKCE-only.' },
+            { n: 1, t: 'Register your application', d: 'In the console, open OAuth Clients → New client. Browser and mobile apps stay public and use PKCE with no secret; tick Confidential for a server-side app and the secret is shown once, at creation.' },
             { n: 2, t: 'Add your redirect URI', d: 'It must match byte-for-byte what your app sends. A mistyped URI is editable later without re-registering.' },
             { n: 3, t: 'Point your OIDC library at the discovery URL', d: 'Most libraries need only the issuer; they read every other endpoint from the discovery document.' },
             { n: 4, t: 'Handle the callback', d: 'Exchange the code for tokens using your PKCE verifier. The ID token carries email and roles.' }

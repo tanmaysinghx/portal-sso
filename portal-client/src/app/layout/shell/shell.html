@@ -1,15 +1,16 @@
 <div class="flex min-h-screen bg-ink-50">
-  <!-- Shared Left Menu Sidebar -->
-  <app-sidebar />
+  <app-sidebar [open]="sidebarOpen()" (dismiss)="closeSidebar()" />
 
-  <!-- Main Content Layout with Shared Top Header -->
-  <div class="ml-64 flex min-h-screen flex-1 flex-col">
-    <!-- Shared Top Header -->
-    <app-header />
+  <!-- The sidebar is fixed, so the content is offset by its width — but only once it is actually
+       on screen. Below lg it is an off-canvas drawer and the content uses the full width. -->
+  <!-- min-w-0 is load-bearing: a flex child defaults to min-width:auto, so without it this column
+       refuses to shrink below the width of its widest content and a wide table pushes the whole
+       page sideways instead of scrolling inside its own container. -->
+  <div class="flex min-h-screen min-w-0 flex-1 flex-col lg:ml-64">
+    <app-header (menuToggle)="toggleSidebar()" />
 
-    <!-- Routed Page View -->
-    <main class="flex-1 px-10 py-9">
-      <div class="mx-auto max-w-5xl">
+    <main class="flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-9">
+      <div class="mx-auto w-full max-w-5xl">
         <router-outlet />
       </div>
     </main>

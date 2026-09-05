@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, HostListener, computed, inject, signal } from '@angular/core';
 import { Subject, debounceTime } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../../core/services/auth.service';
 import { SnackbarService } from '../../../../core/services/snackbar.service';
@@ -89,7 +90,16 @@ export class UserList {
     isAdmin: [false],
   });
 
+  private readonly route = inject(ActivatedRoute);
+
   constructor() {
+    // The command palette links here with ?search=…; without this the list would open unfiltered
+    // and quietly ignore what the user just typed.
+    const initial = this.route.snapshot.queryParamMap.get('search');
+    if (initial) {
+      this.searchTerm.set(initial);
+    }
+
     // Debounced so typing a name does not fire a query per keystroke. This subscription is the only
     // thing that applies a search change, so a value pushed here supersedes any pending keystroke.
     this.searchInput.pipe(debounceTime(300), takeUntilDestroyed()).subscribe((value) => {
@@ -239,9 +249,19 @@ export class UserList {
     this.loadUsers();
   }
 
-  displayName(user: PortalUser): string {
+  /**
+   * The person's name, or null when they have none. Returning the email as a fallback made rows
+   * render the same address twice — once bold as the "name", once grey beneath it — which read as a
+   * rendering bug. The template shows a single line instead when this is null.
+   */
+  displayName(user: PortalUser): string | null {
     const name = [user.firstName, user.lastName].filter(Boolean).join(' ');
-    return name || user.email;
+    return name || null;
+  }
+
+  /** Avatar initial: the name if there is one, otherwise the first letter of the address. */
+  initialFor(user: PortalUser): string {
+    return (this.displayName(user) ?? user.email).charAt(0).toUpperCase();
   }
 
   openCreateModal(): void {

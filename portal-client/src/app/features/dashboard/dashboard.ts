@@ -299,4 +299,13 @@ export class Dashboard {
     const total = t.logins + t.failedLogins;
     return total === 0 ? null : Math.round((t.logins / total) * 100);
   });
+
+  /**
+   * Whether a tile should draw the eye. Only the figures that imply an action — failed sign-ins,
+   * locked accounts — and only once they are actually non-zero. A dashboard where a zero is
+   * highlighted teaches people to ignore the highlight.
+   */
+  needsAttention(alerting: boolean | undefined, value: number | null | undefined): boolean {
+    return !!alerting && !this.loading() && (value ?? 0) > 0;
+  }
 }

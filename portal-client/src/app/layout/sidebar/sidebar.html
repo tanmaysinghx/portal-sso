@@ -1,4 +1,18 @@
-<aside class="fixed inset-y-0 left-0 z-20 flex w-64 flex-col bg-ink-950">
+<!-- Backdrop, phone and tablet only. Above lg the sidebar is part of the layout and there is
+     nothing to dismiss. -->
+@if (open()) {
+  <div
+    class="fixed inset-0 z-30 bg-ink-950/60 backdrop-blur-sm lg:hidden"
+    (click)="dismiss.emit()"
+    aria-hidden="true"
+  ></div>
+}
+
+<aside
+  class="fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-ink-950 transition-transform duration-200 ease-out lg:translate-x-0"
+  [class]="open() ? 'translate-x-0 shadow-2xl' : '-translate-x-full'"
+  [attr.aria-hidden]="null"
+>
   <!-- Brand / Organization Header Lockup -->
   <div class="flex h-16 items-center px-4 border-b border-ink-900/60">
     @if (brandingService.hasCustomLogo()) {
@@ -29,10 +43,20 @@
         </div>
       </div>
     }
+    <button
+      type="button"
+      (click)="dismiss.emit()"
+      class="ml-auto rounded-lg p-1.5 text-ink-400 transition hover:bg-ink-900 hover:text-white lg:hidden"
+      aria-label="Close navigation"
+    >
+      <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
   </div>
 
   <!-- Left Navigation Links -->
-  <nav class="mt-4 flex-1 space-y-0.5 px-3">
+  <nav class="mt-4 flex-1 space-y-0.5 overflow-y-auto px-3">
     <p class="px-3 pb-2 text-[10px] font-semibold uppercase tracking-widest text-ink-600">Manage</p>
 
     <a
