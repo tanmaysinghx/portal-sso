@@ -43,6 +43,7 @@ public enum ErrorCode {
     CLIENT_NOT_FOUND("PRTL-3002", "The requested OAuth client was not found.", HttpStatus.NOT_FOUND),
     INVALID_CLIENT_METADATA("PRTL-3003", "Provided OAuth client metadata is invalid.", HttpStatus.BAD_REQUEST),
     CLIENT_SECRET_UNAVAILABLE("PRTL-3004", "A client secret is shown only once, when the client is created.", HttpStatus.BAD_REQUEST),
+    APPLICATION_NOT_FOUND("PRTL-3005", "The requested application was not found.", HttpStatus.NOT_FOUND),
 
     // =========================================================================
     // 4000 Series: Validation, Formatting & Generic Client Errors

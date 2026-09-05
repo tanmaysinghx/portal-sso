@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { adminGuard } from './core/guards/admin.guard';
+import { authGuard } from './core/guards/auth.guard';
 
 // Every route is lazily loaded. Eagerly importing these put the whole admin console — plus the
 // public product page — into the initial bundle, so an unauthenticated visitor landing on
@@ -25,6 +26,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/register/register').then((m) => m.Register),
   },
   {
+    path: 'apps',
+    loadComponent: () => import('./features/apps/pages/user-apps/user-apps').then((m) => m.UserApps),
+    canActivate: [authGuard],
+  },
+  {
     path: 'forbidden',
     loadComponent: () => import('./features/auth/forbidden/forbidden').then((m) => m.Forbidden),
   },
@@ -37,6 +43,13 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
+      },
+      {
+        path: 'applications',
+        loadComponent: () =>
+          import('./features/applications/pages/application-list/application-list').then(
+            (m) => m.ApplicationList,
+          ),
       },
       {
         path: 'clients',

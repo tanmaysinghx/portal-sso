@@ -32,13 +32,18 @@ public enum AuditAction {
 
     ROLE_CREATED(TargetType.ROLE, "Role created"),
     ROLE_UPDATED(TargetType.ROLE, "Role updated"),
-    ROLE_DELETED(TargetType.ROLE, "Role deleted");
+    ROLE_DELETED(TargetType.ROLE, "Role deleted"),
+
+    APPLICATION_CREATED(TargetType.APPLICATION, "Application added"),
+    APPLICATION_UPDATED(TargetType.APPLICATION, "Application updated"),
+    APPLICATION_DELETED(TargetType.APPLICATION, "Application deleted");
 
     /** What the action operates on. Stored so the log can be filtered by object as well as verb. */
     public enum TargetType {
         USER,
         OAUTH_CLIENT,
-        ROLE
+        ROLE,
+        APPLICATION
     }
 
     private final TargetType targetType;

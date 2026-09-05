@@ -4,22 +4,16 @@ import { map, of } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 
 /**
- * Guards every dashboard route: not logged in -> /sign-in, logged in but not ROLE_ADMIN ->
- * /forbidden. This parent-level guard re-runs on every child navigation within the dashboard
- * (Angular re-evaluates guards up the whole activated-route chain, not just once per subtree
- * entry) — only hit the network the first time; every navigation after that reads the
- * already-resolved signal.
+ * Guards routes requiring an authenticated user (any role).
+ * Unauthenticated visitors are redirected to /sign-in.
  */
-export const adminGuard: CanActivateFn = () => {
+export const authGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
   const decide = () => {
     if (!authService.currentUser()) {
       return router.parseUrl('/sign-in');
-    }
-    if (!authService.isAdmin()) {
-      return router.parseUrl('/apps');
     }
     return true;
   };

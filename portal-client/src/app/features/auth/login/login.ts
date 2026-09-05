@@ -31,8 +31,12 @@ export class Login {
     // it, the login POST below has nothing for the CSRF interceptor to echo back and gets
     // rejected) and as an already-logged-in check.
     this.authService.loadCurrentUser().subscribe((user) => {
-      if (user && this.authService.isAdmin()) {
-        this.router.navigateByUrl('/dashboard');
+      if (user) {
+        if (this.authService.isAdmin()) {
+          this.router.navigateByUrl('/dashboard');
+        } else {
+          this.router.navigateByUrl('/apps');
+        }
       }
     });
 
@@ -49,7 +53,11 @@ export class Login {
       next: (user) => {
         this.submitting.set(false);
         if (user) {
-          this.router.navigateByUrl('/dashboard');
+          if (this.authService.isAdmin()) {
+            this.router.navigateByUrl('/dashboard');
+          } else {
+            this.router.navigateByUrl('/apps');
+          }
         } else {
           this.error.set('Invalid email or password.');
         }

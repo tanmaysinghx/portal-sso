@@ -74,6 +74,20 @@
     </a>
 
     <a
+      routerLink="/applications"
+      routerLinkActive
+      #apps="routerLinkActive"
+      class="relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
+      [class]="apps.isActive ? 'bg-ink-800/70 text-white' : 'text-ink-400 hover:bg-ink-900 hover:text-ink-100'"
+    >
+      <span class="absolute -left-2 h-5 w-0.5 rounded-r bg-brand-500 transition-opacity" [class.opacity-0]="!apps.isActive"></span>
+      <svg class="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+      </svg>
+      Applications
+    </a>
+
+    <a
       routerLink="/clients"
       routerLinkActive
       #clients="routerLinkActive"
@@ -162,6 +176,15 @@
           <p class="text-[10px] text-ink-500">Administrator</p>
         </div>
       </div>
+      <a
+        routerLink="/apps"
+        class="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-ink-800 bg-ink-950 px-3 py-1.5 text-xs font-medium text-ink-300 transition-colors hover:border-ink-700 hover:text-white"
+      >
+        <svg class="h-3.5 w-3.5 text-brand-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+        </svg>
+        My Apps Portal
+      </a>
       <button
         type="button"
         (click)="logout()"
