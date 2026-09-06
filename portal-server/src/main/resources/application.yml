@@ -8,7 +8,7 @@ spring:
         issuer: ${ISSUER_URL:http://localhost:8080}
 
   datasource:
-    url: ${DB_URL:jdbc:h2:file:${PORTAL_HOME:~/.portal-sso}/data/portalsso;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH}
+    url: ${DB_URL:jdbc:h2:file:${PORTAL_HOME:${user.home}/.portal-sso}/data/portalsso;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH}
     username: ${DB_USERNAME:sa}
     password: ${DB_PASSWORD:}
 
