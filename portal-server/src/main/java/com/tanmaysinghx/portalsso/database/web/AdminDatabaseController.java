@@ -40,4 +40,12 @@ public class AdminDatabaseController {
     public ResponseEntity<MigrateDatabaseResponse> migrate(@Valid @RequestBody MigrateDatabaseRequest request) {
         return ResponseEntity.ok(migrationService.migrate(request));
     }
+
+    @PostMapping("/restart")
+    public ResponseEntity<java.util.Map<String, Object>> restart() {
+        migrationService.restartApplication();
+        return ResponseEntity.ok(java.util.Map.of(
+                "success", true,
+                "message", "Application restart initiated. The server will reload momentarily."));
+    }
 }

@@ -18,10 +18,33 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class PortalSsoAuthServerApplication {
 
+	private static org.springframework.context.ConfigurableApplicationContext context;
+	private static String[] savedArgs = new String[0];
+
 	public static void main(String[] args) {
+		savedArgs = args != null ? args : new String[0];
 		String[] normalizedArgs = normalizeArguments(args);
 		initPortalDirectories();
-		SpringApplication.run(PortalSsoAuthServerApplication.class, normalizedArgs);
+		context = SpringApplication.run(PortalSsoAuthServerApplication.class, normalizedArgs);
+	}
+
+	public static void restart() {
+		Thread restartThread = new Thread(() -> {
+			try {
+				Thread.sleep(800);
+				if (context != null) {
+					context.close();
+				}
+				initPortalDirectories();
+				String[] normalizedArgs = normalizeArguments(savedArgs);
+				context = SpringApplication.run(PortalSsoAuthServerApplication.class, normalizedArgs);
+			} catch (Exception e) {
+				// In container environments (e.g. Docker with restart: unless-stopped), exit 0 causes container restart with new config
+				System.exit(0);
+			}
+		}, "portal-sso-restart");
+		restartThread.setDaemon(false);
+		restartThread.start();
 	}
 
 	public static String[] normalizeArguments(String[] args) {

@@ -57,6 +57,8 @@ export class Settings {
   readonly migrating = signal(false);
   readonly migrationResult = signal<MigrateDatabaseResponse | null>(null);
   readonly migrationError = signal<string | null>(null);
+  readonly restarting = signal(false);
+  readonly restartCountdown = signal(6);
 
   // Branding Form State
   readonly companyNameInput = signal('');
@@ -234,6 +236,32 @@ export class Settings {
           this.snackbarService.error('Migration Failed', msg);
         },
       });
+  }
+
+  restartApplication(): void {
+    if (this.restarting()) return;
+    this.restarting.set(true);
+    this.restartCountdown.set(6);
+
+    this.dbMigrationService.restart().subscribe({
+      next: () => {
+        this.runRestartCountdown();
+      },
+      error: () => {
+        // Even if HTTP connection drops due to server shutdown, start the reload countdown
+        this.runRestartCountdown();
+      },
+    });
+  }
+
+  private runRestartCountdown(): void {
+    const interval = setInterval(() => {
+      this.restartCountdown.update((c) => c - 1);
+      if (this.restartCountdown() <= 0) {
+        clearInterval(interval);
+        window.location.reload();
+      }
+    }, 1000);
   }
 
   loadMfaStatus(): void {

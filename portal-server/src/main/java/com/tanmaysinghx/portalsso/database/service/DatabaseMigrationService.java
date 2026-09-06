@@ -268,6 +268,11 @@ public class DatabaseMigrationService {
         return AdminBootstrapper.resolvePortalHome().resolve("portal.properties").toAbsolutePath().toString();
     }
 
+    public void restartApplication() {
+        log.info("Triggering application restart requested via admin database management...");
+        com.tanmaysinghx.portalsso.PortalSsoAuthServerApplication.restart();
+    }
+
     private void savePropertiesFile(String targetUrl, String username, String password) {
         try {
             Path portalHome = AdminBootstrapper.resolvePortalHome();
@@ -283,6 +288,11 @@ public class DatabaseMigrationService {
             }
             if (password != null) {
                 sb.append("spring.datasource.password=").append(password).append("\n");
+            }
+            if (targetUrl != null && (targetUrl.toLowerCase(Locale.ROOT).contains("mysql") || targetUrl.toLowerCase(Locale.ROOT).contains("mariadb"))) {
+                sb.append("spring.profiles.include=mysql\n");
+                sb.append("spring.jpa.properties.hibernate.type.preferred_boolean_jdbc_type=TINYINT\n");
+                sb.append("spring.datasource.hikari.connection-init-sql=SET SESSION sql_require_primary_key=0\n");
             }
 
             Files.writeString(

@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { BrandingService } from '../../../core/services/branding.service';
 import { RegistrationService } from '../../../core/services/registration.service';
+import { SetupService } from '../../../core/services/setup.service';
 
 @Component({
   selector: 'app-login',
@@ -14,6 +15,7 @@ export class Login {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly registrationService = inject(RegistrationService);
+  private readonly setupService = inject(SetupService);
   readonly brandingService = inject(BrandingService);
 
   /** Drives the "Create one" link — self-registration is off unless the server says otherwise. */
@@ -21,15 +23,20 @@ export class Login {
 
   readonly email = signal('');
   readonly password = signal('');
+  readonly confirmPassword = signal('');
+  readonly firstName = signal('');
+  readonly lastName = signal('');
   readonly rememberMe = signal(false);
   readonly submitting = signal(false);
   readonly error = signal<string | null>(null);
+  readonly successMessage = signal<string | null>(null);
+
+  /** First-Run Setup Wizard state */
+  readonly setupRequired = signal(false);
+  readonly setupLoading = signal(true);
+  readonly databaseType = signal('');
 
   constructor() {
-    // This is the SPA's first contact with the backend on a fresh visit — nothing else runs
-    // before the user reaches this page. It doubles as priming the XSRF-TOKEN cookie (without
-    // it, the login POST below has nothing for the CSRF interceptor to echo back and gets
-    // rejected) and as an already-logged-in check.
     this.authService.loadCurrentUser().subscribe((user) => {
       if (user) {
         if (this.authService.isAdmin()) {
@@ -40,13 +47,21 @@ export class Login {
       }
     });
 
-    // Asked rather than assumed: registration is off by default, so linking to /sign-up
-    // unconditionally would send most users to a page that immediately bounces them back.
+    this.setupService.getStatus().subscribe({
+      next: (status) => {
+        this.setupRequired.set(status.setupRequired);
+        this.databaseType.set(status.databaseType);
+        this.setupLoading.set(false);
+      },
+      error: () => this.setupLoading.set(false),
+    });
+
     this.registrationService.loadPolicy().subscribe();
   }
 
   submit(): void {
     this.error.set(null);
+    this.successMessage.set(null);
     this.submitting.set(true);
 
     this.authService.login(this.email(), this.password(), this.rememberMe()).subscribe({
@@ -65,6 +80,56 @@ export class Login {
       error: () => {
         this.submitting.set(false);
         this.error.set('Invalid email or password.');
+      },
+    });
+  }
+
+  submitSetup(): void {
+    this.error.set(null);
+    this.successMessage.set(null);
+
+    if (!this.email() || !this.password()) {
+      this.error.set('Email and password are required.');
+      return;
+    }
+    if (this.password() !== this.confirmPassword()) {
+      this.error.set('Passwords do not match.');
+      return;
+    }
+    if (this.password().length < 12) {
+      this.error.set('Administrator password must be at least 12 characters.');
+      return;
+    }
+
+    this.submitting.set(true);
+    this.setupService.initialize({
+      email: this.email(),
+      password: this.password(),
+      firstName: this.firstName(),
+      lastName: this.lastName(),
+    }).subscribe({
+      next: () => {
+        this.authService.login(this.email(), this.password(), true).subscribe({
+          next: (user) => {
+            this.submitting.set(false);
+            if (user) {
+              this.router.navigateByUrl('/dashboard');
+            } else {
+              this.setupRequired.set(false);
+              this.successMessage.set('Administrator account configured successfully! Please sign in.');
+            }
+          },
+          error: () => {
+            this.submitting.set(false);
+            this.setupRequired.set(false);
+            this.successMessage.set('Administrator account configured successfully! Please sign in.');
+          },
+        });
+      },
+      error: (err) => {
+        this.submitting.set(false);
+        const msg = err.error?.message || err.error?.error || 'Setup initialization failed. Please verify password requirements and try again.';
+        this.error.set(msg);
       },
     });
   }

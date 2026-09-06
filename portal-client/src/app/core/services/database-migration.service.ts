@@ -69,4 +69,8 @@ export class DatabaseMigrationService {
   migrate(req: MigrateDatabaseRequest): Observable<MigrateDatabaseResponse> {
     return this.http.post<MigrateDatabaseResponse>(`${this.baseUrl}/migrate`, req);
   }
+
+  restart(): Observable<{ success: boolean; message: string }> {
+    return this.http.post<{ success: boolean; message: string }>(`${this.baseUrl}/restart`, {});
+  }
 }
