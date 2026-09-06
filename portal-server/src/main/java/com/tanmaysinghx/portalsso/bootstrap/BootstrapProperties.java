@@ -3,20 +3,25 @@ package com.tanmaysinghx.portalsso.bootstrap;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * Credentials for the first administrator, supplied by the operator.
+ * Credentials for the first administrator, supplied by the operator or auto-generated.
  *
- * <p>Both default to null and nothing happens unless both are set, so there is never a default
- * administrator and never a password baked into the product. That is the whole design: an account
- * exists only because an operator deliberately asked for one, with a password they chose.
+ * <p>When credentials are not configured, autoGenerate (if enabled) automatically provisions an
+ * initial administrator with a high-entropy password saved to secrets/initialAdminPassword,
+ * mirroring Jenkins LTS first-run behavior.
  *
  * @param adminEmail e.g. {@code APP_BOOTSTRAP_ADMIN_EMAIL}
  * @param adminPassword e.g. {@code APP_BOOTSTRAP_ADMIN_PASSWORD}
+ * @param autoGenerate e.g. {@code APP_BOOTSTRAP_AUTO_GENERATE} (default false in test profile)
  */
 @ConfigurationProperties(prefix = "app.bootstrap")
-public record BootstrapProperties(String adminEmail, String adminPassword) {
+public record BootstrapProperties(String adminEmail, String adminPassword, Boolean autoGenerate) {
 
     public boolean isConfigured() {
         return adminEmail != null && !adminEmail.isBlank()
                 && adminPassword != null && !adminPassword.isBlank();
+    }
+
+    public boolean shouldAutoGenerate() {
+        return Boolean.TRUE.equals(autoGenerate);
     }
 }

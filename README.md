@@ -37,7 +37,55 @@ portal-sso/
 
 ---
 
-## Setting up for the first time
+## Direct Download & Run (Jenkins LTS Style)
+
+Just like running Jenkins LTS (`jenkins.war`), you can download and run Portal SSO directly as a self-contained executable with **zero external dependencies** — no Docker and no external PostgreSQL required.
+
+### 1. Download & Run
+```bash
+# Direct download (Requires Java 25+)
+curl -LO https://github.com/tanmaysinghx/portal-sso/releases/latest/download/portal-sso.jar
+
+# Run on default port 8080 or custom port
+java -jar portal-sso.jar --httpPort=8080
+```
+
+Or using the automated installer:
+```bash
+curl -fsSL https://raw.githubusercontent.com/tanmaysinghx/portal-sso/main/install.sh | bash
+```
+
+### 2. Unlock Portal SSO (initialAdminPassword)
+On first launch without configured credentials, Portal SSO automatically creates an embedded database in `~/.portal-sso`, sets up platform roles, provisions an initial administrator, and prints a secure unlock password:
+
+```
+*************************************************************
+Portal SSO initial setup is required. An admin user has been created:
+
+  Username: admin@localhost
+  Password: <generated_random_password>
+
+This password has also been written to:
+  ~/.portal-sso/secrets/initialAdminPassword
+
+Please sign in at http://localhost:8080 to complete setup.
+*************************************************************
+```
+
+Sign in at `http://localhost:8080` with `admin@localhost` and the generated password. See [docs/download.md](docs/download.md) for systemd daemon and production setup.
+
+### 3. Seamless In-App Database Migration (PostgreSQL / MySQL)
+Once logged in as an administrator:
+1. An alert banner will highlight that you are currently running on embedded H2 storage.
+2. Navigate to **Settings** &rarr; **Database & Migration** (`/settings?tab=database`).
+3. Select **PostgreSQL** (default port `5432`) or **MySQL** (default port `3306`), and enter your target connection credentials.
+4. Click **Test Target Connection** to verify reachability and credentials.
+5. Click **Migrate to Target Database** to automatically execute Liquibase schema migrations and transfer all user accounts, OAuth applications, signing keys, and audit logs.
+6. The target configuration is automatically saved to `~/.portal-sso/portal.properties` for seamless subsequent restarts.
+
+---
+
+## Setting up with Docker Compose (Alternative)
 
 Every command below was run end to end against a clean checkout; the output shown is what it
 actually printed.

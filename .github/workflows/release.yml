@@ -1,0 +1,83 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag (e.g. v25.0.0-lts)'
+        required: true
+        default: 'v25.0.0-lts'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Publish Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: temurin
+          cache: maven
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: portal-client/package-lock.json
+
+      - name: Install console dependencies
+        working-directory: portal-client
+        run: npm ci
+
+      - name: Build console
+        working-directory: portal-client
+        run: npm run build
+
+      - name: Build and package executable JAR
+        working-directory: portal-server
+        run: ./mvnw -B -DskipTests package
+
+      - name: Generate Checksums
+        run: |
+          cd portal-server/target
+          sha256sum portal-sso.jar > portal-sso.jar.sha256
+          echo "SHA256: $(cat portal-sso.jar.sha256)"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
+          name: Portal SSO ${{ github.event.inputs.tag_name || github.ref_name }} (LTS 25)
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            portal-server/target/portal-sso.jar
+            portal-server/target/portal-sso.jar.sha256
+          body: |
+            ## Portal SSO Standalone Executable (Jenkins LTS Style)
+
+            ### Direct Download
+            - **[portal-sso.jar](https://github.com/${{ github.repository }}/releases/download/${{ github.event.inputs.tag_name || github.ref_name }}/portal-sso.jar)** (Standalone Fat JAR, includes Angular Console SPA)
+            - **[portal-sso.jar.sha256](https://github.com/${{ github.repository }}/releases/download/${{ github.event.inputs.tag_name || github.ref_name }}/portal-sso.jar.sha256)**
+
+            ### Quick Start (Java 25+)
+            ```bash
+            # 1. Download
+            curl -LO https://github.com/${{ github.repository }}/releases/download/${{ github.event.inputs.tag_name || github.ref_name }}/portal-sso.jar
+
+            # 2. Run
+            java -jar portal-sso.jar --httpPort=8080
+            ```
+
+            On first boot, the server initializes an embedded persistent database and displays your `initialAdminPassword` directly in the terminal!

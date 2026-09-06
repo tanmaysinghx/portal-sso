@@ -12,6 +12,8 @@ import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
@@ -55,7 +57,18 @@ public class MfaEncryptionService {
     private final SecureRandom secureRandom = new SecureRandom();
 
     public MfaEncryptionService(MfaEncryptionProperties properties) {
-        this.activeKey = properties.hasEncryptionKey() ? deriveKey(properties.encryptionKey()) : null;
+        this(properties, false);
+    }
+
+    @Autowired
+    public MfaEncryptionService(
+            MfaEncryptionProperties properties,
+            @Value("${app.security.mfa.auto-generate-key:true}") boolean autoGenerateKey) {
+        String key = properties.encryptionKey();
+        if ((key == null || key.isBlank()) && autoGenerateKey) {
+            key = resolveOrGenerateLocalKey();
+        }
+        this.activeKey = (key != null && !key.isBlank()) ? deriveKey(key) : null;
 
         List<SecretKey> fallbacks = new ArrayList<>();
         if (properties.hasPreviousEncryptionKey()) {
@@ -64,6 +77,36 @@ public class MfaEncryptionService {
         fallbacks.add(deriveKey(RETIRED_DEFAULT_KEY));
         this.migrationKeys = List.copyOf(fallbacks);
     }
+
+    private String resolveOrGenerateLocalKey() {
+        try {
+            java.nio.file.Path secretsDir = com.tanmaysinghx.portalsso.bootstrap.AdminBootstrapper.resolvePortalHome().resolve("secrets");
+            java.nio.file.Files.createDirectories(secretsDir);
+            java.nio.file.Path keyFile = secretsDir.resolve("mfa.key");
+            if (java.nio.file.Files.exists(keyFile)) {
+                String existing = java.nio.file.Files.readString(keyFile, StandardCharsets.UTF_8).trim();
+                if (!existing.isEmpty()) {
+                    return existing;
+                }
+            }
+            byte[] bytes = new byte[32];
+            new SecureRandom().nextBytes(bytes);
+            String generated = Base64.getEncoder().encodeToString(bytes);
+            java.nio.file.Files.writeString(keyFile, generated, StandardCharsets.UTF_8,
+                    java.nio.file.StandardOpenOption.CREATE,
+                    java.nio.file.StandardOpenOption.TRUNCATE_EXISTING,
+                    java.nio.file.StandardOpenOption.WRITE);
+            try {
+                java.nio.file.Files.setPosixFilePermissions(keyFile,
+                        java.nio.file.attribute.PosixFilePermissions.fromString("rw-------"));
+            } catch (UnsupportedOperationException ignored) {
+            }
+            return generated;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
 
     public boolean isConfigured() {
         return activeKey != null;

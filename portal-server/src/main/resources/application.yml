@@ -8,9 +8,9 @@ spring:
         issuer: ${ISSUER_URL:http://localhost:8080}
 
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/portalsso}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
+    url: ${DB_URL:jdbc:h2:file:${PORTAL_HOME:~/.portal-sso}/data/portalsso;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
 
   jpa:
     open-in-view: false
@@ -57,7 +57,7 @@ server:
     session:
       cookie:
         http-only: true
-        secure: true
+        secure: ${SERVER_SERVLET_SESSION_COOKIE_SECURE:false}
         same-site: lax
 
 app:
@@ -74,8 +74,9 @@ app:
     #
     # Remove them once you have signed in: while they are set, anyone who can read your
     # configuration knows this account's password.
-    admin-email:
-    admin-password:
+    admin-email: ${APP_BOOTSTRAP_ADMIN_EMAIL:}
+    admin-password: ${APP_BOOTSTRAP_ADMIN_PASSWORD:}
+    auto-generate: ${APP_BOOTSTRAP_AUTO_GENERATE:true}
 
   seed:
     # Dev/test convenience only: seeds a test user, an admin user, and a hardcoded PKCE-only
@@ -101,6 +102,7 @@ app:
       # Losing this key means every enrolled user must re-enrol, so back it up with your database
       # credentials. Supply it as APP_SECURITY_MFA_ENCRYPTION_KEY.
       encryption-key: ${APP_SECURITY_MFA_ENCRYPTION_KEY:}
+      auto-generate-key: ${APP_SECURITY_MFA_AUTO_GENERATE_KEY:true}
       # Set only while rotating: secrets still readable under it are re-encrypted with the active
       # key at startup, after which this can be removed.
       previous-encryption-key: ${APP_SECURITY_MFA_PREVIOUS_ENCRYPTION_KEY:}

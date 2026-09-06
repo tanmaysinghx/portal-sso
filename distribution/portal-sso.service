@@ -1,0 +1,27 @@
+[Unit]
+Description=Portal SSO - Self-Hosted OAuth2/OIDC Identity Provider
+Documentation=https://github.com/tanmaysinghx/portal-sso
+After=network.target
+
+[Service]
+Type=simple
+User=portal
+Group=portal
+Environment="PORTAL_HOME=/var/lib/portal-sso"
+Environment="JAVA_OPTS=-XX:MaxRAMPercentage=75.0"
+ExecStart=/usr/bin/java $JAVA_OPTS -jar /opt/portal-sso/portal-sso.jar --portalHome=/var/lib/portal-sso
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+LimitNOFILE=65536
+
+# Sandboxing & security hardening
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/portal-sso /var/log/portal-sso
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

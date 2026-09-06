@@ -27,3 +27,6 @@ public record MfaEncryptionProperties(String encryptionKey, String previousEncry
         return previousEncryptionKey != null && !previousEncryptionKey.isBlank();
     }
 }
+
+
+
