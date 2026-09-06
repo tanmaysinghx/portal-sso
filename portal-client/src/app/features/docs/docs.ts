@@ -29,13 +29,88 @@ export class Docs {
   readonly copied = signal<string | null>(null);
 
   readonly sections: DocSection[] = [
-    { id: 'quickstart', title: 'Quick start' },
+    { id: 'setup-docker', title: 'Setup with Docker' },
+    { id: 'setup-standalone', title: 'Setup without Docker (JAR)' },
+    { id: 'setup-wizard', title: 'First-run setup wizard' },
+    { id: 'database-migration', title: 'Database migration' },
+    { id: 'quickstart', title: 'Quick start (OIDC)' },
     { id: 'oidc', title: 'OIDC endpoints' },
     { id: 'flow', title: 'Authorization flow' },
     { id: 'admin-api', title: 'Admin API' },
     { id: 'registration', title: 'Self-registration' },
-    { id: 'config', title: 'Configuration' },
+    { id: 'config', title: 'Configuration reference' },
   ];
+
+  readonly dockerSingleSnippet = `# 1. Pull and run in 1 command (embedded database + web setup)
+docker run -d \\
+  --name portal-sso \\
+  --restart unless-stopped \\
+  -p 8080:8080 \\
+  -v portal-sso-data:/root/.portal-sso \\
+  tanmaysinghx/portal-sso:latest
+
+# 2. Open http://localhost:8080 in your browser to complete setup!`;
+
+  readonly dockerComposeSnippet = `services:
+  portal-sso:
+    image: tanmaysinghx/portal-sso:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/portalsso
+      DB_USERNAME: portal
+      DB_PASSWORD: your_db_password
+      ISSUER_URL: https://sso.yourdomain.com
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - portal-data:/root/.portal-sso
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: portalsso
+      POSTGRES_USER: portal
+      POSTGRES_PASSWORD: your_db_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portal -d portalsso"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+volumes:
+  portal-data:
+  db-data:`;
+
+  readonly standaloneJarSnippet = `# 1. Download the standalone fat JAR
+curl -LO https://github.com/tanmaysinghx/portal-sso/releases/latest/download/portal-sso.jar
+
+# 2. Run with standard Java 25 (Zero dependencies required)
+java -jar portal-sso.jar --httpPort=8080
+
+# Or customize home directory and port:
+java -jar portal-sso.jar --httpPort=8090 --portalHome=/var/lib/portal-sso`;
+
+  readonly systemdSnippet = `[Unit]
+Description=Portal SSO Identity Provider
+After=network.target
+
+[Service]
+Type=simple
+User=portal
+WorkingDirectory=/var/lib/portal-sso
+ExecStart=/usr/bin/java -jar /opt/portal-sso/portal-sso.jar --httpPort=8080 --portalHome=/var/lib/portal-sso
+Restart=always
+RestartSec=5
+Environment="PORTAL_HOME=/var/lib/portal-sso"
+
+[Install]
+WantedBy=multi-user.target`;
 
   /** Fixed by Spring Authorization Server; only the origin changes per deployment. */
   readonly oidcEndpoints: Endpoint[] = [
