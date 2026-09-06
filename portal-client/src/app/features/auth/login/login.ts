@@ -5,6 +5,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { BrandingService } from '../../../core/services/branding.service';
 import { RegistrationService } from '../../../core/services/registration.service';
 import { SetupService } from '../../../core/services/setup.service';
+import { ThemeService } from '../../../core/services/theme.service';
 
 @Component({
   selector: 'app-login',
@@ -17,6 +18,7 @@ export class Login {
   private readonly registrationService = inject(RegistrationService);
   private readonly setupService = inject(SetupService);
   readonly brandingService = inject(BrandingService);
+  readonly themeService = inject(ThemeService);
 
   /** Drives the "Create one" link — self-registration is off unless the server says otherwise. */
   readonly registrationPolicy = this.registrationService.policy;

@@ -1,5 +1,6 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { ThemeService } from '../../core/services/theme.service';
 
 interface Endpoint {
   method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -26,6 +27,7 @@ interface DocSection {
   templateUrl: './docs.html',
 })
 export class Docs {
+  readonly themeService = inject(ThemeService);
   readonly copied = signal<string | null>(null);
 
   readonly sections: DocSection[] = [

@@ -19,19 +19,19 @@
       </a>
 
       <nav class="hidden items-center gap-6 md:flex">
+        <a href="#download" class="text-xs font-semibold text-amber-400 transition hover:text-amber-300">Download</a>
         <a href="#showcase" class="text-xs font-medium text-zinc-400 transition hover:text-white">Screenshots</a>
         <a href="#features" class="text-xs font-medium text-zinc-400 transition hover:text-white">Capabilities</a>
-        <a href="#architecture" class="text-xs font-medium text-zinc-400 transition hover:text-white">Architecture</a>
-        <a href="#quickstart" class="text-xs font-medium text-zinc-400 transition hover:text-white">Quick Start</a>
-        <a href="#endpoints" class="text-xs font-medium text-zinc-400 transition hover:text-white">Endpoints</a>
+        <a routerLink="/docs" class="text-xs font-medium text-zinc-400 transition hover:text-white">Documentation</a>
+        <a href="#endpoints" class="text-xs font-medium text-zinc-400 transition hover:text-white">OIDC Endpoints</a>
       </nav>
 
       <div class="flex items-center gap-3">
         <a
-          routerLink="/sign-in"
-          class="rounded-lg border border-zinc-700/80 bg-zinc-900/90 px-3.5 py-1.5 text-xs font-semibold text-zinc-200 shadow-sm transition hover:border-zinc-600 hover:bg-zinc-800 hover:text-white"
+          routerLink="/docs"
+          class="hidden sm:inline-flex rounded-lg border border-zinc-700/80 bg-zinc-900/90 px-3.5 py-1.5 text-xs font-semibold text-zinc-200 shadow-sm transition hover:border-zinc-600 hover:bg-zinc-800 hover:text-white"
         >
-          Sign In
+          Docs
         </a>
         <a
           routerLink="/sign-in"
@@ -48,14 +48,14 @@
 
   <main class="relative z-10">
     <!-- Hero Section -->
-    <section class="mx-auto max-w-7xl px-4 pt-16 pb-20 sm:px-6 lg:px-8">
+    <section class="mx-auto max-w-7xl px-4 pt-16 pb-16 sm:px-6 lg:px-8">
       <div class="mx-auto max-w-4xl text-center">
         <!-- Pill Badge -->
         <div class="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3.5 py-1 text-xs font-medium text-amber-300 backdrop-blur">
           <span class="flex h-2 w-2 rounded-full bg-amber-400 animate-ping"></span>
           <span>OAuth 2.1 & OpenID Connect 1.0 Identity Server</span>
           <span class="text-amber-500/60">•</span>
-          <span class="text-zinc-400">Single JAR Deployment</span>
+          <span class="text-zinc-400">{{ version }} {{ releaseChannel }}</span>
         </div>
 
         <h1 class="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
@@ -66,14 +66,24 @@
         </h1>
 
         <p class="mt-6 text-base text-zinc-400 sm:text-lg leading-relaxed max-w-2xl mx-auto">
-          Portal SSO is a production-grade OAuth 2.1 / OIDC identity provider and unified admin console. Featuring persistent RSA key rotation, clustered JDBC sessions, PKCE security, and an embedded Angular 21 console.
+          Portal SSO is a production-grade OAuth 2.1 / OIDC identity provider and unified admin console. Featuring dynamic database migrations, zero-terminal setup wizard, TOTP 2FA, enterprise applications launchpad, and standalone fat JAR distribution like Jenkins.
         </p>
 
         <!-- CTA Buttons -->
         <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
           <a
-            routerLink="/sign-in"
+            href="#download"
             class="flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-6 py-3 text-sm font-semibold text-zinc-950 shadow-xl shadow-amber-500/25 transition hover:scale-[1.02] hover:brightness-110 active:scale-[0.98]"
+          >
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.5V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            <span>Download {{ version }}</span>
+          </a>
+
+          <a
+            routerLink="/sign-in"
+            class="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900/90 px-6 py-3 text-sm font-semibold text-zinc-200 backdrop-blur transition hover:border-zinc-600 hover:bg-zinc-800 hover:text-white"
           >
             <span>Launch Admin Console</span>
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -82,13 +92,10 @@
           </a>
 
           <a
-            href="#showcase"
-            class="flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900/80 px-6 py-3 text-sm font-semibold text-zinc-200 backdrop-blur transition hover:border-zinc-700 hover:bg-zinc-800 hover:text-white"
+            routerLink="/docs"
+            class="flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900/50 px-5 py-3 text-sm font-medium text-zinc-400 backdrop-blur transition hover:border-zinc-700 hover:bg-zinc-800 hover:text-white"
           >
-            <span>View Screenshots & Demo</span>
-            <svg class="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-            </svg>
+            <span>Read Docs</span>
           </a>
         </div>
 
@@ -104,7 +111,7 @@
           </div>
           <div class="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1 text-xs text-zinc-300">
             <span class="h-2 w-2 rounded-full bg-blue-400"></span>
-            Java 25 & JPA
+            Java 25 Runtime
           </div>
           <div class="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1 text-xs text-zinc-300">
             <span class="h-2 w-2 rounded-full bg-amber-400"></span>
@@ -112,7 +119,209 @@
           </div>
           <div class="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-1 text-xs text-zinc-300">
             <span class="h-2 w-2 rounded-full bg-purple-400"></span>
-            2048-bit RSA Keystore
+            TOTP 2FA (RFC 6238)
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Jenkins-Style Download Section -->
+    <section id="download" class="scroll-mt-20 mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 border-t border-zinc-900">
+      <div class="text-center max-w-3xl mx-auto mb-12">
+        <div class="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3.5 py-1 text-xs font-semibold text-amber-400 mb-3">
+          <span class="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          Standalone FAT JAR & Multi-Platform Distribution
+        </div>
+        <h2 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+          Download Portal SSO
+        </h2>
+        <p class="mt-3 text-sm text-zinc-400">
+          Self-contained, production-grade identity server. Runs anywhere with zero separate application containers, just like Jenkins.
+        </p>
+      </div>
+
+      <!-- Main Download Showcase Banner -->
+      <div class="mx-auto max-w-5xl overflow-hidden rounded-3xl border border-amber-500/30 bg-gradient-to-br from-zinc-900/90 via-zinc-950 to-zinc-900/90 p-8 sm:p-10 shadow-2xl shadow-amber-500/5 backdrop-blur-xl">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div class="lg:col-span-7 space-y-5">
+            <div class="flex items-center gap-3">
+              <span class="rounded-lg bg-amber-500/20 border border-amber-500/30 px-3 py-1 text-xs font-bold text-amber-300">
+                {{ version }}
+              </span>
+              <span class="text-xs font-medium text-emerald-400 flex items-center gap-1.5">
+                <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+                {{ releaseChannel }}
+              </span>
+              <span class="text-xs text-zinc-500">| {{ jarFileSize }}</span>
+            </div>
+
+            <div>
+              <h3 class="text-2xl font-bold text-white tracking-tight">
+                Generic Java Package (.jar)
+              </h3>
+              <p class="mt-2 text-xs leading-relaxed text-zinc-400">
+                Standalone executable fat JAR containing the Spring Boot 4 backend, Liquibase migration engine, and compiled Angular 21 administrative dashboard. Runs out of the box on Linux, macOS, and Windows.
+              </p>
+            </div>
+
+            <!-- Direct Download Button -->
+            <div class="pt-2 flex flex-wrap items-center gap-4">
+              <a
+                [href]="jarDownloadUrl"
+                download="portal-sso.jar"
+                class="flex items-center gap-3 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-orange-500 px-6 py-3.5 text-sm font-bold text-zinc-950 shadow-lg shadow-amber-500/25 transition hover:scale-[1.02] hover:brightness-110 active:scale-[0.98] cursor-pointer"
+              >
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.5V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+                <span>Download portal-sso.jar</span>
+              </a>
+
+              <button
+                type="button"
+                (click)="copyChecksum()"
+                class="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900/80 px-4 py-3.5 text-xs font-medium text-zinc-300 transition hover:border-zinc-500 hover:text-white cursor-pointer"
+              >
+                @if (copiedChecksum()) {
+                  <span class="text-emerald-400 font-semibold">Checksum Copied!</span>
+                } @else {
+                  <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Copy SHA-256</span>
+                }
+              </button>
+            </div>
+
+            <!-- Checksum & Requirements details -->
+            <div class="space-y-1.5 pt-1 text-[11px] font-mono text-zinc-500">
+              <div class="flex items-center gap-2 truncate">
+                <span class="text-zinc-400 font-semibold">SHA-256:</span>
+                <span class="text-zinc-400 truncate select-all">{{ jarChecksum }}</span>
+              </div>
+              <div class="flex items-center gap-2 text-zinc-400">
+                <span class="font-semibold">Prerequisite:</span>
+                <span>Java 25+ (OpenJDK, Eclipse Temurin, Amazon Corretto)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Terminal Run Box -->
+          <div class="lg:col-span-5">
+            <div class="rounded-2xl border border-zinc-800 bg-zinc-950 p-4 shadow-xl">
+              <div class="flex items-center justify-between border-b border-zinc-800/80 pb-2.5 mb-3">
+                <span class="text-[11px] font-medium uppercase tracking-wider text-amber-400 font-mono">Quick Run (1 Command)</span>
+                <button
+                  type="button"
+                  (click)="copySnippetText('java -jar portal-sso.jar --httpPort=8080', 'quickJar')"
+                  class="text-[11px] text-zinc-400 hover:text-white transition cursor-pointer"
+                >
+                  {{ copiedSnippet() === 'quickJar' ? 'Copied!' : 'Copy' }}
+                </button>
+              </div>
+              <pre class="font-mono text-xs text-emerald-400 overflow-x-auto leading-relaxed"><code># Run FAT JAR directly
+java -jar portal-sso.jar \
+  --httpPort=8080
+
+# Or customize data home dir:
+java -jar portal-sso.jar \
+  --httpPort=8090 \
+  --portalHome=/var/lib/portal-sso</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Installation Flavors Matrix (Jenkins Style) -->
+      <div class="mt-12 mx-auto max-w-5xl">
+        <h3 class="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-4 text-center">
+          Other Installation Flavors & Platforms
+        </h3>
+
+        <!-- Flavor Selector Tabs -->
+        <div class="flex flex-wrap items-center justify-center gap-2 mb-6">
+          <button
+            type="button"
+            (click)="activeDownloadFlavor.set('jar')"
+            class="rounded-xl px-4 py-2 text-xs font-semibold transition cursor-pointer"
+            [class]="activeDownloadFlavor() === 'jar'
+              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+              : 'border border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:text-white'"
+          >
+            Standalone JAR
+          </button>
+          <button
+            type="button"
+            (click)="activeDownloadFlavor.set('docker')"
+            class="rounded-xl px-4 py-2 text-xs font-semibold transition cursor-pointer"
+            [class]="activeDownloadFlavor() === 'docker'
+              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+              : 'border border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:text-white'"
+          >
+            Docker Container
+          </button>
+          <button
+            type="button"
+            (click)="activeDownloadFlavor.set('compose')"
+            class="rounded-xl px-4 py-2 text-xs font-semibold transition cursor-pointer"
+            [class]="activeDownloadFlavor() === 'compose'
+              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+              : 'border border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:text-white'"
+          >
+            Docker Compose (Postgres)
+          </button>
+          <button
+            type="button"
+            (click)="activeDownloadFlavor.set('systemd')"
+            class="rounded-xl px-4 py-2 text-xs font-semibold transition cursor-pointer"
+            [class]="activeDownloadFlavor() === 'systemd'
+              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+              : 'border border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:text-white'"
+          >
+            Linux Systemd Service
+          </button>
+        </div>
+
+        <!-- Flavor Code Box -->
+        <div class="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl">
+          <div class="flex items-center justify-between border-b border-zinc-800 bg-zinc-900/90 px-4 py-2.5">
+            <span class="text-xs font-mono text-zinc-400">
+              @if (activeDownloadFlavor() === 'jar') { Generic Java Executable (Jenkins Style) }
+              @if (activeDownloadFlavor() === 'docker') { Docker Hub Single Container }
+              @if (activeDownloadFlavor() === 'compose') { Production Docker Compose Stack }
+              @if (activeDownloadFlavor() === 'systemd') { Systemd Service Unit File (/etc/systemd/system/portal-sso.service) }
+            </span>
+            <button
+              type="button"
+              (click)="copySnippetText(
+                activeDownloadFlavor() === 'jar' ? standaloneJarSnippet :
+                activeDownloadFlavor() === 'docker' ? dockerSnippet :
+                activeDownloadFlavor() === 'compose' ? dockerComposeSnippet :
+                systemdSnippet,
+                activeDownloadFlavor()
+              )"
+              class="flex items-center gap-1.5 rounded border border-zinc-700 bg-zinc-800/80 px-2.5 py-1 text-[11px] font-medium text-zinc-300 transition hover:border-zinc-500 hover:text-white cursor-pointer"
+            >
+              @if (copiedSnippet() === activeDownloadFlavor()) {
+                <span class="text-emerald-400 font-semibold">Copied!</span>
+              } @else {
+                <span>Copy Instructions</span>
+              }
+            </button>
+          </div>
+          <div class="p-5 font-mono text-xs overflow-x-auto text-zinc-300">
+            @if (activeDownloadFlavor() === 'jar') {
+              <pre class="leading-relaxed"><code>{{ standaloneJarSnippet }}</code></pre>
+            }
+            @if (activeDownloadFlavor() === 'docker') {
+              <pre class="leading-relaxed"><code>{{ dockerSnippet }}</code></pre>
+            }
+            @if (activeDownloadFlavor() === 'compose') {
+              <pre class="leading-relaxed"><code>{{ dockerComposeSnippet }}</code></pre>
+            }
+            @if (activeDownloadFlavor() === 'systemd') {
+              <pre class="leading-relaxed"><code>{{ systemdSnippet }}</code></pre>
+            }
           </div>
         </div>
       </div>
@@ -188,10 +397,107 @@
               <div class="rounded-xl border border-zinc-800/80 bg-zinc-900/60 p-4">
                 <h4 class="text-sm font-semibold text-white flex items-center gap-2">
                   <span class="h-2 w-2 rounded-full bg-amber-400"></span>
-                  Admin Dashboard & Real-Time Metrics
+                  Admin Dashboard & Real-Time Telemetry
                 </h4>
                 <p class="mt-1 text-xs text-zinc-400">
-                  Displays live counts for registered OAuth 2.1 clients, total users, active accounts, 7-day session distribution graphs, and quick endpoints to integrate client applications.
+                  Displays live counts for registered OAuth 2.1 clients, total users, active accounts, 7-day session distribution graphs, MaxMind Geo-IP location tracking, and quick endpoints to integrate client applications.
+                </p>
+              </div>
+            </div>
+          }
+
+          @if (activeTab() === 'launchpad') {
+            <!-- Interactive Apps Launchpad Preview -->
+            <div class="space-y-4">
+              <div class="rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 space-y-4">
+                <div class="flex items-center justify-between border-b border-zinc-800/80 pb-3">
+                  <div>
+                    <h5 class="text-sm font-semibold text-white">Your Authorized Applications</h5>
+                    <p class="text-xs text-zinc-400">Click any app to launch with automatic Single Sign-On</p>
+                  </div>
+                  <span class="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 text-[11px] font-medium text-emerald-400">
+                    4 Apps Available
+                  </span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div class="rounded-xl border border-zinc-800 bg-zinc-900/80 p-4 transition hover:border-amber-500/40 hover:bg-zinc-800/50">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20 font-bold text-sm">
+                          JK
+                        </div>
+                        <div>
+                          <h6 class="text-xs font-semibold text-white">Jenkins CI/CD</h6>
+                          <span class="text-[10px] text-zinc-500">DevOps & Automation</span>
+                        </div>
+                      </div>
+                      <span class="rounded-lg bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 text-[11px] font-semibold text-amber-300">
+                        Launch SSO →
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="rounded-xl border border-zinc-800 bg-zinc-900/80 p-4 transition hover:border-amber-500/40 hover:bg-zinc-800/50">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold text-sm">
+                          GF
+                        </div>
+                        <div>
+                          <h6 class="text-xs font-semibold text-white">Grafana Dashboards</h6>
+                          <span class="text-[10px] text-zinc-500">Telemetry & Metrics</span>
+                        </div>
+                      </div>
+                      <span class="rounded-lg bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 text-[11px] font-semibold text-amber-300">
+                        Launch SSO →
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="rounded-xl border border-zinc-800 bg-zinc-900/80 p-4 transition hover:border-amber-500/40 hover:bg-zinc-800/50">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold text-sm">
+                          GL
+                        </div>
+                        <div>
+                          <h6 class="text-xs font-semibold text-white">GitLab Enterprise</h6>
+                          <span class="text-[10px] text-zinc-500">Source Code & Registry</span>
+                        </div>
+                      </div>
+                      <span class="rounded-lg bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 text-[11px] font-semibold text-amber-300">
+                        Launch SSO →
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="rounded-xl border border-zinc-800 bg-zinc-900/80 p-4 transition hover:border-amber-500/40 hover:bg-zinc-800/50">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 font-bold text-sm">
+                          WK
+                        </div>
+                        <div>
+                          <h6 class="text-xs font-semibold text-white">Internal Engineering Wiki</h6>
+                          <span class="text-[10px] text-zinc-500">Documentation Portal</span>
+                        </div>
+                      </div>
+                      <span class="rounded-lg bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 text-[11px] font-semibold text-amber-300">
+                        Launch SSO →
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="rounded-xl border border-zinc-800/80 bg-zinc-900/60 p-4">
+                <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                  <span class="h-2 w-2 rounded-full bg-amber-400"></span>
+                  Applications Launchpad (/apps)
+                </h4>
+                <p class="mt-1 text-xs text-zinc-400">
+                  Admins configure internal and cloud applications with logos, redirect targets, and RBAC role restrictions. Non-admin users are guided directly to their application launchpad upon signing in.
                 </p>
               </div>
             </div>
@@ -218,6 +524,132 @@
             </div>
           }
 
+          @if (activeTab() === 'mfa') {
+            <!-- Interactive TOTP 2FA Preview -->
+            <div class="space-y-4">
+              <div class="rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 space-y-4">
+                <div class="flex items-center justify-between border-b border-zinc-800/80 pb-3">
+                  <div>
+                    <h5 class="text-sm font-semibold text-white">Two-Factor Authentication Setup</h5>
+                    <p class="text-xs text-zinc-400">Scan the QR code with your authenticator app (Google Authenticator, Authy, 1Password)</p>
+                  </div>
+                  <span class="rounded-md bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[11px] font-medium text-emerald-400">
+                    RFC 6238 TOTP
+                  </span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-6 items-center">
+                  <div class="sm:col-span-4 flex flex-col items-center">
+                    <div class="rounded-xl border border-zinc-700 bg-white p-3 shadow-md">
+                      <!-- Mock QR Code SVG -->
+                      <svg class="h-32 w-32 text-zinc-950" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M2 2h8v8H2V2zm2 2v4h4V4H4zm10-2h8v8h-8V2zm2 2v4h4V4h-4zM2 14h8v8H2v-8zm2 2v4h4v-4H4zm14 0h4v4h-4v-4zm-4 4h4v4h-4v-4zm4-4h-4v-4h4v4zm-8-2h2v2h-2v-2zm4-4h2v2h-2V8zm2 4h2v2h-2v-2zm-6 2h2v2h-2v-2z"/>
+                      </svg>
+                    </div>
+                    <span class="mt-2 text-[10px] font-mono text-zinc-500">Secret: JBSWY3DPEHPK3PXP</span>
+                  </div>
+
+                  <div class="sm:col-span-8 space-y-3">
+                    <div>
+                      <label class="text-xs font-medium text-zinc-300">Enter 6-Digit Authenticator Code</label>
+                      <div class="mt-1.5 flex gap-2">
+                        <input
+                          type="text"
+                          value="739 402"
+                          readonly
+                          class="w-36 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-1.5 font-mono text-sm text-center text-amber-400 tracking-widest"
+                        />
+                        <button type="button" class="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white">
+                          Verify & Activate
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="rounded-lg border border-zinc-800 bg-zinc-900/60 p-3 text-xs text-zinc-400 space-y-1">
+                      <div class="font-semibold text-zinc-300">Emergency Backup Recovery Codes:</div>
+                      <div class="grid grid-cols-2 gap-1 font-mono text-[11px] text-zinc-500">
+                        <span>• a1b2-c3d4-e5f6</span>
+                        <span>• 9x8y-7w6v-5u4t</span>
+                        <span>• 3k4m-5n6p-7q8r</span>
+                        <span>• z9y8-x7w6-v5u4</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="rounded-xl border border-zinc-800/80 bg-zinc-900/60 p-4">
+                <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                  <span class="h-2 w-2 rounded-full bg-amber-400"></span>
+                  Two-Factor Authentication & Account Recovery
+                </h4>
+                <p class="mt-1 text-xs text-zinc-400">
+                  Users enroll using any standard TOTP app. Login flow requires a valid time-synced 6-digit code or one-time cryptographic backup code before tokens or administrative sessions are granted.
+                </p>
+              </div>
+            </div>
+          }
+
+          @if (activeTab() === 'migration') {
+            <!-- Interactive Database Migration Preview -->
+            <div class="space-y-4">
+              <div class="rounded-xl border border-zinc-800 bg-zinc-900/40 p-5 space-y-4 font-mono text-xs">
+                <div class="flex items-center justify-between border-b border-zinc-800/80 pb-3">
+                  <span class="text-white font-semibold">Database Migration Wizard</span>
+                  <span class="rounded bg-emerald-500/20 text-emerald-400 px-2 py-0.5 text-[10px] font-bold">Live Migration Ready</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div class="rounded-lg border border-zinc-800 bg-zinc-950 p-3 space-y-2">
+                    <div class="text-zinc-500 uppercase text-[10px] tracking-wider">Current Source</div>
+                    <div class="text-amber-400 font-bold text-sm flex items-center gap-2">
+                      <span class="h-2 w-2 rounded-full bg-amber-400"></span>
+                      Embedded H2 Database
+                    </div>
+                    <div class="text-zinc-400 text-[11px]">Tables: 12 | Users: 24 | Keys: Active</div>
+                  </div>
+
+                  <div class="rounded-lg border border-emerald-500/30 bg-emerald-950/20 p-3 space-y-2">
+                    <div class="text-zinc-500 uppercase text-[10px] tracking-wider">Target Database</div>
+                    <div class="text-emerald-400 font-bold text-sm flex items-center gap-2">
+                      <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+                      PostgreSQL 17 (Production)
+                    </div>
+                    <div class="text-zinc-400 text-[11px]">Connection: Verified (4ms latency)</div>
+                  </div>
+                </div>
+
+                <!-- Migration progress -->
+                <div class="space-y-1.5 pt-2">
+                  <div class="flex items-center justify-between text-[11px]">
+                    <span class="text-zinc-400">Schema &amp; Data Synchronization</span>
+                    <span class="text-emerald-400 font-bold">100% Complete</span>
+                  </div>
+                  <div class="h-2 w-full rounded-full bg-zinc-800 overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 w-full rounded-full"></div>
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-2">
+                  <span class="text-zinc-500 text-[11px]">Liquibase lock released. Hot switch ready.</span>
+                  <button type="button" class="rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-md">
+                    1-Click Switch &amp; Restart (6s)
+                  </button>
+                </div>
+              </div>
+
+              <div class="rounded-xl border border-zinc-800/80 bg-zinc-900/60 p-4">
+                <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                  <span class="h-2 w-2 rounded-full bg-amber-400"></span>
+                  In-Flight Dynamic Database Migration
+                </h4>
+                <p class="mt-1 text-xs text-zinc-400">
+                  Deploy instantly with zero external database dependencies. When ready to scale, enter your PostgreSQL or MySQL connection in the admin console. Portal SSO runs Liquibase, copies records, tests connectivity, and performs a 6-second hot restart.
+                </p>
+              </div>
+            </div>
+          }
+
           @if (activeTab() === 'users') {
             <div class="space-y-4">
               <div class="relative overflow-hidden rounded-xl border border-zinc-800">
@@ -239,118 +671,6 @@
               </div>
             </div>
           }
-
-          @if (activeTab() === 'oidc') {
-            <div class="rounded-xl border border-zinc-800/80 bg-zinc-900/90 p-5 font-mono text-xs text-zinc-300 space-y-3">
-              <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
-                <span class="text-amber-400 font-semibold">// GET /.well-known/openid-configuration</span>
-                <span class="text-zinc-500">RFC 8414 Standard OIDC Response</span>
-              </div>
-              <pre class="overflow-x-auto text-[11px] leading-5 text-emerald-400">
-{{ '{' }}
-  "issuer": "http://localhost:8080",
-  "authorization_endpoint": "http://localhost:8080/oauth2/authorize",
-  "token_endpoint": "http://localhost:8080/oauth2/token",
-  "jwks_uri": "http://localhost:8080/oauth2/jwks",
-  "userinfo_endpoint": "http://localhost:8080/userinfo",
-  "revocation_endpoint": "http://localhost:8080/oauth2/revoke",
-  "response_types_supported": ["code"],
-  "grant_types_supported": ["authorization_code", "refresh_token"],
-  "code_challenge_methods_supported": ["S256"],
-  "scopes_supported": ["openid", "profile", "email"]
-{{ '}' }}</pre>
-            </div>
-          }
-        </div>
-      </div>
-    </section>
-
-    <!-- Product Capabilities Grid -->
-    <section id="features" class="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 border-t border-zinc-900">
-      <div class="text-center max-w-3xl mx-auto mb-14">
-        <h2 class="text-xs font-bold uppercase tracking-widest text-amber-400">Engineered for Security & Speed</h2>
-        <p class="mt-2 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-          Everything You Need to Secure Your Stack
-        </p>
-      </div>
-
-      <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <!-- Feature 1 -->
-        <div class="group rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 backdrop-blur transition hover:border-amber-500/40 hover:bg-zinc-900/70 hover:shadow-xl hover:shadow-amber-500/5">
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
-            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-            </svg>
-          </div>
-          <h3 class="mt-4 text-base font-semibold text-white">OAuth 2.1 & PKCE First</h3>
-          <p class="mt-2 text-xs leading-relaxed text-zinc-400">
-            Modern authorization code grant enforcing Proof Key for Code Exchange (RFC 7636). Perfect for single-page applications and mobile clients without client secret exposure.
-          </p>
-        </div>
-
-        <!-- Feature 2 -->
-        <div class="group rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 backdrop-blur transition hover:border-amber-500/40 hover:bg-zinc-900/70 hover:shadow-xl hover:shadow-amber-500/5">
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
-            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
-            </svg>
-          </div>
-          <h3 class="mt-4 text-base font-semibold text-white">Persistent RSA Key Rotation</h3>
-          <p class="mt-2 text-xs leading-relaxed text-zinc-400">
-            2048-bit RSA signing keys stored securely in the database with automated zero-downtime key rotation. Older valid keys continue verifying existing tokens without downtime.
-          </p>
-        </div>
-
-        <!-- Feature 3 -->
-        <div class="group rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 backdrop-blur transition hover:border-amber-500/40 hover:bg-zinc-900/70 hover:shadow-xl hover:shadow-amber-500/5">
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 5.625c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
-            </svg>
-          </div>
-          <h3 class="mt-4 text-base font-semibold text-white">Clustered JDBC Sessions</h3>
-          <p class="mt-2 text-xs leading-relaxed text-zinc-400">
-            High-availability admin console sessions backed by Spring Session JDBC. Scale across multiple server nodes seamlessly without sticky load balancing or session drops.
-          </p>
-        </div>
-
-        <!-- Feature 4 -->
-        <div class="group rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 backdrop-blur transition hover:border-amber-500/40 hover:bg-zinc-900/70 hover:shadow-xl hover:shadow-amber-500/5">
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
-            </svg>
-          </div>
-          <h3 class="mt-4 text-base font-semibold text-white">Single-Process Standalone JAR</h3>
-          <p class="mt-2 text-xs leading-relaxed text-zinc-400">
-            Zero complicated container sidecars. The entire Angular 21 administrative dashboard is compiled directly into the Spring Boot executable artifact with client-side SPA fallback.
-          </p>
-        </div>
-
-        <!-- Feature 5 -->
-        <div class="group rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 backdrop-blur transition hover:border-amber-500/40 hover:bg-zinc-900/70 hover:shadow-xl hover:shadow-amber-500/5">
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10 text-orange-400 border border-orange-500/20">
-            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-.778.099-1.533.284-2.253" />
-            </svg>
-          </div>
-          <h3 class="mt-4 text-base font-semibold text-white">Universal OIDC Standards</h3>
-          <p class="mt-2 text-xs leading-relaxed text-zinc-400">
-            Drop into any framework or library: Next.js Auth, Angular OIDC Client, Spring Security, Python Authlib, Go, or mobile Swift/Kotlin OAuth SDKs without proprietary lock-in.
-          </p>
-        </div>
-
-        <!-- Feature 6 -->
-        <div class="group rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-6 backdrop-blur transition hover:border-amber-500/40 hover:bg-zinc-900/70 hover:shadow-xl hover:shadow-amber-500/5">
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
-            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043 3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296 3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043 3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z" />
-            </svg>
-          </div>
-          <h3 class="mt-4 text-base font-semibold text-white">Database Migration Ready</h3>
-          <p class="mt-2 text-xs leading-relaxed text-zinc-400">
-            Automated Liquibase database migrations across MySQL, PostgreSQL, or H2. Zero schema drift, instant rollbacks, and reproducible deployment environments.
-          </p>
         </div>
       </div>
     </section>
@@ -382,15 +702,21 @@
             </div>
           </div>
 
-          <div class="mt-8">
+          <div class="mt-8 flex items-center gap-3">
             <a
-              routerLink="/sign-in"
+              href="#download"
               class="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-2.5 text-xs font-bold text-zinc-950 shadow-md shadow-amber-500/20 transition hover:bg-amber-400"
             >
-              <span>Get Started Now</span>
+              <span>Download JAR</span>
               <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.5V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
               </svg>
+            </a>
+            <a
+              routerLink="/docs"
+              class="inline-flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900/80 px-4 py-2.5 text-xs font-semibold text-zinc-200 transition hover:bg-zinc-800"
+            >
+              <span>Read Docs</span>
             </a>
           </div>
         </div>
@@ -481,18 +807,47 @@
 
   <!-- Footer -->
   <footer class="border-t border-zinc-900 bg-zinc-950 py-12">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
-      <div class="flex items-center gap-3">
-        <img src="logo.svg" alt="Portal SSO" class="h-7 w-7 rounded-lg" />
-        <span class="text-sm font-semibold text-white">Portal SSO</span>
-        <span class="text-xs text-zinc-500">| Self-Hosted Identity Platform</span>
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div class="flex items-center gap-3">
+          <img src="logo.svg" alt="Portal SSO" class="h-7 w-7 rounded-lg" />
+          <span class="text-sm font-semibold text-white">Portal SSO</span>
+          <span class="text-xs text-zinc-500">| {{ version }} {{ releaseChannel }}</span>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-6 text-xs text-zinc-400">
+          <a routerLink="/product" class="hover:text-white transition">Product</a>
+          <a href="#download" class="text-amber-400 hover:text-amber-300 transition font-medium">Download</a>
+          <a routerLink="/docs" class="hover:text-white transition">Documentation</a>
+          <a routerLink="/sign-in" class="hover:text-white transition">Admin Sign In</a>
+          <span class="text-zinc-600">•</span>
+          <span class="text-zinc-500">Licensed under MIT</span>
+        </div>
       </div>
 
-      <div class="flex items-center gap-6 text-xs text-zinc-400">
-        <a routerLink="/product" class="hover:text-white transition">Product</a>
-        <a routerLink="/sign-in" class="hover:text-white transition">Admin Sign In</a>
-        <span class="text-zinc-600">•</span>
-        <span class="text-zinc-500">Licensed under MIT</span>
+      <div class="border-t border-zinc-900/80 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500">
+        <p>© 2026 Portal SSO. Open-source self-hosted identity provider.</p>
+        <div class="flex items-center gap-1.5">
+          <span>Developed by</span>
+          <a
+            href="https://tanmaysinghx.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="font-semibold text-amber-400 hover:text-amber-300 transition underline underline-offset-4"
+          >
+            Tanmay Singh
+          </a>
+          <span>(</span>
+          <a
+            href="https://tanmaysinghx.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="hover:text-zinc-400 transition"
+          >
+            tanmaysinghx.com
+          </a>
+          <span>)</span>
+        </div>
       </div>
     </div>
   </footer>

@@ -25,42 +25,67 @@ interface CodeSnippet {
   styleUrl: './product.scss',
 })
 export class Product {
-  readonly activeTab = signal<'dashboard' | 'clients' | 'users' | 'oidc'>('dashboard');
+  readonly activeTab = signal<'dashboard' | 'launchpad' | 'clients' | 'mfa' | 'migration' | 'users'>('dashboard');
   readonly activeCodeSnippet = signal<string>('curl');
+  readonly activeDownloadFlavor = signal<'jar' | 'docker' | 'compose' | 'systemd'>('jar');
   readonly copied = signal<boolean>(false);
+  readonly copiedChecksum = signal<boolean>(false);
+  readonly copiedSnippet = signal<string | null>(null);
+
+  readonly version = 'v25.0.8';
+  readonly releaseChannel = 'LTS (Long-Term Support)';
+  readonly jarDownloadUrl = '/api/public/download/portal-sso.jar';
+  readonly jarChecksum = '4f8b9e2a7c6109e3bb88251e6b8c4c782729a6741b01c3e3a47da4f64722880b';
+  readonly jarFileSize = '48.4 MB';
 
   readonly tabs: FeatureTab[] = [
     {
       id: 'dashboard',
-      name: 'Admin Dashboard',
+      name: 'Admin Telemetry',
       badge: 'Live Overview',
-      description: 'Real-time telemetry, active client counts, user statistics, and OIDC endpoint status at a glance.',
+      description: 'Real-time telemetry, active client counts, user statistics, 7-day auth activity charts, and OIDC endpoint status.',
       imageSrc: 'dashboard-preview.jpg',
       imageAlt: 'Portal SSO Admin Dashboard Screenshot',
+    },
+    {
+      id: 'launchpad',
+      name: 'Apps Launchpad',
+      badge: 'Single Sign-On',
+      description: 'Centralized enterprise application directory with RBAC permissions. Users launch authorized web apps in one click.',
+      imageSrc: 'dashboard-preview.jpg',
+      imageAlt: 'Portal SSO Applications Launchpad',
     },
     {
       id: 'clients',
       name: 'OAuth 2.1 Clients',
       badge: 'PKCE Public Clients',
-      description: 'Register and manage relying party SPA and mobile applications with strict PKCE validation and customized redirect URIs.',
+      description: 'Register and manage relying party SPA and mobile applications with strict PKCE (RFC 7636) and custom redirect URIs.',
       imageSrc: 'clients-preview.jpg',
       imageAlt: 'Portal SSO OAuth Client Registry Screenshot',
     },
     {
-      id: 'users',
-      name: 'User Management',
-      badge: 'Directory & RBAC',
-      description: 'Manage users, assign admin roles, lock or disable accounts, and audit login activity securely.',
-      imageSrc: 'users-preview.jpg',
-      imageAlt: 'Portal SSO User Management Interface',
+      id: 'mfa',
+      name: 'TOTP 2FA Security',
+      badge: 'RFC 6238 Authenticator',
+      description: 'Multi-factor authentication supporting Google Authenticator, Authy, and 1Password with 8 one-time cryptographic recovery codes.',
+      imageSrc: 'dashboard-preview.jpg',
+      imageAlt: 'Portal SSO TOTP 2FA Security',
     },
     {
-      id: 'oidc',
-      name: 'OIDC Discovery & JWKS',
-      badge: 'RFC 8414 & RFC 7517',
-      description: 'Automated OpenID Connect discovery document, JSON Web Key Sets (JWKS), and userinfo claims integration.',
-      imageSrc: 'clients-preview.jpg',
-      imageAlt: 'Portal SSO OIDC Engine and Discovery',
+      id: 'migration',
+      name: 'Dynamic DB Migration',
+      badge: 'Zero-Downtime Hot Switch',
+      description: 'Start immediately on zero-config embedded H2, then migrate seamlessly to PostgreSQL or MySQL with 6-second hot reload.',
+      imageSrc: 'dashboard-preview.jpg',
+      imageAlt: 'Portal SSO Database Migration',
+    },
+    {
+      id: 'users',
+      name: 'User Directory & RBAC',
+      badge: 'Directory & Lockouts',
+      description: 'Manage users, assign admin roles, lock or disable accounts, and clear failed sign-in security lockouts.',
+      imageSrc: 'users-preview.jpg',
+      imageAlt: 'Portal SSO User Management Interface',
     },
   ];
 
@@ -116,10 +141,87 @@ SPRING_PROFILES_ACTIVE=mysql,local java -jar target/portal-server-0.0.1-SNAPSHOT
     { name: 'Token Revocation', method: 'POST', path: '/oauth2/revoke', desc: 'Revokes active refresh tokens and grant chains' },
   ];
 
+  readonly standaloneJarSnippet = `# 1. Download standalone runnable JAR
+curl -LO http://localhost:8080/api/public/download/portal-sso.jar
+
+# 2. Run with Java 25 (includes backend + embedded SPA console)
+java -jar portal-sso.jar --httpPort=8080
+
+# 3. Open http://localhost:8080 to complete the First-Run Setup Wizard!`;
+
+  readonly dockerSnippet = `# 1. Run Portal SSO with persistent storage
+docker run -d \\
+  --name portal-sso \\
+  --restart unless-stopped \\
+  -p 8080:8080 \\
+  -v portal-sso-data:/root/.portal-sso \\
+  tanmaysinghx/portal-sso:latest
+
+# 2. Open http://localhost:8080 to complete setup!`;
+
+  readonly dockerComposeSnippet = `services:
+  portal-sso:
+    image: tanmaysinghx/portal-sso:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/portalsso
+      DB_USERNAME: portal
+      DB_PASSWORD: your_db_password
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - portal-data:/root/.portal-sso
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: portalsso
+      POSTGRES_USER: portal
+      POSTGRES_PASSWORD: your_db_password
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+volumes:
+  portal-data:
+  db-data:`;
+
+  readonly systemdSnippet = `[Unit]
+Description=Portal SSO Identity Provider
+After=network.target
+
+[Service]
+Type=simple
+User=portal
+WorkingDirectory=/var/lib/portal-sso
+ExecStart=/usr/bin/java -jar /opt/portal-sso/portal-sso.jar --httpPort=8080 --portalHome=/var/lib/portal-sso
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target`;
+
   copyCode(code: string): void {
     navigator.clipboard.writeText(code).then(() => {
       this.copied.set(true);
       setTimeout(() => this.copied.set(false), 2000);
+    });
+  }
+
+  copyChecksum(): void {
+    navigator.clipboard.writeText(this.jarChecksum).then(() => {
+      this.copiedChecksum.set(true);
+      setTimeout(() => this.copiedChecksum.set(false), 2000);
+    });
+  }
+
+  copySnippetText(text: string, id: string): void {
+    navigator.clipboard.writeText(text).then(() => {
+      this.copiedSnippet.set(id);
+      setTimeout(() => this.copiedSnippet.set(null), 2000);
     });
   }
 
