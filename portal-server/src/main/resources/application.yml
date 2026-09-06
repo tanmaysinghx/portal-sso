@@ -15,8 +15,8 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      # Liquibase owns the schema; Hibernate only ever validates against it.
-      ddl-auto: validate
+      # Liquibase owns the schema across all databases (Postgres, MySQL, H2).
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:none}
     properties:
       hibernate:
         format_sql: true

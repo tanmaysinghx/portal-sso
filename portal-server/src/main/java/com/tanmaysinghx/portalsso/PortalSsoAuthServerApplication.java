@@ -25,6 +25,7 @@ public class PortalSsoAuthServerApplication {
 		savedArgs = args != null ? args : new String[0];
 		String[] normalizedArgs = normalizeArguments(args);
 		initPortalDirectories();
+		configureDialectAutoDetection();
 		context = SpringApplication.run(PortalSsoAuthServerApplication.class, normalizedArgs);
 	}
 
@@ -92,6 +93,42 @@ public class PortalSsoAuthServerApplication {
 				System.setProperty("spring.config.import", "optional:file:" + propsFile.toAbsolutePath());
 			}
 		} catch (IOException ignored) {
+		}
+	}
+
+	private static void configureDialectAutoDetection() {
+		String dbUrl = System.getenv("DB_URL");
+		if (dbUrl == null || dbUrl.isBlank()) {
+			dbUrl = System.getenv("SPRING_DATASOURCE_URL");
+		}
+		if (dbUrl == null || dbUrl.isBlank()) {
+			dbUrl = System.getProperty("spring.datasource.url");
+		}
+		if (dbUrl == null || dbUrl.isBlank()) {
+			dbUrl = System.getProperty("DB_URL");
+		}
+		if (dbUrl == null || dbUrl.isBlank()) {
+			try {
+				Path propsFile = AdminBootstrapper.resolvePortalHome().resolve("portal.properties");
+				if (Files.exists(propsFile)) {
+					String content = Files.readString(propsFile);
+					for (String line : content.split("\n")) {
+						if (line.trim().startsWith("spring.datasource.url=")) {
+							dbUrl = line.trim().substring("spring.datasource.url=".length()).trim();
+							break;
+						}
+					}
+				}
+			} catch (Exception ignored) {
+			}
+		}
+
+		if (dbUrl != null && (dbUrl.toLowerCase(java.util.Locale.ROOT).contains(":mysql:") || dbUrl.toLowerCase(java.util.Locale.ROOT).contains(":mariadb:"))) {
+			System.setProperty("spring.jpa.properties.hibernate.type.preferred_boolean_jdbc_type", "TINYINT");
+			System.setProperty("spring.datasource.hikari.connection-init-sql", "SET SESSION sql_require_primary_key=0");
+			if (System.getProperty("spring.profiles.active") == null && System.getenv("SPRING_PROFILES_ACTIVE") == null) {
+				System.setProperty("spring.profiles.active", "mysql");
+			}
 		}
 	}
 
