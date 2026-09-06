@@ -53,7 +53,7 @@ COPY --from=client /build/portal-client/dist/ /build/portal-client/dist/
 # Tests are skipped deliberately: the image build is not the place to discover a failure, and CI
 # runs the full suite against a real database on every push.
 RUN ./mvnw -B -q -DskipTests -Dexec.skip=true package \
-    && cp target/portal-server-*.jar /build/portal-server.jar
+    && (cp target/portal-sso.jar /build/portal-server.jar 2>/dev/null || cp target/portal-server-*.jar /build/portal-server.jar)
 
 # ---------------------------------------------------------------------------------------------
 # 3. Runtime

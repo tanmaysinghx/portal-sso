@@ -60,6 +60,7 @@ jobs:
           name: Portal SSO ${{ github.event.inputs.tag_name || github.ref_name }} (LTS 25)
           draft: false
           prerelease: false
+          make_latest: true
           generate_release_notes: true
           files: |
             portal-server/target/portal-sso.jar
