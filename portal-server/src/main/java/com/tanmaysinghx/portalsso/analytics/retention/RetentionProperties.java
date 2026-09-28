@@ -30,7 +30,7 @@ public record RetentionProperties(Integer loginEventsDays, Integer auditEventsDa
             loginEventsDays = 2; // Default to 48 hours as requested
         }
         if (auditEventsDays == null || auditEventsDays < 0) {
-            auditEventsDays = 30; // Default to 30 days
+            auditEventsDays = 2; // Default to 48 hours (2 days)
         }
         if (batchSize == null || batchSize <= 0) {
             batchSize = 1000;

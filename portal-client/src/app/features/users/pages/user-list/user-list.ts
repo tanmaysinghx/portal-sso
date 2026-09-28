@@ -10,7 +10,7 @@ import { SnackbarService } from '../../../../core/services/snackbar.service';
 import { Badge } from '../../../../shared/components/badge/badge';
 import { PortalRole } from '../../../roles/models/role.model';
 import { RoleService } from '../../../roles/services/role.service';
-import { CreateUserRequest, PortalUser } from '../../models/portal-user.model';
+import { CreateUserRequest, PortalUser, UserSessionDto } from '../../models/portal-user.model';
 import { UserService } from '../../services/user.service';
 
 const PAGE_SIZE = 25;
@@ -41,6 +41,13 @@ export class UserList {
   readonly draftRoles = signal<Set<string>>(new Set());
   readonly savingRoles = signal(false);
   readonly rolesError = signal<string | null>(null);
+
+  /** Sessions */
+  readonly showingSessionsFor = signal<PortalUser | null>(null);
+  readonly activeSessions = signal<UserSessionDto[]>([]);
+  readonly sessionsLoading = signal(false);
+  readonly sessionsError = signal<string | null>(null);
+  readonly revokingSessionId = signal<string | null>(null);
 
   readonly users = signal<PortalUser[]>([]);
 
@@ -120,6 +127,8 @@ export class UserList {
   onEscape(): void {
     if (this.editingRolesFor()) {
       this.closeRolesModal();
+    } else if (this.showingSessionsFor()) {
+      this.closeSessionsModal();
     } else if (this.showCreateModal()) {
       this.closeCreateModal();
     }
@@ -403,6 +412,47 @@ export class UserList {
         this.updatingId.set(null);
         this.snackbarService.error('MFA Reset Failed', msg, err.error?.code);
       },
+    });
+  }
+
+  // --- Session Management ---
+
+  openSessionsModal(user: PortalUser): void {
+    this.showingSessionsFor.set(user);
+    this.sessionsLoading.set(true);
+    this.sessionsError.set(null);
+    this.userService.getSessions(user.id).subscribe({
+      next: (sessions) => {
+        this.activeSessions.set(sessions);
+        this.sessionsLoading.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.sessionsError.set(err.error?.message || 'Could not load sessions.');
+        this.sessionsLoading.set(false);
+      }
+    });
+  }
+
+  closeSessionsModal(): void {
+    this.showingSessionsFor.set(null);
+    this.activeSessions.set([]);
+  }
+
+  revokeSession(sessionId: string): void {
+    const user = this.showingSessionsFor();
+    if (!user) return;
+
+    this.revokingSessionId.set(sessionId);
+    this.userService.revokeSession(user.id, sessionId).subscribe({
+      next: () => {
+        this.activeSessions.update(list => list.filter(s => s.id !== sessionId));
+        this.revokingSessionId.set(null);
+        this.snackbarService.success('Session Revoked', 'The device was signed out instantly.');
+      },
+      error: (err: HttpErrorResponse) => {
+        this.sessionsError.set(err.error?.message || 'Could not revoke session.');
+        this.revokingSessionId.set(null);
+      }
     });
   }
 }

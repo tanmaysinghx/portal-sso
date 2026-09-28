@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Page } from '../../../core/models/page.model';
-import { CreateUserRequest, PortalUser } from '../models/portal-user.model';
+import { CreateUserRequest, PortalUser, UserSessionDto } from '../models/portal-user.model';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
@@ -53,5 +53,13 @@ export class UserService {
   /** Disables/resets MFA for a user who lost their device. */
   resetMfa(id: string): Observable<PortalUser> {
     return this.http.post<PortalUser>(`${this.baseUrl}/${id}/mfa/reset`, null);
+  }
+
+  getSessions(id: string): Observable<UserSessionDto[]> {
+    return this.http.get<UserSessionDto[]>(`${this.baseUrl}/${id}/sessions`);
+  }
+
+  revokeSession(userId: string, sessionId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${userId}/sessions/${sessionId}`);
   }
 }

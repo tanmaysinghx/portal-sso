@@ -19,3 +19,12 @@ export interface CreateUserRequest {
   roles?: string[];
   enabled?: boolean;
 }
+
+export interface UserSessionDto {
+  id: string;
+  creationTime: string;
+  lastAccessedTime: string;
+  ipAddress: string;
+  userAgent: string;
+  isCurrent: boolean;
+}
