@@ -19,27 +19,9 @@
         </span>
       </a>
       <nav class="flex items-center gap-3">
-        <a
-          routerLink="/product"
-          class="rounded-lg px-3 py-1.5 text-xs font-medium transition"
-          [class]="themeService.isDark() ? 'text-ink-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'"
-        >
-          Product
-        </a>
-        <a
-          routerLink="/product"
-          fragment="download"
-          class="rounded-lg px-3 py-1.5 text-xs font-medium transition"
-          [class]="themeService.isDark() ? 'text-ink-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'"
-        >
-          Download
-        </a>
-
-        <!-- Theme Toggle Button -->
         <button
           type="button"
           (click)="themeService.toggleTheme()"
-          [title]="themeService.isDark() ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
           class="flex h-8 w-8 items-center justify-center rounded-lg border transition cursor-pointer"
           [class]="themeService.isDark()
             ? 'border-ink-800 bg-ink-900 text-ink-300 hover:border-ink-700 hover:text-white'
@@ -56,7 +38,6 @@
             </svg>
           }
         </button>
-
         <a routerLink="/sign-in" class="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-700">
           Open console
         </a>
@@ -65,7 +46,6 @@
   </header>
 
   <div class="mx-auto flex max-w-6xl gap-10 px-6 py-10">
-    <!-- On-page nav -->
     <aside class="hidden w-48 shrink-0 lg:block">
       <nav class="sticky top-24 space-y-1">
         <p class="px-3 pb-2 text-[10px] font-semibold uppercase tracking-widest" [class]="themeService.isDark() ? 'text-ink-600' : 'text-slate-400'">Contents</p>
@@ -81,200 +61,77 @@
 
     <main class="min-w-0 flex-1 space-y-14">
       <div>
-        <h1 class="text-3xl font-semibold tracking-tight" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">Documentation & Setup Guide</h1>
+        <h1 class="text-3xl font-semibold tracking-tight" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">Documentation</h1>
         <p class="mt-3 max-w-2xl text-sm leading-relaxed" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">
-          Everything you need to install, configure, and integrate Portal SSO. Deploy in 10 seconds with Docker or run standalone with a single JAR command.
+          Everything you need to install, configure, and integrate Portal SSO.
         </p>
       </div>
 
-      <!-- Setup with Docker -->
-      <section id="setup-docker" class="scroll-mt-24 space-y-6">
-        <div>
-          <div class="inline-flex items-center gap-2 rounded-full border border-sky-500/30 bg-sky-500/10 px-3 py-1 text-xs font-semibold text-sky-500 mb-2">
-            Recommended
+      <section id="installation" class="scroll-mt-24 space-y-4">
+        <h2 class="text-xl font-semibold" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">1. Installation & Setup</h2>
+        <div class="overflow-hidden rounded-xl border" [class]="themeService.isDark() ? 'border-ink-800' : 'border-slate-200 shadow-sm'">
+          <div
+            class="flex items-center justify-between border-b px-4 py-2.5"
+            [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900/60' : 'border-slate-200 bg-slate-100/90'"
+          >
+            <span class="text-[11px] font-medium uppercase tracking-wider" [class]="themeService.isDark() ? 'text-ink-500' : 'text-slate-500'">Run via Docker</span>
+            <button type="button" (click)="copy(dockerSnippet, 'docker')"
+                    class="rounded-md px-2 py-1 text-[11px] font-medium transition cursor-pointer"
+                    [class]="themeService.isDark() ? 'text-ink-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'">
+              {{ copied() === 'docker' ? 'Copied' : 'Copy' }}
+            </button>
           </div>
-          <h2 class="text-xl font-semibold" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">Setup with Docker</h2>
-          <p class="mt-1 text-[13px]" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">
-            Run Portal SSO inside Docker with zero local dependencies. Data and signing keys persist in a named Docker volume.
-          </p>
-        </div>
-
-        <div class="space-y-4">
-          <div class="overflow-hidden rounded-xl border" [class]="themeService.isDark() ? 'border-ink-800' : 'border-slate-200 shadow-sm'">
-            <div
-              class="flex items-center justify-between border-b px-4 py-2.5"
-              [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900/60' : 'border-slate-200 bg-slate-100/90'"
-            >
-              <span class="text-[11px] font-medium uppercase tracking-wider" [class]="themeService.isDark() ? 'text-ink-500' : 'text-slate-500'">Single Container (Instant Trial)</span>
-              <button type="button" (click)="copy(dockerSingleSnippet, 'dockerSingle')"
-                      class="rounded-md px-2 py-1 text-[11px] font-medium transition cursor-pointer"
-                      [class]="themeService.isDark() ? 'text-ink-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'">
-                {{ copied() === 'dockerSingle' ? 'Copied' : 'Copy' }}
-              </button>
-            </div>
-            <pre class="overflow-x-auto bg-slate-950 px-4 py-3 font-mono text-[12px] leading-relaxed text-slate-200">{{ dockerSingleSnippet }}</pre>
-          </div>
-
-          <div class="overflow-hidden rounded-xl border" [class]="themeService.isDark() ? 'border-ink-800' : 'border-slate-200 shadow-sm'">
-            <div
-              class="flex items-center justify-between border-b px-4 py-2.5"
-              [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900/60' : 'border-slate-200 bg-slate-100/90'"
-            >
-              <span class="text-[11px] font-medium uppercase tracking-wider" [class]="themeService.isDark() ? 'text-ink-500' : 'text-slate-500'">Docker Compose (Production Stack with PostgreSQL)</span>
-              <button type="button" (click)="copy(dockerComposeSnippet, 'dockerCompose')"
-                      class="rounded-md px-2 py-1 text-[11px] font-medium transition cursor-pointer"
-                      [class]="themeService.isDark() ? 'text-ink-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'">
-                {{ copied() === 'dockerCompose' ? 'Copied' : 'Copy' }}
-              </button>
-            </div>
-            <pre class="overflow-x-auto bg-slate-950 px-4 py-3 font-mono text-[12px] leading-relaxed text-slate-200">{{ dockerComposeSnippet }}</pre>
-          </div>
+          <pre class="overflow-x-auto bg-slate-950 px-4 py-3 font-mono text-[12px] leading-relaxed text-slate-200">{{ dockerSnippet }}</pre>
         </div>
       </section>
 
-      <!-- Setup without Docker (Standalone JAR) -->
-      <section id="setup-standalone" class="scroll-mt-24 space-y-6">
-        <div>
-          <h2 class="text-xl font-semibold" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">Setup without Docker (Standalone JAR)</h2>
-          <p class="mt-1 text-[13px]" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">
-            Portal SSO distributes as a self-contained fat JAR (Jenkins LTS style). Both the Spring backend and the Angular Console SPA are packaged together.
-          </p>
-        </div>
-
-        <div class="space-y-4">
-          <div class="overflow-hidden rounded-xl border" [class]="themeService.isDark() ? 'border-ink-800' : 'border-slate-200 shadow-sm'">
-            <div
-              class="flex items-center justify-between border-b px-4 py-2.5"
-              [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900/60' : 'border-slate-200 bg-slate-100/90'"
-            >
-              <span class="text-[11px] font-medium uppercase tracking-wider" [class]="themeService.isDark() ? 'text-ink-500' : 'text-slate-500'">Run via CLI (Java 25+)</span>
-              <button type="button" (click)="copy(standaloneJarSnippet, 'standaloneJar')"
-                      class="rounded-md px-2 py-1 text-[11px] font-medium transition cursor-pointer"
-                      [class]="themeService.isDark() ? 'text-ink-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'">
-                {{ copied() === 'standaloneJar' ? 'Copied' : 'Copy' }}
-              </button>
-            </div>
-            <pre class="overflow-x-auto bg-slate-950 px-4 py-3 font-mono text-[12px] leading-relaxed text-slate-200">{{ standaloneJarSnippet }}</pre>
-          </div>
-
-          <div class="overflow-hidden rounded-xl border" [class]="themeService.isDark() ? 'border-ink-800' : 'border-slate-200 shadow-sm'">
-            <div
-              class="flex items-center justify-between border-b px-4 py-2.5"
-              [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900/60' : 'border-slate-200 bg-slate-100/90'"
-            >
-              <span class="text-[11px] font-medium uppercase tracking-wider" [class]="themeService.isDark() ? 'text-ink-500' : 'text-slate-500'">Linux Systemd Service (/etc/systemd/system/portal-sso.service)</span>
-              <button type="button" (click)="copy(systemdSnippet, 'systemd')"
-                      class="rounded-md px-2 py-1 text-[11px] font-medium transition cursor-pointer"
-                      [class]="themeService.isDark() ? 'text-ink-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'">
-                {{ copied() === 'systemd' ? 'Copied' : 'Copy' }}
-              </button>
-            </div>
-            <pre class="overflow-x-auto bg-slate-950 px-4 py-3 font-mono text-[12px] leading-relaxed text-slate-200">{{ systemdSnippet }}</pre>
-          </div>
-        </div>
-
-        <div
-          class="rounded-xl border p-4"
-          [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900/40' : 'border-slate-200 bg-white shadow-sm'"
-        >
-          <h3 class="text-xs font-semibold uppercase tracking-wider mb-2" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-500'">Supported CLI Flags</h3>
-          <ul class="space-y-1.5 text-xs font-mono" [class]="themeService.isDark() ? 'text-ink-300' : 'text-slate-700'">
-            <li><span class="text-brand-500 font-semibold">--httpPort=8080</span>: Set the HTTP listening port (default: 8080)</li>
-            <li><span class="text-brand-500 font-semibold">--httpListenAddress=0.0.0.0</span>: Bind interface address</li>
-            <li><span class="text-brand-500 font-semibold">--portalHome=~/.portal-sso</span>: Location for database files, signing keys, and config</li>
-            <li><span class="text-brand-500 font-semibold">--prefix=/sso</span>: Context path prefix if running behind a subpath reverse proxy</li>
-          </ul>
-        </div>
-      </section>
-
-      <!-- First-run Setup Wizard -->
-      <section id="setup-wizard" class="scroll-mt-24 space-y-4">
-        <div>
-          <h2 class="text-xl font-semibold" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">First-Run Web Setup Wizard</h2>
-          <p class="mt-1 text-[13px]" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">
-            No terminal password hunting. Just launch Portal SSO and navigate to it in your web browser.
-          </p>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <section id="add-application" class="scroll-mt-24 space-y-4">
+        <h2 class="text-xl font-semibold" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">2. Adding Applications</h2>
+        <p class="text-[13px]" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">
+          Follow these steps to register a new application and connect it to Portal SSO.
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="rounded-xl border p-4" [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900/40' : 'border-slate-200 bg-white shadow-sm'">
             <span class="flex h-6 w-6 items-center justify-center rounded-full bg-brand-500/20 text-xs font-bold text-brand-500 mb-2">1</span>
-            <h3 class="text-sm font-semibold" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">Boot & Navigate</h3>
+            <h3 class="text-sm font-semibold" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">Open the Console</h3>
             <p class="mt-1 text-xs leading-relaxed" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">
-              Start the container or JAR and visit <code>http://localhost:8080</code>. The Setup Wizard will automatically appear.
+              Log in to the Admin Console and navigate to the <strong>OAuth Clients</strong> page.
             </p>
           </div>
           <div class="rounded-xl border p-4" [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900/40' : 'border-slate-200 bg-white shadow-sm'">
             <span class="flex h-6 w-6 items-center justify-center rounded-full bg-brand-500/20 text-xs font-bold text-brand-500 mb-2">2</span>
-            <h3 class="text-sm font-semibold" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">Create Admin</h3>
+            <h3 class="text-sm font-semibold" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">Create New Client</h3>
             <p class="mt-1 text-xs leading-relaxed" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">
-              Enter your email, full name, and chosen password (minimum 12 characters).
+              Click <strong>"New client"</strong>. Enter your application's name and its redirect URI (the callback URL).
             </p>
           </div>
           <div class="rounded-xl border p-4" [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900/40' : 'border-slate-200 bg-white shadow-sm'">
             <span class="flex h-6 w-6 items-center justify-center rounded-full bg-brand-500/20 text-xs font-bold text-brand-500 mb-2">3</span>
-            <h3 class="text-sm font-semibold" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">Instant Sign-In</h3>
+            <h3 class="text-sm font-semibold" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">Select Client Type</h3>
             <p class="mt-1 text-xs leading-relaxed" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">
-              Click "Complete Setup & Sign In" to gain immediate access to the admin dashboard. The endpoint locks down permanently.
+              Check the <strong>Confidential</strong> box if your app runs on a server. Leave it unchecked for Single Page Apps (Angular, React) and Mobile apps.
+            </p>
+          </div>
+          <div class="rounded-xl border p-4" [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900/40' : 'border-slate-200 bg-white shadow-sm'">
+            <span class="flex h-6 w-6 items-center justify-center rounded-full bg-brand-500/20 text-xs font-bold text-brand-500 mb-2">4</span>
+            <h3 class="text-sm font-semibold" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">Save & Copy Secret</h3>
+            <p class="mt-1 text-xs leading-relaxed" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">
+              Click <strong>"Create"</strong>. If you created a Confidential client, you will be shown the <code>client_secret</code> exactly once. Copy it safely!
             </p>
           </div>
         </div>
       </section>
 
-      <!-- Database Migration -->
-      <section id="database-migration" class="scroll-mt-24 space-y-4">
-        <div>
-          <h2 class="text-xl font-semibold" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">Database Migration & 1-Click Switch</h2>
-          <p class="mt-1 text-[13px]" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">
-            Start on embedded H2, then seamlessly migrate to production PostgreSQL or MySQL with 1 click.
-          </p>
-        </div>
-
-        <div
-          class="rounded-xl border p-5 space-y-3 text-xs leading-relaxed"
-          [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900/40 text-ink-300' : 'border-slate-200 bg-white text-slate-700 shadow-sm'"
-        >
-          <p>
-            Portal SSO features a built-in cross-database migration tool under <strong>Settings → Database</strong>:
-          </p>
-          <ol class="list-decimal pl-5 space-y-1" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">
-            <li>Select your target database type (PostgreSQL or MySQL / MariaDB).</li>
-            <li>Enter your connection parameters or custom JDBC URL and test the connection.</li>
-            <li>Click <strong>"Migrate to Target Database"</strong>. Liquibase updates the target schema and copies all users, roles, OAuth clients, and keys without downtime.</li>
-            <li>Click <strong>"1-Click Switch & Restart"</strong>. Portal SSO automatically reloads with the new configuration in under 6 seconds!</li>
-          </ol>
-        </div>
+      <section id="integration" class="scroll-mt-24 space-y-4">
+        <h2 class="text-xl font-semibold" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">3. App Integration (OIDC)</h2>
+        <p class="text-[13px]" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">
+          Point your OIDC library to the Issuer URL. Portal SSO enforces PKCE for all authorization flows.
+        </p>
       </section>
 
-      <!-- Quick start -->
-      <section id="quickstart" class="scroll-mt-24">
-        <h2 class="text-lg font-semibold" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">Quick start (OIDC Integration)</h2>
-        <ol class="mt-5 space-y-4">
-          @for (step of [
-            { n: 1, t: 'Register your application', d: 'In the console, open OAuth Clients → New client. Browser and mobile apps stay public and use PKCE with no secret; tick Confidential for a server-side app and the secret is shown once, at creation.' },
-            { n: 2, t: 'Add your redirect URI', d: 'It must match byte-for-byte what your app sends. A mistyped URI is editable later without re-registering.' },
-            { n: 3, t: 'Point your OIDC library at the discovery URL', d: 'Most libraries need only the issuer; they read every other endpoint from the discovery document.' },
-            { n: 4, t: 'Handle the callback', d: 'Exchange the code for tokens using your PKCE verifier. The ID token carries email and roles.' }
-          ]; track step.n) {
-            <li
-              class="flex gap-4 rounded-xl border p-4"
-              [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900/40' : 'border-slate-200 bg-white shadow-sm'"
-            >
-              <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-500/15 text-[11px] font-semibold text-brand-500">{{ step.n }}</span>
-              <div>
-                <h3 class="text-sm font-medium" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">{{ step.t }}</h3>
-                <p class="mt-1 text-[13px] leading-relaxed" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">{{ step.d }}</p>
-              </div>
-            </li>
-          }
-        </ol>
-      </section>
-
-      <!-- OIDC endpoints -->
-      <section id="oidc" class="scroll-mt-24">
-        <h2 class="text-lg font-semibold" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">OIDC endpoints</h2>
-        <p class="mt-2 text-[13px]" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">Paths are fixed; only the origin differs per deployment.</p>
-        <div class="mt-5 overflow-hidden rounded-xl border" [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900/40' : 'border-slate-200 bg-white shadow-sm'">
+      <section id="api-reference" class="scroll-mt-24 space-y-4">
+        <h2 class="text-xl font-semibold" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">4. API Reference</h2>
+        <div class="overflow-hidden rounded-xl border" [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900/40' : 'border-slate-200 bg-white shadow-sm'">
           <table class="w-full text-left text-[13px]">
             <tbody class="divide-y" [class]="themeService.isDark() ? 'divide-ink-800' : 'divide-slate-100'">
               @for (ep of oidcEndpoints; track ep.path) {
@@ -291,129 +148,9 @@
         </div>
       </section>
 
-      <!-- Flow -->
-      <section id="flow" class="scroll-mt-24">
-        <h2 class="text-lg font-semibold" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">Authorization flow</h2>
-        <p class="mt-2 max-w-2xl text-[13px] leading-relaxed" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">
-          Authorization code with PKCE. PKCE is enforced for every client regardless of how it was
-          registered, so a request without <code class="rounded px-1 py-0.5 font-mono text-[11px]" [class]="themeService.isDark() ? 'bg-ink-800 text-ink-200' : 'bg-slate-200 text-slate-800'">code_challenge</code> is rejected.
-        </p>
-
-        <div class="mt-5 space-y-4">
-          <div class="overflow-hidden rounded-xl border" [class]="themeService.isDark() ? 'border-ink-800' : 'border-slate-200 shadow-sm'">
-            <div
-              class="flex items-center justify-between border-b px-4 py-2.5"
-              [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900/60' : 'border-slate-200 bg-slate-100/90'"
-            >
-              <span class="text-[11px] font-medium uppercase tracking-wider" [class]="themeService.isDark() ? 'text-ink-500' : 'text-slate-500'">1 — Redirect the user</span>
-              <button type="button" (click)="copy(authorizeSnippet, 'authorize')"
-                      class="rounded-md px-2 py-1 text-[11px] font-medium transition cursor-pointer"
-                      [class]="themeService.isDark() ? 'text-ink-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'">
-                {{ copied() === 'authorize' ? 'Copied' : 'Copy' }}
-              </button>
-            </div>
-            <pre class="overflow-x-auto bg-slate-950 px-4 py-3 font-mono text-[12px] leading-relaxed text-slate-200">{{ authorizeSnippet }}</pre>
-          </div>
-
-          <div class="overflow-hidden rounded-xl border" [class]="themeService.isDark() ? 'border-ink-800' : 'border-slate-200 shadow-sm'">
-            <div
-              class="flex items-center justify-between border-b px-4 py-2.5"
-              [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900/60' : 'border-slate-200 bg-slate-100/90'"
-            >
-              <span class="text-[11px] font-medium uppercase tracking-wider" [class]="themeService.isDark() ? 'text-ink-500' : 'text-slate-500'">2 — Exchange the code</span>
-              <button type="button" (click)="copy(tokenSnippet, 'token')"
-                      class="rounded-md px-2 py-1 text-[11px] font-medium transition cursor-pointer"
-                      [class]="themeService.isDark() ? 'text-ink-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'">
-                {{ copied() === 'token' ? 'Copied' : 'Copy' }}
-              </button>
-            </div>
-            <pre class="overflow-x-auto bg-slate-950 px-4 py-3 font-mono text-[12px] leading-relaxed text-slate-200">{{ tokenSnippet }}</pre>
-          </div>
-
-          <div class="overflow-hidden rounded-xl border" [class]="themeService.isDark() ? 'border-ink-800' : 'border-slate-200 shadow-sm'">
-            <div
-              class="flex items-center justify-between border-b px-4 py-2.5"
-              [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900/60' : 'border-slate-200 bg-slate-100/90'"
-            >
-              <span class="text-[11px] font-medium uppercase tracking-wider" [class]="themeService.isDark() ? 'text-ink-500' : 'text-slate-500'">3 — What the ID token carries</span>
-              <button type="button" (click)="copy(idTokenSnippet, 'idtoken')"
-                      class="rounded-md px-2 py-1 text-[11px] font-medium transition cursor-pointer"
-                      [class]="themeService.isDark() ? 'text-ink-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'">
-                {{ copied() === 'idtoken' ? 'Copied' : 'Copy' }}
-              </button>
-            </div>
-            <pre class="overflow-x-auto bg-slate-950 px-4 py-3 font-mono text-[12px] leading-relaxed text-slate-200">{{ idTokenSnippet }}</pre>
-          </div>
-        </div>
-
-        <p
-          class="mt-4 rounded-xl border px-4 py-3 text-[13px] leading-relaxed"
-          [class]="themeService.isDark() ? 'border-brand-500/20 bg-brand-500/5 text-brand-200' : 'border-brand-200 bg-brand-50/60 text-brand-900'"
-        >
-          <strong class="font-semibold">Scopes decide the claims.</strong> <code class="font-mono text-[11px]">email</code> adds the
-          email claim and <code class="font-mono text-[11px]">profile</code> adds name claims. <code class="font-mono text-[11px]">roles</code>
-          is always included, so your app can authorize without a second lookup.
-        </p>
-      </section>
-
-      <!-- Admin API -->
-      <section id="admin-api" class="scroll-mt-24">
-        <h2 class="text-lg font-semibold" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">Admin API</h2>
-        <p class="mt-2 max-w-2xl text-[13px] leading-relaxed" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">
-          Session-cookie authenticated and gated on <code class="rounded px-1 py-0.5 font-mono text-[11px]" [class]="themeService.isDark() ? 'bg-ink-800 text-ink-200' : 'bg-slate-200 text-slate-800'">ROLE_ADMIN</code>.
-          Writes require the <code class="rounded px-1 py-0.5 font-mono text-[11px]" [class]="themeService.isDark() ? 'bg-ink-800 text-ink-200' : 'bg-slate-200 text-slate-800'">X-XSRF-TOKEN</code> header echoing the
-          <code class="rounded px-1 py-0.5 font-mono text-[11px]" [class]="themeService.isDark() ? 'bg-ink-800 text-ink-200' : 'bg-slate-200 text-slate-800'">XSRF-TOKEN</code> cookie.
-        </p>
-        <div class="mt-5 overflow-hidden rounded-xl border" [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900/40' : 'border-slate-200 bg-white shadow-sm'">
-          <table class="w-full text-left text-[13px]">
-            <tbody class="divide-y" [class]="themeService.isDark() ? 'divide-ink-800' : 'divide-slate-100'">
-              @for (ep of adminEndpoints; track ep.path + ep.method) {
-                <tr [class]="themeService.isDark() ? 'bg-ink-900/40 hover:bg-ink-900/60' : 'bg-white hover:bg-slate-50/80'">
-                  <td class="w-20 px-4 py-3 align-top">
-                    <span class="rounded-md px-1.5 py-0.5 font-mono text-[10px] font-semibold ring-1 ring-inset {{ methodClass(ep.method) }}">{{ ep.method }}</span>
-                  </td>
-                  <td class="px-4 py-3 font-mono text-[12px]" [class]="themeService.isDark() ? 'text-ink-200' : 'text-slate-800 font-medium'">{{ ep.path }}</td>
-                  <td class="px-4 py-3" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">{{ ep.summary }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- Registration -->
-      <section id="registration" class="scroll-mt-24">
-        <h2 class="text-lg font-semibold" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">Self-registration</h2>
-        <p class="mt-2 max-w-2xl text-[13px] leading-relaxed" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">
-          Your application <strong [class]="themeService.isDark() ? 'text-ink-200' : 'text-slate-800'">links</strong> users to this server's sign-up page; it
-          never creates accounts itself. A Portal SSO account grants access to every application behind
-          the server, so no single application decides who exists. Check the policy endpoint before
-          showing a sign-up link — registration is off unless the operator enabled it.
-        </p>
-        <div class="mt-5 overflow-hidden rounded-xl border" [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900/40' : 'border-slate-200 bg-white shadow-sm'">
-          <table class="w-full text-left text-[13px]">
-            <tbody class="divide-y" [class]="themeService.isDark() ? 'divide-ink-800' : 'divide-slate-100'">
-              @for (ep of publicEndpoints; track ep.path) {
-                <tr [class]="themeService.isDark() ? 'bg-ink-900/40 hover:bg-ink-900/60' : 'bg-white hover:bg-slate-50/80'">
-                  <td class="w-20 px-4 py-3 align-top">
-                    <span class="rounded-md px-1.5 py-0.5 font-mono text-[10px] font-semibold ring-1 ring-inset {{ methodClass(ep.method) }}">{{ ep.method }}</span>
-                  </td>
-                  <td class="px-4 py-3 font-mono text-[12px]" [class]="themeService.isDark() ? 'text-ink-200' : 'text-slate-800 font-medium'">{{ ep.path }}</td>
-                  <td class="px-4 py-3" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">{{ ep.summary }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- Config -->
-      <section id="config" class="scroll-mt-24">
-        <h2 class="text-lg font-semibold" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">Configuration</h2>
-        <p class="mt-2 text-[13px]" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">
-          Credentials belong in environment variables or <code class="rounded px-1 py-0.5 font-mono text-[11px]" [class]="themeService.isDark() ? 'bg-ink-800 text-ink-200' : 'bg-slate-200 text-slate-800'">config/application-local.yml</code>, never in a committed file.
-        </p>
-        <div class="mt-5 overflow-hidden rounded-xl border" [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900/40' : 'border-slate-200 bg-white shadow-sm'">
+      <section id="config" class="scroll-mt-24 space-y-4">
+        <h2 class="text-xl font-semibold" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">5. Configuration</h2>
+        <div class="overflow-hidden rounded-xl border" [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900/40' : 'border-slate-200 bg-white shadow-sm'">
           <table class="w-full text-left text-[13px]">
             <thead class="border-b" [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900/60' : 'border-slate-200 bg-slate-100'">
               <tr class="text-[11px] font-semibold uppercase tracking-wider" [class]="themeService.isDark() ? 'text-ink-500' : 'text-slate-500'">
@@ -435,21 +172,6 @@
         </div>
       </section>
 
-      <footer class="border-t pt-6 text-[12px] flex flex-col sm:flex-row items-center justify-between gap-3" [class]="themeService.isDark() ? 'border-ink-800 text-ink-600' : 'border-slate-200 text-slate-400'">
-        <span>Every endpoint on this page exists on this build and was verified against a running server.</span>
-        <div class="flex items-center gap-1.5">
-          <span>Developed by</span>
-          <a
-            href="https://tanmaysinghx.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="font-medium hover:underline"
-            [class]="themeService.isDark() ? 'text-amber-400 hover:text-amber-300' : 'text-amber-600 hover:text-amber-700'"
-          >
-            Tanmay Singh
-          </a>
-        </div>
-      </footer>
     </main>
   </div>
 </div>

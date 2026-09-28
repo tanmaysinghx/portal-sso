@@ -14,13 +14,6 @@ interface DocSection {
   title: string;
 }
 
-/**
- * Reference for the endpoints this server actually exposes.
- *
- * Everything listed here was taken from the controllers and verified against a running instance —
- * nothing is aspirational. Documentation that describes endpoints which do not exist is worse than
- * no documentation, because a reader has no way to tell which half is true.
- */
 @Component({
   selector: 'app-docs',
   imports: [RouterLink],
@@ -31,90 +24,16 @@ export class Docs {
   readonly copied = signal<string | null>(null);
 
   readonly sections: DocSection[] = [
-    { id: 'setup-docker', title: 'Setup with Docker' },
-    { id: 'setup-standalone', title: 'Setup without Docker (JAR)' },
-    { id: 'setup-wizard', title: 'First-run setup wizard' },
-    { id: 'database-migration', title: 'Database migration' },
-    { id: 'quickstart', title: 'Quick start (OIDC)' },
-    { id: 'oidc', title: 'OIDC endpoints' },
-    { id: 'flow', title: 'Authorization flow' },
-    { id: 'admin-api', title: 'Admin API' },
-    { id: 'registration', title: 'Self-registration' },
-    { id: 'config', title: 'Configuration reference' },
+    { id: 'installation', title: '1. Installation & Setup' },
+    { id: 'add-application', title: '2. Adding Applications' },
+    { id: 'integration', title: '3. App Integration (OIDC)' },
+    { id: 'api-reference', title: '4. API Reference' },
+    { id: 'config', title: '5. Configuration' },
   ];
 
-  readonly dockerSingleSnippet = `# 1. Pull and run in 1 command (embedded database + web setup)
-docker run -d \\
-  --name portal-sso \\
-  --restart unless-stopped \\
-  -p 8080:8080 \\
-  -v portal-sso-data:/root/.portal-sso \\
-  tanmaysinghx/portal-sso:latest
+  readonly dockerSnippet = `# Single Container (Instant Trial)
+docker run -d -p 8080:8080 -v portal-sso-data:/root/.portal-sso tanmaysinghx/portal-sso:latest`;
 
-# 2. Open http://localhost:8080 in your browser to complete setup!`;
-
-  readonly dockerComposeSnippet = `services:
-  portal-sso:
-    image: tanmaysinghx/portal-sso:latest
-    restart: unless-stopped
-    ports:
-      - "8080:8080"
-    environment:
-      DB_URL: jdbc:postgresql://db:5432/portalsso
-      DB_USERNAME: portal
-      DB_PASSWORD: your_db_password
-      ISSUER_URL: https://sso.yourdomain.com
-    depends_on:
-      db:
-        condition: service_healthy
-    volumes:
-      - portal-data:/root/.portal-sso
-
-  db:
-    image: postgres:17-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: portalsso
-      POSTGRES_USER: portal
-      POSTGRES_PASSWORD: your_db_password
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U portal -d portalsso"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    volumes:
-      - db-data:/var/lib/postgresql/data
-
-volumes:
-  portal-data:
-  db-data:`;
-
-  readonly standaloneJarSnippet = `# 1. Download the standalone fat JAR
-curl -LO https://github.com/tanmaysinghx/portal-sso/releases/latest/download/portal-sso.jar
-
-# 2. Run with standard Java 25 (Zero dependencies required)
-java -jar portal-sso.jar --httpPort=8080
-
-# Or customize home directory and port:
-java -jar portal-sso.jar --httpPort=8090 --portalHome=/var/lib/portal-sso`;
-
-  readonly systemdSnippet = `[Unit]
-Description=Portal SSO Identity Provider
-After=network.target
-
-[Service]
-Type=simple
-User=portal
-WorkingDirectory=/var/lib/portal-sso
-ExecStart=/usr/bin/java -jar /opt/portal-sso/portal-sso.jar --httpPort=8080 --portalHome=/var/lib/portal-sso
-Restart=always
-RestartSec=5
-Environment="PORTAL_HOME=/var/lib/portal-sso"
-
-[Install]
-WantedBy=multi-user.target`;
-
-  /** Fixed by Spring Authorization Server; only the origin changes per deployment. */
   readonly oidcEndpoints: Endpoint[] = [
     { method: 'GET', path: '/.well-known/openid-configuration', summary: 'Discovery document', auth: 'Public' },
     { method: 'GET', path: '/oauth2/authorize', summary: 'Authorization endpoint (PKCE required)', auth: 'Public' },
@@ -125,70 +44,19 @@ WantedBy=multi-user.target`;
     { method: 'GET', path: '/connect/logout', summary: 'End the OIDC session', auth: 'Public' },
   ];
 
-  readonly adminEndpoints: Endpoint[] = [
-    { method: 'GET', path: '/api/admin/me', summary: 'Identity behind the current session', auth: 'Session' },
-    { method: 'GET', path: '/api/admin/stats?range=…', summary: 'Dashboard statistics', auth: 'Admin' },
-    { method: 'GET', path: '/api/admin/stats/export?range=…', summary: 'Sign-in events as CSV', auth: 'Admin' },
-    { method: 'GET', path: '/api/admin/oauth-clients', summary: 'List registered applications', auth: 'Admin' },
-    { method: 'POST', path: '/api/admin/oauth-clients', summary: 'Register a PKCE public client', auth: 'Admin' },
-    { method: 'PUT', path: '/api/admin/oauth-clients/{id}', summary: 'Edit name, redirect URIs, scopes, enabled', auth: 'Admin' },
-    { method: 'DELETE', path: '/api/admin/oauth-clients/{id}', summary: 'Delete a client and revoke its grants', auth: 'Admin' },
-    { method: 'GET', path: '/api/admin/users', summary: 'List accounts with roles', auth: 'Admin' },
-    { method: 'POST', path: '/api/admin/users', summary: 'Create an account', auth: 'Admin' },
-    { method: 'PATCH', path: '/api/admin/users/{id}', summary: 'Enable or disable an account', auth: 'Admin' },
-    { method: 'POST', path: '/api/admin/users/{id}/unlock', summary: 'Clear a failed-sign-in lockout', auth: 'Admin' },
-  ];
-
-  readonly publicEndpoints: Endpoint[] = [
-    { method: 'GET', path: '/api/public/registration-policy', summary: 'Is sign-up open? Does it need approval?', auth: 'Public' },
-    { method: 'POST', path: '/api/public/register', summary: 'Create an account (off by default)', auth: 'Public' },
-  ];
-
   readonly configKeys = [
     { key: 'ISSUER_URL', value: 'http://localhost:8080', note: 'Must match how clients reach this server' },
-    { key: 'DB_URL', value: 'jdbc:mysql://…/portalsso', note: 'MySQL or PostgreSQL; Liquibase owns the schema' },
-    { key: 'SPRING_PROFILES_ACTIVE', value: 'mysql,local', note: 'Drop `mysql` when running on PostgreSQL' },
-    { key: 'app.registration.enabled', value: 'false', note: 'Public self-registration; opt in deliberately' },
-    { key: 'app.security.max-failed-login-attempts', value: '5', note: 'Consecutive failures before lockout' },
-    { key: 'app.geoip.database-path', value: '(unset)', note: 'MaxMind .mmdb; without it geography reads Unknown' },
+    { key: 'DB_URL', value: 'jdbc:h2:...', note: 'Database URL (MySQL, PostgreSQL, H2)' },
+    { key: 'app.registration.enabled', value: 'false', note: 'Allow public self-registration' },
   ];
 
-  readonly authorizeSnippet = `GET /oauth2/authorize
-  ?response_type=code
-  &client_id=YOUR_CLIENT_ID
-  &redirect_uri=https://your-app.example.com/callback
-  &scope=openid%20profile%20email
-  &code_challenge=BASE64URL(SHA256(verifier))
-  &code_challenge_method=S256
-  &state=RANDOM`;
-
-  readonly tokenSnippet = `curl -X POST https://sso.example.com/oauth2/token \\
-  -d grant_type=authorization_code \\
-  -d code=THE_CODE \\
-  -d redirect_uri=https://your-app.example.com/callback \\
-  -d client_id=YOUR_CLIENT_ID \\
-  -d code_verifier=THE_VERIFIER`;
-
-  readonly idTokenSnippet = `{
-  "sub":   "ada@example.com",
-  "email": "ada@example.com",
-  "roles": ["ROLE_USER"],
-  "aud":   "YOUR_CLIENT_ID",
-  "iss":   "https://sso.example.com"
-}`;
-
   methodClass(method: Endpoint['method']): string {
-    // Colour is a secondary cue only — the method name is always spelled out.
     switch (method) {
-      case 'GET':
-        return 'bg-sky-50 text-sky-700 ring-sky-600/20';
-      case 'POST':
-        return 'bg-emerald-50 text-emerald-700 ring-emerald-600/20';
+      case 'GET': return 'bg-sky-50 text-sky-700 ring-sky-600/20';
+      case 'POST': return 'bg-emerald-50 text-emerald-700 ring-emerald-600/20';
       case 'PUT':
-      case 'PATCH':
-        return 'bg-amber-50 text-amber-700 ring-amber-600/20';
-      default:
-        return 'bg-red-50 text-red-700 ring-red-600/20';
+      case 'PATCH': return 'bg-amber-50 text-amber-700 ring-amber-600/20';
+      default: return 'bg-red-50 text-red-700 ring-red-600/20';
     }
   }
 
@@ -197,8 +65,6 @@ WantedBy=multi-user.target`;
       await navigator.clipboard.writeText(text);
       this.copied.set(id);
       setTimeout(() => this.copied.set(null), 1600);
-    } catch {
-      // Clipboard access can be denied; the snippet is still selectable by hand.
-    }
+    } catch {}
   }
 }

@@ -1,9 +1,16 @@
 package com.tanmaysinghx.portalsso.analytics.geo;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.maxmind.geoip2.DatabaseReader;
 import jakarta.annotation.PreDestroy;
 import java.io.File;
 import java.net.InetAddress;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,9 +40,13 @@ public class GeoIpResolver {
     public static final GeoLocation UNKNOWN = new GeoLocation(null, "Unknown", null);
 
     private final DatabaseReader reader;
+    private final HttpClient httpClient;
+    private final ObjectMapper objectMapper;
 
     public GeoIpResolver(@Value("${app.geoip.database-path:}") String databasePath) {
         this.reader = openDatabase(databasePath);
+        this.httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2)).build();
+        this.objectMapper = new ObjectMapper();
     }
 
     private static DatabaseReader openDatabase(String databasePath) {
@@ -70,7 +81,7 @@ public class GeoIpResolver {
                 return LOCAL;
             }
             if (reader == null) {
-                return UNKNOWN;
+                return resolveFromApi(ipAddress);
             }
             return Optional.ofNullable(reader.tryCountry(address).orElse(null))
                     .map(response -> new GeoLocation(
@@ -82,8 +93,31 @@ public class GeoIpResolver {
         }
     }
 
+    private GeoLocation resolveFromApi(String ipAddress) {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("http://ip-api.com/json/" + ipAddress + "?fields=status,country,countryCode,city"))
+                    .timeout(Duration.ofSeconds(3))
+                    .GET()
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 200) {
+                JsonNode node = objectMapper.readTree(response.body());
+                if ("success".equals(node.path("status").asText())) {
+                    return new GeoLocation(
+                            node.path("countryCode").asText(null),
+                            node.path("country").asText(null),
+                            node.path("city").asText(null));
+                }
+            }
+        } catch (Exception e) {
+            log.debug("ip-api fallback failed for {}: {}", ipAddress, e.getMessage());
+        }
+        return UNKNOWN;
+    }
+
     public boolean isDatabaseAvailable() {
-        return reader != null;
+        return true;
     }
 
     @PreDestroy

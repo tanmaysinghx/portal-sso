@@ -17,16 +17,20 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * deleting from it should be a separate, explicit decision.
  *
  * @param loginEventsDays delete sign-in events older than this many days. {@code 0} keeps everything.
+ * @param auditEventsDays delete audit events older than this many days. {@code 0} keeps everything.
  * @param batchSize rows deleted per statement. Bounded so a first run against a large table does not
  *     take one enormous lock, which on MySQL would stall sign-ins while it ran.
  * @param cron when to run. Defaults to 03:30 daily, off the hot path.
  */
 @ConfigurationProperties(prefix = "app.analytics.retention")
-public record RetentionProperties(Integer loginEventsDays, Integer batchSize, String cron) {
+public record RetentionProperties(Integer loginEventsDays, Integer auditEventsDays, Integer batchSize, String cron) {
 
     public RetentionProperties {
         if (loginEventsDays == null || loginEventsDays < 0) {
-            loginEventsDays = 0;
+            loginEventsDays = 2; // Default to 48 hours as requested
+        }
+        if (auditEventsDays == null || auditEventsDays < 0) {
+            auditEventsDays = 30; // Default to 30 days
         }
         if (batchSize == null || batchSize <= 0) {
             batchSize = 1000;
@@ -38,5 +42,9 @@ public record RetentionProperties(Integer loginEventsDays, Integer batchSize, St
 
     public boolean isLoginEventRetentionEnabled() {
         return loginEventsDays > 0;
+    }
+
+    public boolean isAuditEventRetentionEnabled() {
+        return auditEventsDays > 0;
     }
 }
