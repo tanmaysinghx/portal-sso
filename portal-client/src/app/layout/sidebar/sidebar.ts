@@ -2,6 +2,7 @@ import { Component, computed, inject, input, output } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { BrandingService } from '../../core/services/branding.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-sidebar',
@@ -25,7 +26,7 @@ export class Sidebar {
 
   readonly currentUser = this.authService.currentUser;
   readonly initial = computed(() => (this.currentUser()?.email ?? '?').charAt(0).toUpperCase());
-  readonly version = 'v25.0.12';
+  readonly version = environment.version;
 
   logout(): void {
     this.authService.logout().subscribe(() => this.router.navigateByUrl('/sign-in'));

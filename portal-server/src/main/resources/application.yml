@@ -44,7 +44,7 @@ server:
   #
   # Left NONE by default on purpose: trusting X-Forwarded-* when nothing strips it lets any caller
   # forge their own source address. Turn it on only when a proxy you control sets those headers.
-  forward-headers-strategy: ${FORWARD_HEADERS_STRATEGY:FRAMEWORK}
+  forward-headers-strategy: ${FORWARD_HEADERS_STRATEGY:NATIVE}
 
   compression:
     # The console's largest bundle is ~1.1MB uncompressed. Compression is off by default in Spring

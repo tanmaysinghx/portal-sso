@@ -4,4 +4,5 @@ export const environment = {
   // portal-server at localhost:8080 — required for both the session cookie and Angular's default
   // XSRF interceptor (which only attaches X-XSRF-TOKEN on same-origin requests).
   apiBaseUrl: '',
+  version: '25.0.14',
 };
