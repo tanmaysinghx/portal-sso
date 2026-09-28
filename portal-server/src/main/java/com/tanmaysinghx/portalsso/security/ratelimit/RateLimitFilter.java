@@ -1,6 +1,7 @@
 package com.tanmaysinghx.portalsso.security.ratelimit;
 
 import com.tanmaysinghx.portalsso.common.error.ErrorCode;
+import com.tanmaysinghx.portalsso.common.web.ClientIpResolver;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -54,13 +55,14 @@ public class RateLimitFilter extends OncePerRequestFilter {
             return;
         }
 
-        long retryAfter = rateLimiter.checkAndConsume(match.getKey(), match.getValue(), request.getRemoteAddr());
+        String clientIp = ClientIpResolver.getClientIp(request);
+        long retryAfter = rateLimiter.checkAndConsume(match.getKey(), match.getValue(), clientIp);
         if (retryAfter == 0) {
             chain.doFilter(request, response);
             return;
         }
 
-        log.warn("Rate limit hit for {} from {} — retry in {}s", match.getKey(), request.getRemoteAddr(), retryAfter);
+        log.warn("Rate limit hit for {} from {} — retry in {}s", match.getKey(), clientIp, retryAfter);
         writeTooManyRequests(response, retryAfter);
     }
 

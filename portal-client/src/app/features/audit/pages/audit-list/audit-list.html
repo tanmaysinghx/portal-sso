@@ -124,7 +124,7 @@
                   <div class="min-w-0">
                     <div class="truncate text-[13px] text-ink-900">{{ event.targetLabel ?? '—' }}</div>
                     <div class="text-[11px] uppercase tracking-wide text-ink-400">
-                      {{ event.targetType === 'OAUTH_CLIENT' ? 'OAuth client' : 'User' }}
+                      {{ event.targetType === 'OAUTH_CLIENT' ? 'OAuth client' : event.targetType === 'ROLE' ? 'Role' : event.targetType === 'APPLICATION' ? 'Application' : 'User' }}
                     </div>
                   </div>
                 </td>

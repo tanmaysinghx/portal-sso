@@ -221,7 +221,7 @@
       <p class="mt-0.5 text-[12px] text-ink-500">Source addresses, newest first</p>
     </header>
 
-    @if (loading()) {
+    @if (loading() || recentLoginsLoading()) {
       <div class="divide-y divide-ink-100">
         @for (row of [1, 2, 3]; track row) {
           <div class="flex items-center gap-4 px-5 py-3.5">
@@ -230,7 +230,7 @@
           </div>
         }
       </div>
-    } @else if ((stats()?.recentLogins ?? []).length === 0) {
+    } @else if (recentLoginsList().length === 0) {
       <div class="px-6 py-16 text-center text-[13px] text-ink-500">No sign-in attempts recorded yet.</div>
     } @else {
       <div class="overflow-x-auto">
@@ -246,7 +246,7 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-ink-100">
-            @for (login of stats()?.recentLogins ?? []; track login.occurredAt + login.email) {
+            @for (login of recentLoginsList(); track login.occurredAt + login.email) {
               <tr class="transition-colors hover:bg-ink-50/60">
                 <!-- Icon + word, never colour alone: green/red are indistinguishable to many
                      readers, so the shape and the label carry the meaning. -->
@@ -280,6 +280,30 @@
           </tbody>
         </table>
       </div>
+
+      @if (recentLoginsTotalPages() > 1) {
+        <div class="flex items-center justify-between border-t border-ink-200 bg-ink-50/40 px-5 py-3">
+          <span class="text-[12px] tabular-nums text-ink-500">Page {{ recentLoginsPage() + 1 }} of {{ recentLoginsTotalPages() }}</span>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              (click)="loadRecentLogins(recentLoginsPage() - 1)"
+              [disabled]="recentLoginsPage() === 0 || recentLoginsLoading()"
+              class="rounded-lg border border-ink-300 bg-white px-3 py-1.5 text-[12px] font-medium text-ink-700 shadow-sm transition hover:bg-ink-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              (click)="loadRecentLogins(recentLoginsPage() + 1)"
+              [disabled]="recentLoginsPage() + 1 >= recentLoginsTotalPages() || recentLoginsLoading()"
+              class="rounded-lg border border-ink-300 bg-white px-3 py-1.5 text-[12px] font-medium text-ink-700 shadow-sm transition hover:bg-ink-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      }
     }
   </section>
 </div>

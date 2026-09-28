@@ -3,6 +3,7 @@ package com.tanmaysinghx.portalsso.analytics.service;
 import com.tanmaysinghx.portalsso.analytics.entity.LoginEvent;
 import com.tanmaysinghx.portalsso.analytics.geo.GeoIpResolver;
 import com.tanmaysinghx.portalsso.analytics.repository.LoginEventRepository;
+import com.tanmaysinghx.portalsso.common.web.ClientIpResolver;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import org.slf4j.Logger;
@@ -48,7 +49,7 @@ public class LoginEventRecorder {
 
             HttpServletRequest request = currentRequest();
             if (request != null) {
-                String ip = request.getRemoteAddr();
+                String ip = ClientIpResolver.getClientIp(request);
                 event.setIpAddress(ip);
                 event.setUserAgent(truncate(request.getHeader("User-Agent")));
                 event.setClientId(request.getParameter("client_id"));

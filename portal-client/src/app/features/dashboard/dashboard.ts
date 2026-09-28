@@ -7,6 +7,7 @@ import { Chart } from '../../shared/components/chart/chart';
 import {
   DashboardStats,
   RANGE_OPTIONS,
+  RecentLogin,
   StatsRange,
 } from './models/dashboard-stats.model';
 import { DashboardStatsService } from './services/dashboard-stats.service';
@@ -45,6 +46,12 @@ export class Dashboard {
   readonly exporting = signal(false);
   readonly worldGeoJson = signal<unknown | null>(null);
 
+  readonly recentLoginsPage = signal(0);
+  readonly recentLoginsTotalPages = signal(0);
+  readonly recentLoginsTotalElements = signal(0);
+  readonly recentLoginsList = signal<RecentLogin[]>([]);
+  readonly recentLoginsLoading = signal(false);
+
   constructor() {
     this.load();
   }
@@ -60,6 +67,7 @@ export class Dashboard {
   load(): void {
     this.loading.set(true);
     this.error.set(null);
+    this.loadRecentLogins(0, 10);
     this.statsService.load(this.range()).subscribe({
       next: (stats) => {
         this.stats.set(stats);
@@ -72,6 +80,25 @@ export class Dashboard {
       error: () => {
         this.error.set('Could not load dashboard statistics.');
         this.loading.set(false);
+      },
+    });
+  }
+
+  loadRecentLogins(page = 0, size = 10): void {
+    if (page < 0 || (this.recentLoginsTotalPages() > 0 && page >= this.recentLoginsTotalPages())) {
+      return;
+    }
+    this.recentLoginsLoading.set(true);
+    this.statsService.getRecentLogins(page, size).subscribe({
+      next: (res) => {
+        this.recentLoginsList.set(res.content);
+        this.recentLoginsPage.set(res.page);
+        this.recentLoginsTotalPages.set(res.totalPages);
+        this.recentLoginsTotalElements.set(res.totalElements);
+        this.recentLoginsLoading.set(false);
+      },
+      error: () => {
+        this.recentLoginsLoading.set(false);
       },
     });
   }

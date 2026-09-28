@@ -22,7 +22,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
+import com.tanmaysinghx.portalsso.common.api.PageResponse;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -335,6 +338,24 @@ public class DashboardStatsService {
                         e.getClientId(),
                         e.getOccurredAt()))
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<DashboardStats.RecentLogin> findRecentLogins(int page, int size) {
+        PageRequest pageRequest = PageRequest.of(
+                Math.max(page, 0),
+                Math.clamp(size, 1, 100),
+                Sort.by(Sort.Direction.DESC, "occurredAt").and(Sort.by(Sort.Direction.DESC, "id")));
+
+        Page<LoginEvent> events = loginEventRepository.findAll(pageRequest);
+        return PageResponse.from(events, e -> new DashboardStats.RecentLogin(
+                e.getEmail(),
+                e.isSuccessful(),
+                e.getIpAddress(),
+                e.getCountryCode(),
+                e.getCountryName(),
+                e.getClientId(),
+                e.getOccurredAt()));
     }
 
     /** Flat CSV of the login events in the window — the dashboard's "Export" action. */

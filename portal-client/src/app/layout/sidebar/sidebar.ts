@@ -25,6 +25,7 @@ export class Sidebar {
 
   readonly currentUser = this.authService.currentUser;
   readonly initial = computed(() => (this.currentUser()?.email ?? '?').charAt(0).toUpperCase());
+  readonly version = 'v25.0.12';
 
   logout(): void {
     this.authService.logout().subscribe(() => this.router.navigateByUrl('/sign-in'));

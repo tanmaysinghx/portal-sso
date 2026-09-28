@@ -103,9 +103,20 @@ class AdminStatsControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
+    void recentLoginsEndpointReturnsPagedPayload() throws Exception {
+        mockMvc.perform(get("/api/admin/stats/recent-logins").param("page", "0").param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(10));
+    }
+
+    @Test
     @WithMockUser(roles = "USER")
     void nonAdminsCannotReadOrExportStats() throws Exception {
         mockMvc.perform(get("/api/admin/stats")).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/admin/stats/recent-logins")).andExpect(status().isForbidden());
         mockMvc.perform(get("/api/admin/stats/export")).andExpect(status().isForbidden());
     }
 }

@@ -3,6 +3,7 @@ package com.tanmaysinghx.portalsso.audit.service;
 import com.tanmaysinghx.portalsso.audit.entity.AuditAction;
 import com.tanmaysinghx.portalsso.audit.entity.AuditEvent;
 import com.tanmaysinghx.portalsso.audit.repository.AuditEventRepository;
+import com.tanmaysinghx.portalsso.common.web.ClientIpResolver;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.UUID;
@@ -88,7 +89,7 @@ public class AuditService {
             // unconditionally would let a caller forge the source address of its own audit entry.
             // Behind a proxy, set server.forward-headers-strategy=FRAMEWORK and Spring populates
             // getRemoteAddr() from it, with the trust decision made once in configuration.
-            ipAddress = request.getRemoteAddr();
+            ipAddress = ClientIpResolver.getClientIp(request);
             userAgent = truncate(request.getHeader("User-Agent"), MAX_USER_AGENT);
         }
 

@@ -18,7 +18,7 @@ const PAGE_SIZE = 25;
  * accent against a field of grey is what makes a weakened control findable. The tone is never the
  * only signal either way: the label always says what happened.
  */
-const DESTRUCTIVE_ACTIONS = new Set(['USER_DISABLED', 'USER_MFA_RESET', 'CLIENT_DELETED']);
+const DESTRUCTIVE_ACTIONS = new Set(['USER_DISABLED', 'USER_MFA_RESET', 'CLIENT_DELETED', 'ROLE_DELETED', 'APPLICATION_DELETED']);
 
 @Component({
   selector: 'app-audit-list',

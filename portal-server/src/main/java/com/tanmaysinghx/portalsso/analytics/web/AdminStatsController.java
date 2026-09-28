@@ -3,6 +3,7 @@ package com.tanmaysinghx.portalsso.analytics.web;
 import com.tanmaysinghx.portalsso.analytics.service.DashboardStatsService;
 import com.tanmaysinghx.portalsso.analytics.service.StatsRange;
 import com.tanmaysinghx.portalsso.analytics.web.dto.DashboardStats;
+import com.tanmaysinghx.portalsso.common.api.PageResponse;
 import java.time.LocalDate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -28,6 +29,13 @@ public class AdminStatsController {
     @GetMapping
     public DashboardStats stats(@RequestParam(name = "range", required = false) String range) {
         return statsService.build(StatsRange.parse(range));
+    }
+
+    @GetMapping("/recent-logins")
+    public PageResponse<DashboardStats.RecentLogin> recentLogins(
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size) {
+        return statsService.findRecentLogins(page, size);
     }
 
     @GetMapping(value = "/export", produces = "text/csv")
