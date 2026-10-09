@@ -125,18 +125,11 @@ app:
 
   analytics:
     retention:
-      # login_events gains a row on every sign-in attempt. Retention is OFF by default (0 keeps
-      # everything): an upgrade that silently deleted an operator's authentication history — the
-      # record they reach for during an incident — would be a worse defect than the growth it fixes.
-      #
-      # 90–365 days suits most deployments. Deleting happens in batches so a first run against a
-      # large backlog does not hold one long lock while sign-ins queue behind it.
-      #
-      # Deliberately not applied to audit_events: that table answers compliance questions and
-      # deleting from it should be a separate, explicit decision.
-      login-events-days: 0
+      # login_events gains a row on every sign-in attempt. Deletes entries older than 48 hours.
+      # Deleting happens in batches so a first run against a large backlog does not hold one long lock.
+      login-events-hours: 48
       batch-size: 1000
-      cron: "0 30 3 * * *"
+      cron: "0 0 * * * *"
 
   rate-limit:
     # Per-IP request limits. Complements the per-account lockout, which caps guesses against a

@@ -17,34 +17,41 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * deleting from it should be a separate, explicit decision.
  *
  * @param loginEventsDays delete sign-in events older than this many days. {@code 0} keeps everything.
+ * @param loginEventsHours delete sign-in events older than this many hours. Takes precedence over days if set.
  * @param auditEventsDays delete audit events older than this many days. {@code 0} keeps everything.
+ * @param auditEventsHours delete audit events older than this many hours. Takes precedence over days if set.
  * @param batchSize rows deleted per statement. Bounded so a first run against a large table does not
  *     take one enormous lock, which on MySQL would stall sign-ins while it ran.
- * @param cron when to run. Defaults to 03:30 daily, off the hot path.
+ * @param cron when to run.
  */
 @ConfigurationProperties(prefix = "app.analytics.retention")
-public record RetentionProperties(Integer loginEventsDays, Integer auditEventsDays, Integer batchSize, String cron) {
+public record RetentionProperties(
+        Integer loginEventsDays,
+        Integer loginEventsHours,
+        Integer auditEventsDays,
+        Integer auditEventsHours,
+        Integer batchSize,
+        String cron) {
 
     public RetentionProperties {
-        if (loginEventsDays == null || loginEventsDays < 0) {
-            loginEventsDays = 2; // Default to 48 hours as requested
-        }
-        if (auditEventsDays == null || auditEventsDays < 0) {
-            auditEventsDays = 2; // Default to 48 hours (2 days)
+        if (loginEventsHours == null && loginEventsDays == null) {
+            loginEventsHours = 48; // Default to 48 hours as requested
         }
         if (batchSize == null || batchSize <= 0) {
             batchSize = 1000;
         }
         if (cron == null || cron.isBlank()) {
-            cron = "0 30 3 * * *";
+            cron = "0 0 * * * *";
         }
     }
 
     public boolean isLoginEventRetentionEnabled() {
-        return loginEventsDays > 0;
+        return (loginEventsHours != null && loginEventsHours > 0)
+                || (loginEventsDays != null && loginEventsDays > 0);
     }
 
     public boolean isAuditEventRetentionEnabled() {
-        return auditEventsDays > 0;
+        return (auditEventsHours != null && auditEventsHours > 0)
+                || (auditEventsDays != null && auditEventsDays > 0);
     }
 }

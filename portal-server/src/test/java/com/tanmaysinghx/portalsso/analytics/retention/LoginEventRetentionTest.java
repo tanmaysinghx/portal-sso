@@ -22,6 +22,7 @@ import org.springframework.test.context.TestPropertySource;
 @TestPropertySource(properties = {
         "spring.datasource.url=jdbc:h2:mem:retention;MODE=PostgreSQL",
         "app.seed.test-data=false",
+        "app.analytics.retention.login-events-hours=0",
         "app.analytics.retention.login-events-days=30",
         "app.analytics.retention.batch-size=3"
 })

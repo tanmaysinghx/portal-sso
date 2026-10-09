@@ -37,17 +37,21 @@ class RetentionDisabledByDefaultTest {
     private RetentionProperties properties;
 
     @Test
-    void retentionIsOffUnlessAnOperatorTurnsItOn() {
-        assertThat(properties.isLoginEventRetentionEnabled()).isFalse();
-        assertThat(properties.loginEventsDays()).isZero();
+    void retentionIsEnabledByDefaultWith48Hours() {
+        assertThat(properties.isLoginEventRetentionEnabled()).isTrue();
+        assertThat(properties.loginEventsHours()).isEqualTo(48);
     }
 
     @Test
-    void avowedlyAncientEventsSurviveWhenRetentionIsDisabled() {
+    void ancientEventsArePurgedBeyond48Hours() {
         repository.save(new LoginEvent(
-                "ancient@example.com", true, Instant.now().minus(3650, ChronoUnit.DAYS)));
+                "ancient@example.com", true, Instant.now().minus(72, ChronoUnit.HOURS)));
+        repository.save(new LoginEvent(
+                "recent@example.com", true, Instant.now().minus(12, ChronoUnit.HOURS)));
 
-        assertThat(job.run()).isZero();
-        assertThat(repository.count()).isEqualTo(1);
+        assertThat(job.run()).isEqualTo(1);
+        assertThat(repository.findAll())
+                .extracting(LoginEvent::getEmail)
+                .containsExactly("recent@example.com");
     }
 }

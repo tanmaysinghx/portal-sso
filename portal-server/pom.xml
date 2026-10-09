@@ -16,7 +16,22 @@
 	<properties>
 		<java.version>25</java.version>
 		<testcontainers.version>1.21.3</testcontainers.version>
+		<npm.executable>npm</npm.executable>
 	</properties>
+
+	<profiles>
+		<profile>
+			<id>windows</id>
+			<activation>
+				<os>
+					<family>windows</family>
+				</os>
+			</activation>
+			<properties>
+				<npm.executable>npm.cmd</npm.executable>
+			</properties>
+		</profile>
+	</profiles>
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
@@ -167,7 +182,7 @@
 						</goals>
 						<configuration>
 							<workingDirectory>${project.basedir}/../portal-client</workingDirectory>
-							<executable>npm</executable>
+							<executable>${npm.executable}</executable>
 							<arguments>
 								<argument>run</argument>
 								<argument>build</argument>

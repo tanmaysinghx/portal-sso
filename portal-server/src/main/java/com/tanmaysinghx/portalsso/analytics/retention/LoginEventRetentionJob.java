@@ -72,7 +72,19 @@ public class LoginEventRetentionJob {
             return 0;
         }
 
-        Instant cutoff = Instant.now().minus(Duration.ofDays(properties.loginEventsDays()));
+        Duration retentionDuration;
+        String windowDescription;
+        if (properties.loginEventsHours() != null && properties.loginEventsHours() > 0) {
+            retentionDuration = Duration.ofHours(properties.loginEventsHours());
+            windowDescription = properties.loginEventsHours() + " hour(s)";
+        } else if (properties.loginEventsDays() != null && properties.loginEventsDays() > 0) {
+            retentionDuration = Duration.ofDays(properties.loginEventsDays());
+            windowDescription = properties.loginEventsDays() + " day(s)";
+        } else {
+            return 0;
+        }
+
+        Instant cutoff = Instant.now().minus(retentionDuration);
         int batchSize = properties.batchSize();
         int total = 0;
 
@@ -95,9 +107,9 @@ public class LoginEventRetentionJob {
 
         if (total > 0) {
             log.info(
-                    "Retention: deleted {} login event(s) older than {} days.",
+                    "Retention: deleted {} login event(s) older than {}.",
                     total,
-                    properties.loginEventsDays());
+                    windowDescription);
         }
         return total;
     }

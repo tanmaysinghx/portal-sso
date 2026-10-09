@@ -51,7 +51,19 @@ public class AuditEventRetentionJob {
             return 0;
         }
 
-        Instant cutoff = Instant.now().minus(Duration.ofDays(properties.auditEventsDays()));
+        Duration retentionDuration;
+        String windowDescription;
+        if (properties.auditEventsHours() != null && properties.auditEventsHours() > 0) {
+            retentionDuration = Duration.ofHours(properties.auditEventsHours());
+            windowDescription = properties.auditEventsHours() + " hour(s)";
+        } else if (properties.auditEventsDays() != null && properties.auditEventsDays() > 0) {
+            retentionDuration = Duration.ofDays(properties.auditEventsDays());
+            windowDescription = properties.auditEventsDays() + " day(s)";
+        } else {
+            return 0;
+        }
+
+        Instant cutoff = Instant.now().minus(retentionDuration);
         int batchSize = properties.batchSize();
         int total = 0;
 
@@ -74,9 +86,9 @@ public class AuditEventRetentionJob {
 
         if (total > 0) {
             log.info(
-                    "Retention: deleted {} audit event(s) older than {} days.",
+                    "Retention: deleted {} audit event(s) older than {}.",
                     total,
-                    properties.auditEventsDays());
+                    windowDescription);
         }
         return total;
     }
