@@ -51,6 +51,7 @@ public class AdminUserController {
     private final RoleService roleService;
     private final UserQueryService userQueryService;
     private final PasswordPolicy passwordPolicy;
+    private final com.tanmaysinghx.portalsso.user.service.UserImportService userImportService;
 
     public AdminUserController(
             UserRepository userRepository,
@@ -60,7 +61,8 @@ public class AdminUserController {
             AuditService auditService,
             RoleService roleService,
             UserQueryService userQueryService,
-            PasswordPolicy passwordPolicy) {
+            PasswordPolicy passwordPolicy,
+            com.tanmaysinghx.portalsso.user.service.UserImportService userImportService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
@@ -69,6 +71,16 @@ public class AdminUserController {
         this.roleService = roleService;
         this.userQueryService = userQueryService;
         this.passwordPolicy = passwordPolicy;
+        this.userImportService = userImportService;
+    }
+
+    /**
+     * Bulk imports users via CSV or structured JSON.
+     */
+    @PostMapping("/import")
+    public com.tanmaysinghx.portalsso.user.web.dto.BulkUserImportResponse importUsers(
+            @RequestBody com.tanmaysinghx.portalsso.user.web.dto.BulkUserImportRequest request) {
+        return userImportService.importUsers(request);
     }
 
     /**

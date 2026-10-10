@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Page } from '../../../core/models/page.model';
-import { CreateUserRequest, PortalUser, UserSessionDto } from '../models/portal-user.model';
+import { BulkUserImportRequest, BulkUserImportResponse, CreateUserRequest, PortalUser, UserSessionDto } from '../models/portal-user.model';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
@@ -61,5 +61,9 @@ export class UserService {
 
   revokeSession(userId: string, sessionId: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${userId}/sessions/${sessionId}`);
+  }
+
+  importUsers(request: BulkUserImportRequest): Observable<BulkUserImportResponse> {
+    return this.http.post<BulkUserImportResponse>(`${this.baseUrl}/import`, request);
   }
 }

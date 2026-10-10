@@ -123,10 +123,111 @@
       </section>
 
       <section id="integration" class="scroll-mt-24 space-y-4">
-        <h2 class="text-xl font-semibold" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">3. App Integration (OIDC)</h2>
+        <h2 class="text-xl font-semibold" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">3. App Integration & Quickstarts (OIDC)</h2>
         <p class="text-[13px]" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">
-          Point your OIDC library to the Issuer URL. Portal SSO enforces PKCE for all authorization flows.
+          Portal SSO is strictly OpenID Connect Core 1.0 & OAuth 2.1 compliant. Integrate directly with your favorite framework or protect legacy apps with zero code changes:
         </p>
+
+        <!-- Framework Pills -->
+        <div class="flex flex-wrap gap-1.5 pt-1">
+          <button
+            type="button"
+            (click)="activeStack.set('react')"
+            [class.bg-brand-600]="activeStack() === 'react'"
+            [class.text-white]="activeStack() === 'react'"
+            [class]="activeStack() !== 'react' ? (themeService.isDark() ? 'bg-ink-800 text-ink-300 hover:text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200') : ''"
+            class="rounded-lg px-3 py-1.5 text-xs font-semibold transition"
+          >
+            React / Next.js
+          </button>
+          <button
+            type="button"
+            (click)="activeStack.set('angular')"
+            [class.bg-brand-600]="activeStack() === 'angular'"
+            [class.text-white]="activeStack() === 'angular'"
+            [class]="activeStack() !== 'angular' ? (themeService.isDark() ? 'bg-ink-800 text-ink-300 hover:text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200') : ''"
+            class="rounded-lg px-3 py-1.5 text-xs font-semibold transition"
+          >
+            Angular
+          </button>
+          <button
+            type="button"
+            (click)="activeStack.set('spring')"
+            [class.bg-brand-600]="activeStack() === 'spring'"
+            [class.text-white]="activeStack() === 'spring'"
+            [class]="activeStack() !== 'spring' ? (themeService.isDark() ? 'bg-ink-800 text-ink-300 hover:text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200') : ''"
+            class="rounded-lg px-3 py-1.5 text-xs font-semibold transition"
+          >
+            Spring Boot
+          </button>
+          <button
+            type="button"
+            (click)="activeStack.set('jsp')"
+            [class.bg-brand-600]="activeStack() === 'jsp'"
+            [class.text-white]="activeStack() === 'jsp'"
+            [class]="activeStack() !== 'jsp' ? (themeService.isDark() ? 'bg-ink-800 text-ink-300 hover:text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200') : ''"
+            class="rounded-lg px-3 py-1.5 text-xs font-semibold transition flex items-center gap-1.5"
+          >
+            <span>Legacy JSP / JSF</span>
+            <span class="rounded bg-emerald-500/20 px-1 py-0.2 text-[9px] font-bold text-emerald-400">Zero Code</span>
+          </button>
+          <button
+            type="button"
+            (click)="activeStack.set('nodejs')"
+            [class.bg-brand-600]="activeStack() === 'nodejs'"
+            [class.text-white]="activeStack() === 'nodejs'"
+            [class]="activeStack() !== 'nodejs' ? (themeService.isDark() ? 'bg-ink-800 text-ink-300 hover:text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200') : ''"
+            class="rounded-lg px-3 py-1.5 text-xs font-semibold transition"
+          >
+            Node.js
+          </button>
+          <button
+            type="button"
+            (click)="activeStack.set('python')"
+            [class.bg-brand-600]="activeStack() === 'python'"
+            [class.text-white]="activeStack() === 'python'"
+            [class]="activeStack() !== 'python' ? (themeService.isDark() ? 'bg-ink-800 text-ink-300 hover:text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200') : ''"
+            class="rounded-lg px-3 py-1.5 text-xs font-semibold transition"
+          >
+            Python
+          </button>
+          <button
+            type="button"
+            (click)="activeStack.set('go')"
+            [class.bg-brand-600]="activeStack() === 'go'"
+            [class.text-white]="activeStack() === 'go'"
+            [class]="activeStack() !== 'go' ? (themeService.isDark() ? 'bg-ink-800 text-ink-300 hover:text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200') : ''"
+            class="rounded-lg px-3 py-1.5 text-xs font-semibold transition"
+          >
+            Go
+          </button>
+        </div>
+
+        <!-- Code Block -->
+        <div class="overflow-hidden rounded-xl border border-slate-800 bg-slate-950 shadow-sm">
+          <div class="flex items-center justify-between border-b border-slate-800/80 bg-slate-900/60 px-4 py-2.5">
+            <span class="font-mono text-xs text-slate-400">
+              @switch (activeStack()) {
+                @case ('react') { oidc-client-ts configuration }
+                @case ('angular') { angular-auth-oidc-client setup }
+                @case ('spring') { application.yml OAuth 2.0 Client }
+                @case ('jsp') { oauth2-proxy.cfg (Reverse Proxy) }
+                @case ('nodejs') { openid-client Express handler }
+                @case ('python') { Authlib FastApi / Django }
+                @case ('go') { golang.org/x/oauth2 config }
+              }
+            </span>
+            <button
+              type="button"
+              (click)="copy(snippets[activeStack()], 'quickstart-' + activeStack())"
+              class="text-xs font-semibold transition"
+              [class]="themeService.isDark() ? 'text-ink-400 hover:text-white' : 'text-slate-300 hover:text-white'"
+            >
+              {{ copied() === 'quickstart-' + activeStack() ? 'Copied!' : 'Copy Code' }}
+            </button>
+          </div>
+          <pre class="overflow-x-auto p-4 font-mono text-[12px] leading-relaxed text-emerald-400">{{ snippets[activeStack()] }}</pre>
+        </div>
       </section>
 
       <section id="api-reference" class="scroll-mt-24 space-y-4">

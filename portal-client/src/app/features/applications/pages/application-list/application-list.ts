@@ -16,12 +16,14 @@ import {
 } from '../../models/application.model';
 import { ApplicationService } from '../../services/application.service';
 
+import { QuickstartModal } from '../../../../shared/components/quickstart-modal/quickstart-modal';
+
 const CATEGORY_PRESETS = ['General', 'Productivity', 'Engineering', 'Operations', 'Finance', 'Communication'];
 
 @Component({
   selector: 'app-application-list',
   standalone: true,
-  imports: [Badge, ReactiveFormsModule, RouterLink],
+  imports: [Badge, ReactiveFormsModule, RouterLink, QuickstartModal],
   templateUrl: './application-list.html',
 })
 export class ApplicationList {
@@ -60,6 +62,20 @@ export class ApplicationList {
     loginEndpoint: string;
   } | null>(null);
   readonly appApiKeyCopied = signal(false);
+
+  // Quickstart modal
+  readonly showQuickstart = signal(false);
+  readonly selectedQuickstartApp = signal<Application | null>(null);
+
+  openQuickstart(app: Application): void {
+    this.selectedQuickstartApp.set(app);
+    this.showQuickstart.set(true);
+  }
+
+  closeQuickstart(): void {
+    this.showQuickstart.set(false);
+    this.selectedQuickstartApp.set(null);
+  }
 
   readonly categoryPresets = CATEGORY_PRESETS;
 

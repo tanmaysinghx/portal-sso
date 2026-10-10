@@ -255,6 +255,17 @@
                     </a>
                     <button
                       type="button"
+                      (click)="openQuickstart(app)"
+                      title="Integration quickstart code generator"
+                      class="rounded-md border border-brand-200 bg-brand-50 px-2 py-1 text-[11px] font-semibold text-brand-700 transition hover:bg-brand-100 flex items-center gap-1"
+                    >
+                      <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+                      </svg>
+                      Quickstart
+                    </button>
+                    <button
+                      type="button"
                       (click)="rotateExternalAuthApiKey(app)"
                       class="rounded-md border border-ink-300 px-2 py-1 text-[11px] font-medium text-ink-600 transition hover:border-ink-400 hover:text-ink-900"
                     >
@@ -786,3 +797,12 @@
     </div>
   </div>
 }
+
+<app-quickstart-modal
+  [open]="showQuickstart()"
+  [appName]="selectedQuickstartApp()?.name ?? 'My Application'"
+  [clientId]="selectedQuickstartApp()?.clientId ?? 'portal-client-id'"
+  [appUrl]="selectedQuickstartApp()?.appUrl ?? 'http://localhost:3000'"
+  (dismiss)="closeQuickstart()"
+/>
+

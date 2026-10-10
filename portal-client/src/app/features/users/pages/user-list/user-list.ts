@@ -10,7 +10,7 @@ import { SnackbarService } from '../../../../core/services/snackbar.service';
 import { Badge } from '../../../../shared/components/badge/badge';
 import { PortalRole } from '../../../roles/models/role.model';
 import { RoleService } from '../../../roles/services/role.service';
-import { CreateUserRequest, PortalUser, UserSessionDto } from '../../models/portal-user.model';
+import { BulkUserImportResponse, CreateUserRequest, PortalUser, UserSessionDto } from '../../models/portal-user.model';
 import { UserService } from '../../services/user.service';
 
 const PAGE_SIZE = 25;
@@ -131,6 +131,8 @@ export class UserList {
       this.closeSessionsModal();
     } else if (this.showCreateModal()) {
       this.closeCreateModal();
+    } else if (this.showImportModal()) {
+      this.closeImportModal();
     }
   }
 
@@ -454,5 +456,88 @@ export class UserList {
         this.revokingSessionId.set(null);
       }
     });
+  }
+
+  // --- Bulk User Import ---
+  readonly showImportModal = signal(false);
+  readonly importCsvText = signal('');
+  readonly importDefaultPassword = signal('');
+  readonly importDefaultRole = signal('ROLE_USER');
+  readonly importSubmitting = signal(false);
+  readonly importResult = signal<BulkUserImportResponse | null>(null);
+  readonly importError = signal<string | null>(null);
+
+  openImportModal(): void {
+    this.showImportModal.set(true);
+    this.importCsvText.set('');
+    this.importDefaultPassword.set('');
+    this.importDefaultRole.set('ROLE_USER');
+    this.importResult.set(null);
+    this.importError.set(null);
+  }
+
+  closeImportModal(): void {
+    this.showImportModal.set(false);
+    this.importResult.set(null);
+  }
+
+  onFileSelected(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    if (target.files && target.files.length > 0) {
+      const file = target.files[0];
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.importCsvText.set((e.target?.result as string) || '');
+      };
+      reader.readAsText(file);
+    }
+  }
+
+  downloadSampleCsv(): void {
+    const sample = `email,firstName,lastName,password,roles,enabled\nalice@example.com,Alice,Smith,Password123!,ROLE_USER,true\nbob@example.com,Bob,Jones,SecurePass456!,ROLE_USER;ROLE_ADMIN,true\ncarol@example.com,Carol,Taylor,,ROLE_USER,true\n`;
+    const blob = new Blob([sample], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'portal_sso_users_sample.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  submitImport(): void {
+    const csv = this.importCsvText().trim();
+    if (!csv) {
+      this.importError.set('Please upload a CSV file or paste CSV content.');
+      return;
+    }
+
+    this.importSubmitting.set(true);
+    this.importError.set(null);
+
+    this.userService
+      .importUsers({
+        csvContent: csv,
+        defaultPassword: this.importDefaultPassword().trim() || undefined,
+        defaultRoles: [this.importDefaultRole()],
+        defaultEnabled: true,
+      })
+      .subscribe({
+        next: (res) => {
+          this.importSubmitting.set(false);
+          this.importResult.set(res);
+          if (res.importedCount > 0) {
+            this.loadUsers();
+            this.snackbarService.success(
+              'Import Complete',
+              `Successfully imported ${res.importedCount} users.`,
+            );
+          }
+        },
+        error: (err: HttpErrorResponse) => {
+          this.importSubmitting.set(false);
+          this.importError.set(err.error?.message || 'Failed to import users.');
+        },
+      });
   }
 }

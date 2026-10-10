@@ -28,3 +28,26 @@ export interface UserSessionDto {
   userAgent: string;
   isCurrent: boolean;
 }
+
+export interface BulkUserImportRequest {
+  csvContent?: string;
+  users?: {
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    password?: string;
+    roles?: string[];
+    enabled?: boolean;
+  }[];
+  defaultPassword?: string;
+  defaultRoles?: string[];
+  defaultEnabled?: boolean;
+}
+
+export interface BulkUserImportResponse {
+  totalProcessed: number;
+  importedCount: number;
+  skippedCount: number;
+  errors: string[];
+}
+
