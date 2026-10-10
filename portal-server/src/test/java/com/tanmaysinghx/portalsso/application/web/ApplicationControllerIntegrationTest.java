@@ -79,7 +79,8 @@ class ApplicationControllerIntegrationTest {
                 List.of(),
                 true,
                 1,
-                false);
+                false,
+                true);
 
         mockMvc.perform(post("/api/admin/applications")
                         .with(user("admin@portalsso.local").roles("ADMIN"))
@@ -115,7 +116,8 @@ class ApplicationControllerIntegrationTest {
                 List.of(),
                 true,
                 1,
-                false);
+                false,
+                true);
 
         // App 2: Restricted to ROLE_ADMIN
         CreateApplicationRequest app2 = new CreateApplicationRequest(
@@ -129,7 +131,8 @@ class ApplicationControllerIntegrationTest {
                 List.of(adminRole.getId()),
                 true,
                 2,
-                false);
+                false,
+                true);
 
         // App 3: Public to all but disabled
         CreateApplicationRequest app3 = new CreateApplicationRequest(
@@ -143,7 +146,8 @@ class ApplicationControllerIntegrationTest {
                 List.of(),
                 false,
                 3,
-                false);
+                false,
+                true);
 
         mockMvc.perform(post("/api/admin/applications")
                         .with(user("admin@portalsso.local").roles("ADMIN"))
@@ -193,7 +197,8 @@ class ApplicationControllerIntegrationTest {
                 List.of(),
                 true,
                 1,
-                false);
+                false,
+                true);
 
         String createRes = mockMvc.perform(post("/api/admin/applications")
                         .with(user("admin@portalsso.local").roles("ADMIN"))
@@ -216,7 +221,8 @@ class ApplicationControllerIntegrationTest {
                 List.of(),
                 true,
                 1,
-                false);
+                false,
+                true);
 
         mockMvc.perform(put("/api/admin/applications/" + appId)
                         .with(user("admin@portalsso.local").roles("ADMIN"))
@@ -304,7 +310,8 @@ class ApplicationControllerIntegrationTest {
                 List.of(),
                 true,
                 1,
-                externalAuthEnabled);
+                externalAuthEnabled,
+                true);
 
         String response = mockMvc.perform(post("/api/admin/applications")
                         .with(user("admin@portalsso.local").roles("ADMIN"))
