@@ -170,12 +170,15 @@ class ApplicationControllerIntegrationTest {
                         .content(jsonMapper.writeValueAsString(app3)))
                 .andExpect(status().isCreated());
 
-        // Regular user should see only "Company Wiki"
+        // Regular user should see both enabled apps, but only Company Wiki is accessible
         mockMvc.perform(get("/api/user/applications")
                         .with(user("alice@corp.com").roles("USER")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].name").value("Company Wiki"));
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].name").value("Company Wiki"))
+                .andExpect(jsonPath("$[0].accessible").value(true))
+                .andExpect(jsonPath("$[1].name").value("Production Cluster"))
+                .andExpect(jsonPath("$[1].accessible").value(false));
 
         // Admin user should see both enabled apps ("Company Wiki" and "Production Cluster"), but not disabled
         mockMvc.perform(get("/api/user/applications")

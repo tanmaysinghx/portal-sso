@@ -57,7 +57,8 @@
 
   <!-- Left Navigation Links -->
   <nav class="mt-4 flex-1 space-y-0.5 overflow-y-auto px-3">
-    <p class="px-3 pb-2 text-[10px] font-semibold uppercase tracking-widest text-ink-600">Manage</p>
+    @if (authService.isAdmin()) {
+      <p class="px-3 pb-2 text-[10px] font-semibold uppercase tracking-widest text-ink-600">Manage</p>
 
     <a
       routerLink="/dashboard"
@@ -179,6 +180,37 @@
         <span class="ml-auto h-2 w-2 rounded-full bg-amber-400"></span>
       }
     </a>
+    }
+
+    <p class="px-3 pt-4 pb-2 text-[10px] font-semibold uppercase tracking-widest text-ink-600">Personal</p>
+
+    <a
+      routerLink="/apps"
+      routerLinkActive
+      #appsUser="routerLinkActive"
+      class="relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
+      [class]="appsUser.isActive ? 'bg-ink-800/70 text-white' : 'text-ink-400 hover:bg-ink-900 hover:text-ink-100'"
+    >
+      <span class="absolute -left-2 h-5 w-0.5 rounded-r bg-brand-500 transition-opacity" [class.opacity-0]="!appsUser.isActive"></span>
+      <svg class="h-[18px] w-[18px] shrink-0 text-brand-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+      </svg>
+      My Apps
+    </a>
+
+    <a
+      routerLink="/sessions"
+      routerLinkActive
+      #sessions="routerLinkActive"
+      class="relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
+      [class]="sessions.isActive ? 'bg-ink-800/70 text-white' : 'text-ink-400 hover:bg-ink-900 hover:text-ink-100'"
+    >
+      <span class="absolute -left-2 h-5 w-0.5 rounded-r bg-brand-500 transition-opacity" [class.opacity-0]="!sessions.isActive"></span>
+      <svg class="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
+      </svg>
+      Active Sessions
+    </a>
   </nav>
 
   <!-- User Profile & Logout -->
@@ -190,18 +222,9 @@
         </div>
         <div class="min-w-0 flex-1">
           <p class="truncate text-xs font-medium text-ink-100">{{ currentUser()?.email }}</p>
-          <p class="text-[10px] text-ink-500">Administrator</p>
+          <p class="text-[10px] text-ink-500">{{ authService.isAdmin() ? 'Administrator' : 'User' }}</p>
         </div>
       </div>
-      <a
-        routerLink="/apps"
-        class="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-ink-800 bg-ink-950 px-3 py-1.5 text-xs font-medium text-ink-300 transition-colors hover:border-ink-700 hover:text-white"
-      >
-        <svg class="h-3.5 w-3.5 text-brand-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-        </svg>
-        My Apps Portal
-      </a>
       <button
         type="button"
         (click)="logout()"

@@ -22,7 +22,7 @@ export class Sidebar implements OnInit {
   /** Raised when the backdrop or the close button is used. */
   readonly dismiss = output<void>();
 
-  private readonly authService = inject(AuthService);
+  readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   readonly brandingService = inject(BrandingService);
   private readonly accessRequestService = inject(AccessRequestService);
