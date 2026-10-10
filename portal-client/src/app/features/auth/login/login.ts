@@ -41,6 +41,12 @@ export class Login {
   constructor() {
     this.authService.loadCurrentUser().subscribe((user) => {
       if (user) {
+        const params = new URLSearchParams(window.location.search);
+        const returnUrl = params.get('return_url') || params.get('returnUrl') || params.get('redirect_uri');
+        if (returnUrl) {
+          window.location.href = returnUrl;
+          return;
+        }
         if (this.authService.isAdmin()) {
           this.router.navigateByUrl('/dashboard');
         } else {
@@ -70,6 +76,12 @@ export class Login {
       next: (user) => {
         this.submitting.set(false);
         if (user) {
+          const params = new URLSearchParams(window.location.search);
+          const returnUrl = params.get('return_url') || params.get('returnUrl') || params.get('redirect_uri');
+          if (returnUrl) {
+            window.location.href = returnUrl;
+            return;
+          }
           if (this.authService.isAdmin()) {
             this.router.navigateByUrl('/dashboard');
           } else {
