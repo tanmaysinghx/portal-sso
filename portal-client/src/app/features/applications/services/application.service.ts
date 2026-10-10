@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   Application,
+  ApplicationApiKeyResponse,
   CreateApplicationRequest,
   UpdateApplicationRequest,
   UserApplication,
@@ -44,6 +45,13 @@ export class ApplicationService {
 
   deleteApplication(id: string): Observable<void> {
     return this.http.delete<void>(`/api/admin/applications/${id}`);
+  }
+
+  rotateExternalAuthApiKey(id: string): Observable<ApplicationApiKeyResponse> {
+    return this.http.post<ApplicationApiKeyResponse>(
+      `/api/admin/applications/${id}/external-auth/api-key`,
+      {},
+    );
   }
 
   getUserApplications(): Observable<UserApplication[]> {

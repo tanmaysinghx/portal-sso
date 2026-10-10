@@ -1,6 +1,7 @@
 package com.tanmaysinghx.portalsso.application.web;
 
 import com.tanmaysinghx.portalsso.application.service.ApplicationService;
+import com.tanmaysinghx.portalsso.application.web.dto.ApplicationApiKeyResponse;
 import com.tanmaysinghx.portalsso.application.web.dto.ApplicationResponse;
 import com.tanmaysinghx.portalsso.application.web.dto.CreateApplicationRequest;
 import com.tanmaysinghx.portalsso.application.web.dto.UpdateApplicationRequest;
@@ -53,6 +54,18 @@ public class AdminApplicationController {
     @PutMapping("/{id}")
     public ApplicationResponse update(@PathVariable UUID id, @Valid @RequestBody UpdateApplicationRequest request) {
         return applicationService.update(id, request);
+    }
+
+    @PostMapping("/{id}/external-auth/api-key")
+    public ApplicationApiKeyResponse rotateExternalAuthApiKey(@PathVariable UUID id) {
+        String apiKey = applicationService.rotateExternalAuthApiKey(id);
+        String basePath = "/api/external/apps/" + id;
+        return new ApplicationApiKeyResponse(
+                apiKey,
+                apiKey.substring(0, 12),
+                "X-Portal-App-Key",
+                basePath + "/register",
+                basePath + "/login");
     }
 
     @DeleteMapping("/{id}")

@@ -18,6 +18,9 @@ export interface Application {
   roles: RoleSummary[];
   enabled: boolean;
   displayOrder: number;
+  externalAuthEnabled: boolean;
+  externalAuthApiKeyIssued: boolean;
+  externalAuthApiKeyPrefix: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -43,6 +46,7 @@ export interface CreateApplicationRequest {
   roleIds?: string[];
   enabled?: boolean;
   displayOrder?: number;
+  externalAuthEnabled?: boolean;
 }
 
 export interface UpdateApplicationRequest {
@@ -56,4 +60,13 @@ export interface UpdateApplicationRequest {
   roleIds?: string[];
   enabled?: boolean;
   displayOrder?: number;
+  externalAuthEnabled?: boolean;
+}
+
+export interface ApplicationApiKeyResponse {
+  apiKey: string;
+  apiKeyPrefix: string;
+  headerName: string;
+  registerEndpoint: string;
+  loginEndpoint: string;
 }

@@ -23,4 +23,6 @@ databaseChangeLog:
       file: db/changelog/changes/011-seed-platform-roles.yaml
   - include:
       file: db/changelog/changes/012-create-applications-table.yaml
+  - include:
+      file: db/changelog/changes/013-add-external-auth-to-applications.yaml
 

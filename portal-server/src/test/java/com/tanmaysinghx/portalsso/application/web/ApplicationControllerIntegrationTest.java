@@ -13,7 +13,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.tanmaysinghx.portalsso.application.entity.ApplicationAccessType;
 import com.tanmaysinghx.portalsso.application.repository.ApplicationRepository;
 import com.tanmaysinghx.portalsso.application.web.dto.CreateApplicationRequest;
+import com.tanmaysinghx.portalsso.application.web.dto.ExternalAppLoginRequest;
 import com.tanmaysinghx.portalsso.application.web.dto.UpdateApplicationRequest;
+import com.tanmaysinghx.portalsso.registration.web.dto.RegisterRequest;
 import com.tanmaysinghx.portalsso.user.entity.Role;
 import com.tanmaysinghx.portalsso.user.repository.RoleRepository;
 import java.util.List;
@@ -76,7 +78,8 @@ class ApplicationControllerIntegrationTest {
                 ApplicationAccessType.ALL_USERS,
                 List.of(),
                 true,
-                1);
+                1,
+                false);
 
         mockMvc.perform(post("/api/admin/applications")
                         .with(user("admin@portalsso.local").roles("ADMIN"))
@@ -111,7 +114,8 @@ class ApplicationControllerIntegrationTest {
                 ApplicationAccessType.ALL_USERS,
                 List.of(),
                 true,
-                1);
+                1,
+                false);
 
         // App 2: Restricted to ROLE_ADMIN
         CreateApplicationRequest app2 = new CreateApplicationRequest(
@@ -124,7 +128,8 @@ class ApplicationControllerIntegrationTest {
                 ApplicationAccessType.RESTRICTED,
                 List.of(adminRole.getId()),
                 true,
-                2);
+                2,
+                false);
 
         // App 3: Public to all but disabled
         CreateApplicationRequest app3 = new CreateApplicationRequest(
@@ -137,7 +142,8 @@ class ApplicationControllerIntegrationTest {
                 ApplicationAccessType.ALL_USERS,
                 List.of(),
                 false,
-                3);
+                3,
+                false);
 
         mockMvc.perform(post("/api/admin/applications")
                         .with(user("admin@portalsso.local").roles("ADMIN"))
@@ -186,7 +192,8 @@ class ApplicationControllerIntegrationTest {
                 ApplicationAccessType.ALL_USERS,
                 List.of(),
                 true,
-                1);
+                1,
+                false);
 
         String createRes = mockMvc.perform(post("/api/admin/applications")
                         .with(user("admin@portalsso.local").roles("ADMIN"))
@@ -208,7 +215,8 @@ class ApplicationControllerIntegrationTest {
                 ApplicationAccessType.ALL_USERS,
                 List.of(),
                 true,
-                1);
+                1,
+                false);
 
         mockMvc.perform(put("/api/admin/applications/" + appId)
                         .with(user("admin@portalsso.local").roles("ADMIN"))
@@ -225,5 +233,87 @@ class ApplicationControllerIntegrationTest {
                 .andExpect(status().isNoContent());
 
         assertThat(applicationRepository.findById(appId)).isEmpty();
+    }
+
+    @Test
+    void adminCanIssueApiKeyAndExternalAppCanRegisterAndLogin() throws Exception {
+        UUID appId = createApplication("Ticket Desk", true);
+
+        String keyResponse = mockMvc.perform(post("/api/admin/applications/" + appId + "/external-auth/api-key")
+                        .with(user("admin@portalsso.local").roles("ADMIN"))
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.apiKey").isString())
+                .andExpect(jsonPath("$.headerName").value("X-Portal-App-Key"))
+                .andReturn().getResponse().getContentAsString();
+
+        String apiKey = jsonMapper.readTree(keyResponse).get("apiKey").asText();
+
+        RegisterRequest registerRequest = new RegisterRequest(
+                "new-user@example.com",
+                "Str0ngPassw0rd",
+                "New",
+                "User");
+
+        mockMvc.perform(post("/api/external/apps/" + appId + "/register")
+                        .header("X-Portal-App-Key", apiKey)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonMapper.writeValueAsString(registerRequest)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.authenticated").value(true))
+                .andExpect(jsonPath("$.user.email").value("new-user@example.com"))
+                .andExpect(jsonPath("$.user.roles[0]").value("ROLE_USER"));
+
+        ExternalAppLoginRequest loginRequest = new ExternalAppLoginRequest(
+                "new-user@example.com",
+                "Str0ngPassw0rd");
+
+        mockMvc.perform(post("/api/external/apps/" + appId + "/login")
+                        .header("X-Portal-App-Key", apiKey)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.authenticated").value(true))
+                .andExpect(jsonPath("$.user.email").value("new-user@example.com"));
+    }
+
+    @Test
+    void externalAppApiRejectsMissingOrWrongKey() throws Exception {
+        UUID appId = createApplication("Ticket Desk", true);
+
+        ExternalAppLoginRequest loginRequest = new ExternalAppLoginRequest(
+                "missing@example.com",
+                "Str0ngPassw0rd");
+
+        mockMvc.perform(post("/api/external/apps/" + appId + "/login")
+                        .header("X-Portal-App-Key", "wrong")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isForbidden());
+    }
+
+    private UUID createApplication(String name, boolean externalAuthEnabled) throws Exception {
+        CreateApplicationRequest request = new CreateApplicationRequest(
+                name,
+                "A test application",
+                "https://app.example.com",
+                null,
+                "General",
+                null,
+                ApplicationAccessType.ALL_USERS,
+                List.of(),
+                true,
+                1,
+                externalAuthEnabled);
+
+        String response = mockMvc.perform(post("/api/admin/applications")
+                        .with(user("admin@portalsso.local").roles("ADMIN"))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+
+        return UUID.fromString(jsonMapper.readTree(response).get("id").asText());
     }
 }

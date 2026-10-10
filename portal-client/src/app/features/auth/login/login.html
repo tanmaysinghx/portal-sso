@@ -1,341 +1,389 @@
 <div
-  class="relative flex min-h-screen items-center justify-center overflow-hidden px-4 transition-colors duration-200"
-  [class]="themeService.isDark() ? 'bg-ink-950 text-white' : 'bg-gradient-to-b from-slate-50 via-white to-slate-100 text-slate-900'"
+  class="min-h-screen transition-colors duration-200"
+  [class]="themeService.isDark() ? 'bg-ink-950 text-white' : 'bg-slate-50 text-slate-950'"
 >
-  <!-- Theme Toggle Button (Top-Right) -->
-  <div class="absolute top-4 right-4 z-20">
-    <button
-      type="button"
-      (click)="themeService.toggleTheme()"
-      [title]="themeService.isDark() ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
-      class="flex h-9 w-9 items-center justify-center rounded-xl border transition cursor-pointer"
-      [class]="themeService.isDark()
-        ? 'border-ink-800 bg-ink-900/80 text-ink-300 hover:border-ink-700 hover:text-white shadow-sm'
-        : 'border-slate-200 bg-white/90 text-slate-600 hover:border-slate-300 hover:text-slate-900 shadow-sm'"
+  <div class="flex min-h-screen">
+    <aside
+      class="hidden w-[42%] min-w-[28rem] border-r px-10 py-8 lg:flex lg:flex-col lg:justify-between"
+      [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900' : 'border-slate-200 bg-white'"
     >
-      @if (themeService.isDark()) {
-        <!-- Sun icon to switch to light -->
-        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="4" />
-          <path stroke-linecap="round" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
-        </svg>
-      } @else {
-        <!-- Moon icon to switch to dark -->
-        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
-        </svg>
-      }
-    </button>
-  </div>
-
-  <!-- Warm glow picked from the logo gradient -->
-  <div
-    class="pointer-events-none absolute -top-32 left-1/2 h-[28rem] w-[46rem] -translate-x-1/2 rounded-full bg-gradient-to-br from-brand-500 to-red-500 blur-[110px]"
-    [class]="themeService.isDark() ? 'opacity-[0.18]' : 'opacity-[0.12]'"
-  ></div>
-  <div
-    class="pointer-events-none absolute inset-0"
-    [class]="themeService.isDark() ? 'bg-[radial-gradient(circle_at_50%_0%,transparent_0%,#09090b_72%)]' : 'bg-[radial-gradient(circle_at_50%_0%,transparent_0%,#f8fafc_72%)]'"
-  ></div>
-
-  <div class="animate-fade-in-up relative w-full max-w-[26rem]">
-    <div class="mb-7 flex flex-col items-center text-center">
-      @if (setupRequired()) {
-        <div class="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-500 mb-3">
-          <span class="flex h-2 w-2 rounded-full bg-amber-400 animate-pulse"></span>
-          First-Run Setup Wizard
-        </div>
-        <img src="logo.svg" alt="Portal SSO" class="h-16 w-16 rounded-[16px] shadow-xl" [class]="themeService.isDark() ? 'shadow-black/50' : 'shadow-slate-300/60'" />
-        <h1 class="mt-3 text-2xl font-bold tracking-tight" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">Create Administrator</h1>
-        <p class="mt-1.5 text-sm" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">
-          No administrator account exists yet. Set up your root credentials to take control of your instance.
-        </p>
-        @if (databaseType()) {
-          <span
-            class="mt-2 inline-flex items-center gap-1.5 rounded-md border px-2.5 py-0.5 text-xs"
-            [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900/60 text-ink-300' : 'border-slate-200 bg-slate-100 text-slate-700'"
-          >
-            <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-            Database: {{ databaseType() }}
-          </span>
-        }
-      } @else if (brandingService.hasCustomLogo()) {
-        <!-- Elegant co-branded lockup card -->
-        <div
-          class="inline-flex items-center gap-3 rounded-2xl border px-4 py-2.5 shadow-xl backdrop-blur mb-3"
-          [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900/80' : 'border-slate-200 bg-white/90 shadow-slate-200'"
-        >
-          <img src="logo.svg" alt="Portal SSO" class="h-10 w-10 rounded-xl shrink-0" />
-          <div class="h-6 w-px" [class]="themeService.isDark() ? 'bg-ink-700' : 'bg-slate-300'"></div>
-          <img
-            [src]="brandingService.companyLogoUrl()!"
-            alt="Company Logo"
-            class="h-10 max-w-[100px] object-contain rounded-lg shrink-0"
-          />
-        </div>
-        <h1 class="text-xl font-bold tracking-tight" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">
-          Sign in to {{ brandingService.companyName() || 'Portal SSO' }}
-        </h1>
-        <p class="mt-1 text-xs" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">Single Sign-On powered by Portal SSO</p>
-      } @else {
-        <img src="logo.svg" alt="Portal SSO" class="h-20 w-20 rounded-[19px] shadow-xl" [class]="themeService.isDark() ? 'shadow-black/50' : 'shadow-slate-300/60'" />
-        <h1 class="mt-4 text-[22px] font-semibold tracking-tight" [class]="themeService.isDark() ? 'text-white' : 'text-slate-900'">Welcome back</h1>
-        <p class="mt-1.5 text-sm" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">Sign in to the Portal SSO admin console</p>
-      }
-    </div>
-
-    @if (setupRequired()) {
-      <!-- First-Run Administrator Setup Wizard -->
-      <form
-        class="rounded-2xl border p-7 transition-all"
-        [class]="themeService.isDark()
-          ? 'border-ink-800 bg-ink-900/70 shadow-2xl shadow-black/50 backdrop-blur'
-          : 'border-slate-200 bg-white/95 shadow-xl shadow-slate-200/80 backdrop-blur'"
-        (ngSubmit)="submitSetup()"
-      >
-        @if (error()) {
-          <div
-            class="mb-5 flex items-start gap-2.5 rounded-lg border px-3.5 py-3 text-sm"
-            [class]="themeService.isDark() ? 'border-red-500/20 bg-red-500/10 text-red-300' : 'border-red-200 bg-red-50 text-red-700'"
-          >
-            <svg class="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-            </svg>
-            <span>{{ error() }}</span>
-          </div>
-        }
-
-        <div class="mb-4">
-          <label for="setup-email" class="mb-1.5 block text-xs font-medium" [class]="themeService.isDark() ? 'text-ink-300' : 'text-slate-700'">Administrator Email</label>
-          <input
-            id="setup-email"
-            type="email"
-            name="email"
-            autocomplete="email"
-            required
-            [ngModel]="email()"
-            (ngModelChange)="email.set($event)"
-            placeholder="admin@yourdomain.com"
-            class="block w-full rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2"
-            [class]="themeService.isDark()
-              ? 'border-ink-700 bg-ink-950/60 text-white placeholder:text-ink-600 focus:border-brand-500 focus:ring-brand-500/25'
-              : 'border-slate-300 bg-slate-50/80 text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-brand-500/20'"
-          />
-        </div>
-
-        <div class="mb-4 grid grid-cols-2 gap-3">
+      <div>
+        <div class="flex items-center gap-3">
+          <img src="logo.svg" alt="Portal SSO" class="h-10 w-10 rounded-xl" />
           <div>
-            <label for="setup-first-name" class="mb-1.5 block text-xs font-medium" [class]="themeService.isDark() ? 'text-ink-300' : 'text-slate-700'">First Name</label>
-            <input
-              id="setup-first-name"
-              type="text"
-              name="firstName"
-              [ngModel]="firstName()"
-              (ngModelChange)="firstName.set($event)"
-              placeholder="Admin"
-              class="block w-full rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2"
-              [class]="themeService.isDark()
-                ? 'border-ink-700 bg-ink-950/60 text-white placeholder:text-ink-600 focus:border-brand-500 focus:ring-brand-500/25'
-                : 'border-slate-300 bg-slate-50/80 text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-brand-500/20'"
-            />
-          </div>
-          <div>
-            <label for="setup-last-name" class="mb-1.5 block text-xs font-medium" [class]="themeService.isDark() ? 'text-ink-300' : 'text-slate-700'">Last Name</label>
-            <input
-              id="setup-last-name"
-              type="text"
-              name="lastName"
-              [ngModel]="lastName()"
-              (ngModelChange)="lastName.set($event)"
-              placeholder="User"
-              class="block w-full rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2"
-              [class]="themeService.isDark()
-                ? 'border-ink-700 bg-ink-950/60 text-white placeholder:text-ink-600 focus:border-brand-500 focus:ring-brand-500/25'
-                : 'border-slate-300 bg-slate-50/80 text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-brand-500/20'"
-            />
+            <p class="text-sm font-semibold" [class]="themeService.isDark() ? 'text-white' : 'text-slate-950'">
+              Portal SSO
+            </p>
+            <p class="text-xs" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-500'">
+              Identity and access management
+            </p>
           </div>
         </div>
 
-        <div class="mb-4">
-          <div class="mb-1.5 flex items-center justify-between">
-            <label for="setup-password" class="block text-xs font-medium" [class]="themeService.isDark() ? 'text-ink-300' : 'text-slate-700'">Password</label>
-            <span class="text-[11px]" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-500'">Min 12 characters</span>
-          </div>
-          <input
-            id="setup-password"
-            type="password"
-            name="password"
-            autocomplete="new-password"
-            required
-            [ngModel]="password()"
-            (ngModelChange)="password.set($event)"
-            placeholder="Choose a strong password"
-            class="block w-full rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2"
-            [class]="themeService.isDark()
-              ? 'border-ink-700 bg-ink-950/60 text-white placeholder:text-ink-600 focus:border-brand-500 focus:ring-brand-500/25'
-              : 'border-slate-300 bg-slate-50/80 text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-brand-500/20'"
-          />
+        <div class="mt-16 max-w-md">
+          <p class="text-xs font-semibold uppercase tracking-[0.16em]" [class]="themeService.isDark() ? 'text-ink-500' : 'text-slate-500'">
+            Secure access
+          </p>
+          <h1 class="mt-4 text-3xl font-semibold leading-tight tracking-tight" [class]="themeService.isDark() ? 'text-white' : 'text-slate-950'">
+            Sign in to your organization workspace
+          </h1>
+          <p class="mt-4 text-sm leading-6" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">
+            Use your Portal SSO account to access applications, admin tools, and identity settings from one controlled entry point.
+          </p>
         </div>
-
-        <div class="mb-6">
-          <label for="setup-confirm-password" class="mb-1.5 block text-xs font-medium" [class]="themeService.isDark() ? 'text-ink-300' : 'text-slate-700'">Confirm Password</label>
-          <input
-            id="setup-confirm-password"
-            type="password"
-            name="confirmPassword"
-            autocomplete="new-password"
-            required
-            [ngModel]="confirmPassword()"
-            (ngModelChange)="confirmPassword.set($event)"
-            placeholder="Repeat password"
-            class="block w-full rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2"
-            [class]="themeService.isDark()
-              ? 'border-ink-700 bg-ink-950/60 text-white placeholder:text-ink-600 focus:border-brand-500 focus:ring-brand-500/25'
-              : 'border-slate-300 bg-slate-50/80 text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-brand-500/20'"
-          />
-        </div>
-
-        <button
-          type="submit"
-          [disabled]="submitting()"
-          class="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/25 transition-all hover:bg-brand-700 hover:shadow-brand-600/35 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
-        >
-          @if (submitting()) {
-            <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-            </svg>
-          }
-          {{ submitting() ? 'Creating Administrator…' : 'Complete Setup & Sign In' }}
-        </button>
-      </form>
-    } @else {
-      <!-- Standard Sign In Form -->
-      <form
-        class="rounded-2xl border p-7 transition-all"
-        [class]="themeService.isDark()
-          ? 'border-ink-800 bg-ink-900/70 shadow-2xl shadow-black/50 backdrop-blur'
-          : 'border-slate-200 bg-white/95 shadow-xl shadow-slate-200/80 backdrop-blur'"
-        (ngSubmit)="submit()"
-      >
-        @if (error()) {
-          <div
-            class="mb-5 flex items-start gap-2.5 rounded-lg border px-3.5 py-3 text-sm"
-            [class]="themeService.isDark() ? 'border-red-500/20 bg-red-500/10 text-red-300' : 'border-red-200 bg-red-50 text-red-700'"
-          >
-            <svg class="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-            </svg>
-            <span>{{ error() }}</span>
-          </div>
-        }
-
-        @if (successMessage()) {
-          <div
-            class="mb-5 flex items-start gap-2.5 rounded-lg border px-3.5 py-3 text-sm"
-            [class]="themeService.isDark() ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300' : 'border-emerald-200 bg-emerald-50 text-emerald-700'"
-          >
-            <svg class="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>{{ successMessage() }}</span>
-          </div>
-        }
-
-        <div class="mb-4">
-          <label for="email" class="mb-1.5 block text-xs font-medium" [class]="themeService.isDark() ? 'text-ink-300' : 'text-slate-700'">Email address</label>
-          <input
-            id="email"
-            type="email"
-            name="email"
-            autocomplete="username"
-            required
-            [ngModel]="email()"
-            (ngModelChange)="email.set($event)"
-            placeholder="you@company.com"
-            class="block w-full rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2"
-            [class]="themeService.isDark()
-              ? 'border-ink-700 bg-ink-950/60 text-white placeholder:text-ink-600 focus:border-brand-500 focus:ring-brand-500/25'
-              : 'border-slate-300 bg-slate-50/80 text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-brand-500/20'"
-          />
-        </div>
-
-        <div class="mb-4">
-          <label for="password" class="mb-1.5 block text-xs font-medium" [class]="themeService.isDark() ? 'text-ink-300' : 'text-slate-700'">Password</label>
-          <input
-            id="password"
-            type="password"
-            name="password"
-            autocomplete="current-password"
-            required
-            [ngModel]="password()"
-            (ngModelChange)="password.set($event)"
-            placeholder="••••••••••"
-            class="block w-full rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2"
-            [class]="themeService.isDark()
-              ? 'border-ink-700 bg-ink-950/60 text-white placeholder:text-ink-600 focus:border-brand-500 focus:ring-brand-500/25'
-              : 'border-slate-300 bg-slate-50/80 text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-brand-500/20'"
-          />
-        </div>
-
-        <div class="mb-6 flex items-center justify-between">
-          <label class="group flex cursor-pointer items-center gap-2">
-            <input
-              id="remember-me"
-              type="checkbox"
-              name="remember-me"
-              [ngModel]="rememberMe()"
-              (ngModelChange)="rememberMe.set($event)"
-              class="h-4 w-4 rounded text-brand-600 accent-brand-500 transition-colors focus:ring-2 focus:ring-brand-500/25 focus:ring-offset-0 cursor-pointer"
-              [class]="themeService.isDark() ? 'border-ink-700 bg-ink-950/60' : 'border-slate-300 bg-white'"
-            />
-            <span
-              class="text-xs transition-colors"
-              [class]="themeService.isDark() ? 'text-ink-400 group-hover:text-ink-300' : 'text-slate-600 group-hover:text-slate-800'"
-            >
-              Remember me
-            </span>
-          </label>
-        </div>
-
-        <button
-          type="submit"
-          [disabled]="submitting()"
-          class="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/25 transition-all hover:bg-brand-700 hover:shadow-brand-600/35 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
-        >
-          @if (submitting()) {
-            <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-            </svg>
-          }
-          {{ submitting() ? 'Signing in…' : 'Sign in' }}
-        </button>
-      </form>
-    }
-
-    <div class="mt-6 flex flex-col items-center gap-2">
-      @if (registrationPolicy().enabled && !setupRequired()) {
-        <p class="text-xs" [class]="themeService.isDark() ? 'text-ink-500' : 'text-slate-500'">
-          Don't have an account?
-          <a routerLink="/sign-up" class="font-medium text-brand-500 transition hover:text-brand-600">Create one</a>
-        </p>
-      }
-      <a
-        routerLink="/product"
-        class="inline-flex items-center gap-1.5 text-xs font-medium transition"
-        [class]="themeService.isDark() ? 'text-amber-400/90 hover:text-amber-300' : 'text-amber-600 hover:text-amber-700'"
-      >
-        <span>Explore Product Features & Screenshots</span>
-        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-        </svg>
-      </a>
-      <div class="flex items-center gap-2 text-xs" [class]="themeService.isDark() ? 'text-ink-600' : 'text-slate-400'">
-        <span>Self-hosted identity provider</span>
-        <span>•</span>
-        <span>Developed by <a href="https://tanmaysinghx.com" target="_blank" rel="noopener noreferrer" class="font-medium hover:underline" [class]="themeService.isDark() ? 'text-amber-400/90 hover:text-amber-300' : 'text-amber-600 hover:text-amber-700'">Tanmay Singh</a></span>
       </div>
-    </div>
+
+      <div class="space-y-4">
+        <div
+          class="rounded-lg border p-4"
+          [class]="themeService.isDark() ? 'border-ink-800 bg-ink-950/40' : 'border-slate-200 bg-slate-50'"
+        >
+          <p class="text-xs font-semibold" [class]="themeService.isDark() ? 'text-ink-200' : 'text-slate-800'">
+            Session security
+          </p>
+          <p class="mt-1 text-xs leading-5" [class]="themeService.isDark() ? 'text-ink-500' : 'text-slate-500'">
+            Access is protected by centralized credentials, optional MFA, audited sign-ins, and short-lived OAuth sessions.
+          </p>
+        </div>
+        <p class="text-xs" [class]="themeService.isDark() ? 'text-ink-600' : 'text-slate-400'">
+          Developed by
+          <a
+            href="https://tanmaysinghx.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="font-medium underline-offset-2 hover:underline"
+            [class]="themeService.isDark() ? 'text-ink-300' : 'text-slate-700'"
+          >
+            Tanmay Singh
+          </a>
+        </p>
+      </div>
+    </aside>
+
+    <main class="flex min-h-screen flex-1 flex-col">
+      <div class="flex h-16 items-center justify-between px-5 sm:px-8">
+        <div class="flex items-center gap-3 lg:hidden">
+          <img src="logo.svg" alt="Portal SSO" class="h-9 w-9 rounded-xl" />
+          <span class="text-sm font-semibold">Portal SSO</span>
+        </div>
+        <div class="ml-auto">
+          <button
+            type="button"
+            (click)="themeService.toggleTheme()"
+            [title]="themeService.isDark() ? 'Switch to light mode' : 'Switch to dark mode'"
+            class="flex h-9 w-9 items-center justify-center rounded-lg border transition"
+            [class]="themeService.isDark()
+              ? 'border-ink-800 bg-ink-900 text-ink-300 hover:border-ink-700 hover:text-white'
+              : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-950'"
+          >
+            @if (themeService.isDark()) {
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                <circle cx="12" cy="12" r="4" />
+                <path stroke-linecap="round" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+              </svg>
+            } @else {
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+              </svg>
+            }
+          </button>
+        </div>
+      </div>
+
+      <section class="flex flex-1 items-center justify-center px-5 py-10 sm:px-8">
+        <div class="w-full max-w-[25rem]">
+          <div class="mb-7">
+            @if (setupRequired()) {
+              <span
+                class="inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium"
+                [class]="themeService.isDark() ? 'border-amber-500/25 bg-amber-500/10 text-amber-300' : 'border-amber-200 bg-amber-50 text-amber-800'"
+              >
+                First-run setup
+              </span>
+              <h2 class="mt-4 text-2xl font-semibold tracking-tight" [class]="themeService.isDark() ? 'text-white' : 'text-slate-950'">
+                Create the first administrator
+              </h2>
+              <p class="mt-2 text-sm leading-6" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">
+                Set the root account for this Portal SSO instance. You can add more administrators later.
+              </p>
+              @if (databaseType()) {
+                <p class="mt-3 text-xs" [class]="themeService.isDark() ? 'text-ink-500' : 'text-slate-500'">
+                  Database: <span class="font-medium">{{ databaseType() }}</span>
+                </p>
+              }
+            } @else if (brandingService.hasCustomLogo()) {
+              <div class="mb-4 flex items-center gap-3">
+                <img src="logo.svg" alt="Portal SSO" class="h-9 w-9 rounded-xl" />
+                <div class="h-7 w-px" [class]="themeService.isDark() ? 'bg-ink-800' : 'bg-slate-200'"></div>
+                <img
+                  [src]="brandingService.companyLogoUrl()!"
+                  alt="Company Logo"
+                  class="h-9 max-w-[8rem] object-contain"
+                />
+              </div>
+              <h2 class="text-2xl font-semibold tracking-tight" [class]="themeService.isDark() ? 'text-white' : 'text-slate-950'">
+                Sign in to {{ brandingService.companyName() || 'Portal SSO' }}
+              </h2>
+              <p class="mt-2 text-sm" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">
+                Continue with your organization account.
+              </p>
+            } @else {
+              <h2 class="text-2xl font-semibold tracking-tight" [class]="themeService.isDark() ? 'text-white' : 'text-slate-950'">
+                Sign in
+              </h2>
+              <p class="mt-2 text-sm" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">
+                Access the Portal SSO admin console and application launchpad.
+              </p>
+            }
+          </div>
+
+          @if (setupRequired()) {
+            <form
+              class="rounded-xl border p-6 shadow-sm"
+              [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900' : 'border-slate-200 bg-white'"
+              (ngSubmit)="submitSetup()"
+            >
+              @if (error()) {
+                <div
+                  class="mb-5 flex items-start gap-2.5 rounded-lg border px-3.5 py-3 text-sm"
+                  [class]="themeService.isDark() ? 'border-red-500/25 bg-red-500/10 text-red-300' : 'border-red-200 bg-red-50 text-red-700'"
+                >
+                  <svg class="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                  </svg>
+                  <span>{{ error() }}</span>
+                </div>
+              }
+
+              <div class="space-y-4">
+                <div>
+                  <label for="setup-email" class="mb-1.5 block text-xs font-medium" [class]="themeService.isDark() ? 'text-ink-300' : 'text-slate-700'">Administrator email</label>
+                  <input
+                    id="setup-email"
+                    type="email"
+                    name="email"
+                    autocomplete="email"
+                    required
+                    [ngModel]="email()"
+                    (ngModelChange)="email.set($event)"
+                    placeholder="admin@company.com"
+                    class="block w-full rounded-lg border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2"
+                    [class]="themeService.isDark()
+                      ? 'border-ink-700 bg-ink-950 text-white placeholder:text-ink-600 focus:border-brand-500 focus:ring-brand-500/20'
+                      : 'border-slate-300 bg-white text-slate-950 placeholder:text-slate-400 focus:border-brand-500 focus:ring-brand-500/20'"
+                  />
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label for="setup-first-name" class="mb-1.5 block text-xs font-medium" [class]="themeService.isDark() ? 'text-ink-300' : 'text-slate-700'">First name</label>
+                    <input
+                      id="setup-first-name"
+                      type="text"
+                      name="firstName"
+                      [ngModel]="firstName()"
+                      (ngModelChange)="firstName.set($event)"
+                      placeholder="First"
+                      class="block w-full rounded-lg border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2"
+                      [class]="themeService.isDark()
+                        ? 'border-ink-700 bg-ink-950 text-white placeholder:text-ink-600 focus:border-brand-500 focus:ring-brand-500/20'
+                        : 'border-slate-300 bg-white text-slate-950 placeholder:text-slate-400 focus:border-brand-500 focus:ring-brand-500/20'"
+                    />
+                  </div>
+                  <div>
+                    <label for="setup-last-name" class="mb-1.5 block text-xs font-medium" [class]="themeService.isDark() ? 'text-ink-300' : 'text-slate-700'">Last name</label>
+                    <input
+                      id="setup-last-name"
+                      type="text"
+                      name="lastName"
+                      [ngModel]="lastName()"
+                      (ngModelChange)="lastName.set($event)"
+                      placeholder="Last"
+                      class="block w-full rounded-lg border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2"
+                      [class]="themeService.isDark()
+                        ? 'border-ink-700 bg-ink-950 text-white placeholder:text-ink-600 focus:border-brand-500 focus:ring-brand-500/20'
+                        : 'border-slate-300 bg-white text-slate-950 placeholder:text-slate-400 focus:border-brand-500 focus:ring-brand-500/20'"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div class="mb-1.5 flex items-center justify-between gap-3">
+                    <label for="setup-password" class="block text-xs font-medium" [class]="themeService.isDark() ? 'text-ink-300' : 'text-slate-700'">Password</label>
+                    <span class="text-[11px]" [class]="themeService.isDark() ? 'text-ink-500' : 'text-slate-500'">Minimum 12 characters</span>
+                  </div>
+                  <input
+                    id="setup-password"
+                    type="password"
+                    name="password"
+                    autocomplete="new-password"
+                    required
+                    [ngModel]="password()"
+                    (ngModelChange)="password.set($event)"
+                    placeholder="Create a strong password"
+                    class="block w-full rounded-lg border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2"
+                    [class]="themeService.isDark()
+                      ? 'border-ink-700 bg-ink-950 text-white placeholder:text-ink-600 focus:border-brand-500 focus:ring-brand-500/20'
+                      : 'border-slate-300 bg-white text-slate-950 placeholder:text-slate-400 focus:border-brand-500 focus:ring-brand-500/20'"
+                  />
+                </div>
+
+                <div>
+                  <label for="setup-confirm-password" class="mb-1.5 block text-xs font-medium" [class]="themeService.isDark() ? 'text-ink-300' : 'text-slate-700'">Confirm password</label>
+                  <input
+                    id="setup-confirm-password"
+                    type="password"
+                    name="confirmPassword"
+                    autocomplete="new-password"
+                    required
+                    [ngModel]="confirmPassword()"
+                    (ngModelChange)="confirmPassword.set($event)"
+                    placeholder="Repeat password"
+                    class="block w-full rounded-lg border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2"
+                    [class]="themeService.isDark()
+                      ? 'border-ink-700 bg-ink-950 text-white placeholder:text-ink-600 focus:border-brand-500 focus:ring-brand-500/20'
+                      : 'border-slate-300 bg-white text-slate-950 placeholder:text-slate-400 focus:border-brand-500 focus:ring-brand-500/20'"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                [disabled]="submitting()"
+                class="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                @if (submitting()) {
+                  <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                  </svg>
+                }
+                {{ submitting() ? 'Creating administrator...' : 'Complete setup' }}
+              </button>
+            </form>
+          } @else {
+            <form
+              class="rounded-xl border p-6 shadow-sm"
+              [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900' : 'border-slate-200 bg-white'"
+              (ngSubmit)="submit()"
+            >
+              @if (error()) {
+                <div
+                  class="mb-5 flex items-start gap-2.5 rounded-lg border px-3.5 py-3 text-sm"
+                  [class]="themeService.isDark() ? 'border-red-500/25 bg-red-500/10 text-red-300' : 'border-red-200 bg-red-50 text-red-700'"
+                >
+                  <svg class="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                  </svg>
+                  <span>{{ error() }}</span>
+                </div>
+              }
+
+              @if (successMessage()) {
+                <div
+                  class="mb-5 flex items-start gap-2.5 rounded-lg border px-3.5 py-3 text-sm"
+                  [class]="themeService.isDark() ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-300' : 'border-emerald-200 bg-emerald-50 text-emerald-700'"
+                >
+                  <svg class="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>{{ successMessage() }}</span>
+                </div>
+              }
+
+              <div class="space-y-4">
+                <div>
+                  <label for="email" class="mb-1.5 block text-xs font-medium" [class]="themeService.isDark() ? 'text-ink-300' : 'text-slate-700'">Email address</label>
+                  <input
+                    id="email"
+                    type="email"
+                    name="email"
+                    autocomplete="username"
+                    required
+                    [ngModel]="email()"
+                    (ngModelChange)="email.set($event)"
+                    placeholder="you@company.com"
+                    class="block w-full rounded-lg border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2"
+                    [class]="themeService.isDark()
+                      ? 'border-ink-700 bg-ink-950 text-white placeholder:text-ink-600 focus:border-brand-500 focus:ring-brand-500/20'
+                      : 'border-slate-300 bg-white text-slate-950 placeholder:text-slate-400 focus:border-brand-500 focus:ring-brand-500/20'"
+                  />
+                </div>
+
+                <div>
+                  <label for="password" class="mb-1.5 block text-xs font-medium" [class]="themeService.isDark() ? 'text-ink-300' : 'text-slate-700'">Password</label>
+                  <input
+                    id="password"
+                    type="password"
+                    name="password"
+                    autocomplete="current-password"
+                    required
+                    [ngModel]="password()"
+                    (ngModelChange)="password.set($event)"
+                    placeholder="Enter your password"
+                    class="block w-full rounded-lg border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2"
+                    [class]="themeService.isDark()
+                      ? 'border-ink-700 bg-ink-950 text-white placeholder:text-ink-600 focus:border-brand-500 focus:ring-brand-500/20'
+                      : 'border-slate-300 bg-white text-slate-950 placeholder:text-slate-400 focus:border-brand-500 focus:ring-brand-500/20'"
+                  />
+                </div>
+              </div>
+
+              <div class="mt-4 flex items-center justify-between">
+                <label class="group flex cursor-pointer items-center gap-2">
+                  <input
+                    id="remember-me"
+                    type="checkbox"
+                    name="remember-me"
+                    [ngModel]="rememberMe()"
+                    (ngModelChange)="rememberMe.set($event)"
+                    class="h-4 w-4 rounded accent-slate-950 focus:ring-2 focus:ring-slate-400"
+                  />
+                  <span
+                    class="text-xs transition-colors"
+                    [class]="themeService.isDark() ? 'text-ink-400 group-hover:text-ink-300' : 'text-slate-600 group-hover:text-slate-800'"
+                  >
+                    Keep me signed in
+                  </span>
+                </label>
+              </div>
+
+              <button
+                type="submit"
+                [disabled]="submitting()"
+                class="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                @if (submitting()) {
+                  <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                  </svg>
+                }
+                {{ submitting() ? 'Signing in...' : 'Sign in' }}
+              </button>
+            </form>
+          }
+
+          <div class="mt-6 space-y-3 text-center">
+            @if (registrationPolicy().enabled && !setupRequired()) {
+              <p class="text-xs" [class]="themeService.isDark() ? 'text-ink-500' : 'text-slate-500'">
+                Need an account?
+                <a routerLink="/sign-up" class="font-medium text-brand-600 transition hover:text-brand-700">Request access</a>
+              </p>
+            }
+            <a
+              routerLink="/product"
+              class="inline-flex items-center gap-1.5 text-xs font-medium transition"
+              [class]="themeService.isDark() ? 'text-ink-400 hover:text-white' : 'text-slate-600 hover:text-slate-950'"
+            >
+              <span>Product overview</span>
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
   </div>
 </div>

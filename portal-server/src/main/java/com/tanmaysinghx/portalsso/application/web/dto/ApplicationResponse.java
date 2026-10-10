@@ -18,6 +18,9 @@ public record ApplicationResponse(
         List<RoleSummary> roles,
         boolean enabled,
         int displayOrder,
+        boolean externalAuthEnabled,
+        boolean externalAuthApiKeyIssued,
+        String externalAuthApiKeyPrefix,
         Instant createdAt,
         Instant updatedAt) {
 
@@ -43,6 +46,9 @@ public record ApplicationResponse(
                 roleSummaries,
                 app.isEnabled(),
                 app.getDisplayOrder(),
+                app.isExternalAuthEnabled(),
+                app.getExternalAuthApiKeyHash() != null,
+                app.getExternalAuthApiKeyPrefix(),
                 app.getCreatedAt(),
                 app.getUpdatedAt());
     }

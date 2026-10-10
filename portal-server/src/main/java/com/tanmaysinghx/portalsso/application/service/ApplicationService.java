@@ -13,10 +13,13 @@ import com.tanmaysinghx.portalsso.common.error.ErrorCode;
 import com.tanmaysinghx.portalsso.common.error.ResourceNotFoundException;
 import com.tanmaysinghx.portalsso.user.entity.Role;
 import com.tanmaysinghx.portalsso.user.repository.RoleRepository;
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
@@ -28,14 +31,17 @@ public class ApplicationService {
     private final ApplicationRepository applicationRepository;
     private final RoleRepository roleRepository;
     private final AuditService auditService;
+    private final PasswordEncoder passwordEncoder;
 
     public ApplicationService(
             ApplicationRepository applicationRepository,
             RoleRepository roleRepository,
-            AuditService auditService) {
+            AuditService auditService,
+            PasswordEncoder passwordEncoder) {
         this.applicationRepository = applicationRepository;
         this.roleRepository = roleRepository;
         this.auditService = auditService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional(readOnly = true)
@@ -83,6 +89,7 @@ public class ApplicationService {
         app.setAccessType(request.accessType() != null ? request.accessType() : ApplicationAccessType.ALL_USERS);
         app.setEnabled(request.enabled() != null ? request.enabled() : true);
         app.setDisplayOrder(request.displayOrder() != null ? request.displayOrder() : 0);
+        app.setExternalAuthEnabled(Boolean.TRUE.equals(request.externalAuthEnabled()));
 
         if (app.getAccessType() == ApplicationAccessType.RESTRICTED && request.roleIds() != null && !request.roleIds().isEmpty()) {
             List<Role> roles = roleRepository.findAllById(request.roleIds());
@@ -115,6 +122,7 @@ public class ApplicationService {
         app.setAccessType(request.accessType() != null ? request.accessType() : ApplicationAccessType.ALL_USERS);
         app.setEnabled(request.enabled() != null ? request.enabled() : true);
         app.setDisplayOrder(request.displayOrder() != null ? request.displayOrder() : 0);
+        app.setExternalAuthEnabled(Boolean.TRUE.equals(request.externalAuthEnabled()));
 
         if (app.getAccessType() == ApplicationAccessType.RESTRICTED && request.roleIds() != null) {
             List<Role> roles = roleRepository.findAllById(request.roleIds());
@@ -132,6 +140,34 @@ public class ApplicationService {
 
         return ApplicationResponse.from(saved);
     }
+
+    @Transactional
+    public String rotateExternalAuthApiKey(UUID id) {
+        Application app = applicationRepository.findByIdWithRoles(id)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.APPLICATION_NOT_FOUND, "Application not found: " + id));
+
+        String rawKey = generateApiKey();
+        app.setExternalAuthEnabled(true);
+        app.setExternalAuthApiKeyHash(passwordEncoder.encode(rawKey));
+        app.setExternalAuthApiKeyPrefix(rawKey.substring(0, 12));
+
+        Application saved = applicationRepository.save(app);
+        auditService.record(
+                AuditAction.APPLICATION_UPDATED,
+                saved.getId(),
+                saved.getName(),
+                "externalAuthApiKey=rotated, externalAuthEnabled=true, keyPrefix=%s".formatted(saved.getExternalAuthApiKeyPrefix()));
+
+        return rawKey;
+    }
+
+    private static String generateApiKey() {
+        byte[] bytes = new byte[32];
+        SECURE_RANDOM.nextBytes(bytes);
+        return "psso_app_" + Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     @Transactional
     public void delete(UUID id) {

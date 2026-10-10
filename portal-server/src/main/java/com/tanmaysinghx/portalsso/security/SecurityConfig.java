@@ -125,6 +125,19 @@ public class SecurityConfig {
 
     @Bean
     @Order(2)
+    SecurityFilterChain externalApiSecurityFilterChain(HttpSecurity http) throws Exception {
+        http.securityMatcher("/api/external/**")
+                .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll())
+                .securityContext(context -> context.securityContextRepository(new NullSecurityContextRepository()))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .csrf(AbstractHttpConfigurer::disable)
+                .requestCache(RequestCacheConfigurer::disable);
+
+        return http.build();
+    }
+
+    @Bean
+    @Order(3)
     SecurityFilterChain defaultSecurityFilterChain(
             HttpSecurity http,
             PortalUserDetailsService userDetailsService,

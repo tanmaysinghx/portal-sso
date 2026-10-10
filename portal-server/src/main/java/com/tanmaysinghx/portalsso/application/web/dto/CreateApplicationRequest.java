@@ -35,4 +35,6 @@ public record CreateApplicationRequest(
 
         Boolean enabled,
 
-        Integer displayOrder) {}
+        Integer displayOrder,
+
+        Boolean externalAuthEnabled) {}

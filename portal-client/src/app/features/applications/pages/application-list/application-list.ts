@@ -1,6 +1,7 @@
 import { Component, HostListener, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { switchMap } from 'rxjs';
 import { SnackbarService } from '../../../../core/services/snackbar.service';
 import { Badge } from '../../../../shared/components/badge/badge';
 import { OAuthClient } from '../../../clients/models/oauth-client.model';
@@ -49,6 +50,16 @@ export class ApplicationList {
 
   readonly pendingDelete = signal<Application | null>(null);
   readonly deleting = signal(false);
+  readonly issuedClientId = signal<string | null>(null);
+  readonly issuedClientSecret = signal<string | null>(null);
+  readonly secretCopied = signal(false);
+  readonly issuedAppApiKey = signal<{
+    apiKey: string;
+    headerName: string;
+    registerEndpoint: string;
+    loginEndpoint: string;
+  } | null>(null);
+  readonly appApiKeyCopied = signal(false);
 
   readonly categoryPresets = CATEGORY_PRESETS;
 
@@ -59,6 +70,13 @@ export class ApplicationList {
     iconUrl: [''],
     category: ['General', [Validators.required]],
     clientId: [''],
+    createOAuthClient: [false],
+    newClientId: [''],
+    redirectUris: [''],
+    profileScope: [true],
+    emailScope: [true],
+    confidential: [false],
+    externalAuthEnabled: [false],
     accessType: ['ALL_USERS' as ApplicationAccessType],
     enabled: [true],
     displayOrder: [0],
@@ -161,6 +179,13 @@ export class ApplicationList {
       iconUrl: '',
       category: 'General',
       clientId: '',
+      createOAuthClient: false,
+      newClientId: '',
+      redirectUris: '',
+      profileScope: true,
+      emailScope: true,
+      confidential: false,
+      externalAuthEnabled: false,
       accessType: 'ALL_USERS',
       enabled: true,
       displayOrder: 0,
@@ -180,6 +205,13 @@ export class ApplicationList {
       iconUrl: app.iconUrl ?? '',
       category: app.category,
       clientId: app.clientId ?? '',
+      createOAuthClient: false,
+      newClientId: '',
+      redirectUris: '',
+      profileScope: true,
+      emailScope: true,
+      confidential: false,
+      externalAuthEnabled: app.externalAuthEnabled,
       accessType: app.accessType,
       enabled: app.enabled,
       displayOrder: app.displayOrder,
@@ -191,6 +223,76 @@ export class ApplicationList {
     this.showModal.set(false);
     this.editingApp.set(null);
     this.modalError.set(null);
+  }
+
+  useLaunchUrlAsRedirectUri(): void {
+    const appUrl = this.form.controls.appUrl.value.trim();
+    if (appUrl) {
+      this.form.controls.redirectUris.setValue(appUrl);
+    }
+  }
+
+  copyIssuedSecret(): void {
+    const secret = this.issuedClientSecret();
+    if (!secret) {
+      return;
+    }
+    navigator.clipboard.writeText(secret).then(
+      () => {
+        this.secretCopied.set(true);
+        setTimeout(() => this.secretCopied.set(false), 2000);
+      },
+      () => this.secretCopied.set(false),
+    );
+  }
+
+  clearIssuedSecret(): void {
+    this.issuedClientId.set(null);
+    this.issuedClientSecret.set(null);
+    this.secretCopied.set(false);
+  }
+
+  copyIssuedAppApiKey(): void {
+    const key = this.issuedAppApiKey()?.apiKey;
+    if (!key) {
+      return;
+    }
+    navigator.clipboard.writeText(key).then(
+      () => {
+        this.appApiKeyCopied.set(true);
+        setTimeout(() => this.appApiKeyCopied.set(false), 2000);
+      },
+      () => this.appApiKeyCopied.set(false),
+    );
+  }
+
+  clearIssuedAppApiKey(): void {
+    this.issuedAppApiKey.set(null);
+    this.appApiKeyCopied.set(false);
+  }
+
+  rotateExternalAuthApiKey(app: Application): void {
+    this.applicationService.rotateExternalAuthApiKey(app.id).subscribe({
+      next: (response) => {
+        this.issuedAppApiKey.set(response);
+        this.applications.set(
+          this.applications().map((a) =>
+            a.id === app.id
+              ? {
+                  ...a,
+                  externalAuthEnabled: true,
+                  externalAuthApiKeyIssued: true,
+                  externalAuthApiKeyPrefix: response.apiKeyPrefix,
+                }
+              : a,
+          ),
+        );
+        this.snackbarService.success(`External API key generated for "${app.name}".`);
+      },
+      error: (err) => {
+        this.snackbarService.error(err?.error?.message ?? 'Failed to generate external API key.');
+      },
+    });
   }
 
   toggleRoleSelection(roleId: string): void {
@@ -225,25 +327,71 @@ export class ApplicationList {
     this.modalError.set(null);
 
     if (this.modalMode() === 'create') {
+      const createLinkedClient = val.createOAuthClient;
+      const clientId = createLinkedClient
+        ? (val.newClientId.trim() || this.toClientId(val.name))
+        : val.clientId.trim();
+      if (createLinkedClient && !clientId) {
+        this.submitting.set(false);
+        this.modalError.set('Enter a Client ID using letters, numbers, dots, underscores, or hyphens.');
+        return;
+      }
       const payload: CreateApplicationRequest = {
         name: val.name.trim(),
         description: val.description.trim() || undefined,
         appUrl: val.appUrl.trim(),
         iconUrl: val.iconUrl.trim() || undefined,
         category: val.category.trim() || 'General',
-        clientId: val.clientId.trim() || undefined,
+        clientId: clientId || undefined,
         accessType,
         roleIds,
         enabled: val.enabled,
         displayOrder: val.displayOrder,
+        externalAuthEnabled: val.externalAuthEnabled,
       };
 
-      this.applicationService.createApplication(payload).subscribe({
+      const createApplication$ = createLinkedClient
+        ? this.oauthClientService
+            .create({
+              clientId,
+              clientName: val.name.trim(),
+              redirectUris: this.parseRedirectUris(val.redirectUris),
+              scopes: [
+                'openid',
+                ...(val.profileScope ? ['profile'] : []),
+                ...(val.emailScope ? ['email'] : []),
+              ],
+              logoUrl: val.iconUrl.trim() || undefined,
+              confidential: val.confidential,
+            })
+            .pipe(
+              switchMap((createdClient) => {
+                this.availableOAuthClients.set([createdClient.client, ...this.availableOAuthClients()]);
+                if (createdClient.clientSecret) {
+                  this.issuedClientId.set(createdClient.client.clientId);
+                  this.issuedClientSecret.set(createdClient.clientSecret);
+                }
+                return this.applicationService.createApplication({
+                  ...payload,
+                  clientId: createdClient.client.clientId,
+                });
+              }),
+            )
+        : this.applicationService.createApplication(payload);
+
+      if (createLinkedClient && this.parseRedirectUris(val.redirectUris).length === 0) {
+        this.submitting.set(false);
+        this.modalError.set('Add at least one redirect URI for the linked OAuth client.');
+        return;
+      }
+
+      createApplication$.subscribe({
         next: (created) => {
           this.applications.set([created, ...this.applications()]);
           this.submitting.set(false);
           this.closeModal();
-          this.snackbarService.success(`Application "${created.name}" created successfully.`);
+          const suffix = createLinkedClient ? ' and linked OAuth client' : '';
+          this.snackbarService.success(`Application "${created.name}" created${suffix} successfully.`);
         },
         error: (err) => {
           this.submitting.set(false);
@@ -265,6 +413,7 @@ export class ApplicationList {
         roleIds,
         enabled: val.enabled,
         displayOrder: val.displayOrder,
+        externalAuthEnabled: val.externalAuthEnabled,
       };
 
       this.applicationService.updateApplication(current.id, payload).subscribe({
@@ -282,6 +431,22 @@ export class ApplicationList {
         },
       });
     }
+  }
+
+  private parseRedirectUris(value: string): string[] {
+    return value
+      .split('\n')
+      .map((uri) => uri.trim())
+      .filter((uri) => uri.length > 0);
+  }
+
+  private toClientId(name: string): string {
+    return name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9._-]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 80);
   }
 
   confirmDelete(app: Application): void {

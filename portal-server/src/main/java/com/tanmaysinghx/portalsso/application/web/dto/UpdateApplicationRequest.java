@@ -35,4 +35,6 @@ public record UpdateApplicationRequest(
 
         Boolean enabled,
 
-        Integer displayOrder) {}
+        Integer displayOrder,
+
+        Boolean externalAuthEnabled) {}

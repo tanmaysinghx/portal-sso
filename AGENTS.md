@@ -90,6 +90,12 @@ portal-sso/
 
 When modifying or adding code, you **MUST** uphold these rules:
 
+### App Onboarding Shortcut
+- For work related to adding, linking, or configuring user-facing apps and OAuth/OIDC clients, read `docs/APP_ONBOARDING.md` first. It is the compact agent guide for this domain and should usually be enough before opening the implementation files it names.
+- Keep the distinction clear: an **Application** is a launchpad/catalog entry; an **OAuth Client** is the OIDC relying-party registration. An Application may link to an OAuth Client by `clientId`, but deleting one must not silently delete the other.
+- Prefer simplifying admin workflows in the Applications UI while preserving the lower-level OAuth Clients page for advanced registry management.
+- External app login/register APIs are protected by per-Application API keys. Keys are generated server-side, shown once, stored hashed, and must be used only from the app backend, never browser JavaScript.
+
 ### 1. Database & Portability
 - **Liquibase owns all schemas**: Never rely on Hibernate `ddl-auto` in production. Always write changesets under `portal-server/src/main/resources/db/changelog/changes/`.
 - **Database Agnostic**: All schemas and queries must run interchangeably on **PostgreSQL, MySQL, and H2**.

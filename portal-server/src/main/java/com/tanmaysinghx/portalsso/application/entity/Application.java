@@ -46,6 +46,15 @@ public class Application extends BaseEntity {
     @Column(name = "display_order", nullable = false)
     private int displayOrder = 0;
 
+    @Column(name = "external_auth_enabled", nullable = false)
+    private boolean externalAuthEnabled = false;
+
+    @Column(name = "external_auth_api_key_hash", length = 255)
+    private String externalAuthApiKeyHash;
+
+    @Column(name = "external_auth_api_key_prefix", length = 16)
+    private String externalAuthApiKeyPrefix;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "application_roles",
@@ -132,6 +141,30 @@ public class Application extends BaseEntity {
 
     public void setDisplayOrder(int displayOrder) {
         this.displayOrder = displayOrder;
+    }
+
+    public boolean isExternalAuthEnabled() {
+        return externalAuthEnabled;
+    }
+
+    public void setExternalAuthEnabled(boolean externalAuthEnabled) {
+        this.externalAuthEnabled = externalAuthEnabled;
+    }
+
+    public String getExternalAuthApiKeyHash() {
+        return externalAuthApiKeyHash;
+    }
+
+    public void setExternalAuthApiKeyHash(String externalAuthApiKeyHash) {
+        this.externalAuthApiKeyHash = externalAuthApiKeyHash;
+    }
+
+    public String getExternalAuthApiKeyPrefix() {
+        return externalAuthApiKeyPrefix;
+    }
+
+    public void setExternalAuthApiKeyPrefix(String externalAuthApiKeyPrefix) {
+        this.externalAuthApiKeyPrefix = externalAuthApiKeyPrefix;
     }
 
     public Set<Role> getRoles() {
