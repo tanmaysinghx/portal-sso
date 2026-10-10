@@ -1,0 +1,165 @@
+<div class="relative min-h-screen bg-white text-zinc-900 font-sans selection:bg-brand-500 selection:text-white flex flex-col">
+  
+  <!-- Header Navigation -->
+  <header class="sticky top-0 z-50 border-b border-zinc-200/80 bg-white/70 backdrop-blur-xl">
+    <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <a routerLink="/product" class="flex items-center gap-3 hover:opacity-80 transition">
+        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 shadow-sm">
+          <img src="logo.svg" alt="Portal SSO" class="h-5 w-5 brightness-0 invert" />
+        </div>
+        <span class="text-base font-bold tracking-tight text-zinc-900">Portal SSO</span>
+      </a>
+
+      <nav class="hidden items-center gap-8 md:flex">
+        <a routerLink="/product" fragment="features" class="text-sm font-medium text-zinc-500 transition hover:text-zinc-900">Features</a>
+        <a routerLink="/download" class="text-sm font-bold text-zinc-900 transition">Download</a>
+        <a routerLink="/docs" class="text-sm font-medium text-zinc-500 transition hover:text-zinc-900">Documentation</a>
+        <a routerLink="/product" fragment="endpoints" class="text-sm font-medium text-zinc-500 transition hover:text-zinc-900">Endpoints</a>
+      </nav>
+
+      <div class="flex items-center gap-4">
+        <a routerLink="/sign-in" class="hidden sm:block text-sm font-semibold text-zinc-600 transition hover:text-zinc-900">Sign In</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="relative z-10 flex-grow pb-24">
+    <!-- Download Header Section -->
+    <section class="mx-auto max-w-5xl px-4 pt-24 pb-12 sm:px-6 lg:px-8 text-center sm:text-left border-b border-zinc-100">
+      <h1 class="text-4xl font-extrabold tracking-tight text-zinc-900 sm:text-5xl">Download Portal SSO</h1>
+      <p class="mt-4 text-xl text-zinc-600 max-w-2xl">
+        Get the latest stable release. Run Portal SSO anywhere Java 25 is installed.
+      </p>
+    </section>
+
+    <!-- Version Table Section -->
+    <section class="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
+      <h2 class="text-2xl font-bold tracking-tight text-zinc-900 mb-6">Current Releases</h2>
+      <div class="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm ring-1 ring-zinc-900/5">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm whitespace-nowrap">
+            <thead class="bg-zinc-50 border-b border-zinc-200">
+              <tr>
+                <th scope="col" class="px-6 py-4 font-semibold text-xs text-zinc-500 uppercase tracking-wider">Channel</th>
+                <th scope="col" class="px-6 py-4 font-semibold text-xs text-zinc-500 uppercase tracking-wider">Version</th>
+                <th scope="col" class="px-6 py-4 font-semibold text-xs text-zinc-500 uppercase tracking-wider">Release Date</th>
+                <th scope="col" class="px-6 py-4 font-semibold text-xs text-zinc-500 uppercase tracking-wider">Checksum (SHA-256)</th>
+                <th scope="col" class="px-6 py-4 font-semibold text-xs text-zinc-500 uppercase tracking-wider text-right">Download</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-zinc-100 text-zinc-700">
+              <tr class="hover:bg-zinc-50/80 transition-colors">
+                <td class="px-6 py-4">
+                  <span class="inline-flex items-center rounded-md bg-brand-50 px-2 py-1 text-xs font-semibold text-brand-700 ring-1 ring-inset ring-brand-600/20">
+                    Stable LTS
+                  </span>
+                </td>
+                <td class="px-6 py-4 font-bold text-zinc-900">v{{ version }}</td>
+                <td class="px-6 py-4 text-zinc-500">Oct 10, 2026</td>
+                <td class="px-6 py-4 font-mono text-zinc-400 text-xs">{{ jarChecksum.substring(0, 16) }}...</td>
+                <td class="px-6 py-4 text-right">
+                  <a [href]="jarDownloadUrl" download="portal-sso.jar" class="font-semibold text-brand-600 hover:text-brand-500">Download .jar</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Installation Instructions Section -->
+    <section class="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
+      <h2 class="text-2xl font-bold tracking-tight text-zinc-900 mb-6">Installation</h2>
+      
+      <div class="rounded-3xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
+        <div class="flex border-b border-zinc-100 bg-zinc-50">
+          <button (click)="activeOs.set('linux')" [class.border-brand-500]="activeOs() === 'linux'" [class.text-zinc-900]="activeOs() === 'linux'" [class.border-transparent]="activeOs() !== 'linux'" [class.text-zinc-500]="activeOs() !== 'linux'" class="flex-1 py-4 text-sm font-semibold border-b-2 hover:text-zinc-900 transition text-center">
+            Linux
+          </button>
+          <button (click)="activeOs.set('mac')" [class.border-brand-500]="activeOs() === 'mac'" [class.text-zinc-900]="activeOs() === 'mac'" [class.border-transparent]="activeOs() !== 'mac'" [class.text-zinc-500]="activeOs() !== 'mac'" class="flex-1 py-4 text-sm font-semibold border-b-2 hover:text-zinc-900 transition text-center">
+            macOS
+          </button>
+          <button (click)="activeOs.set('windows')" [class.border-brand-500]="activeOs() === 'windows'" [class.text-zinc-900]="activeOs() === 'windows'" [class.border-transparent]="activeOs() !== 'windows'" [class.text-zinc-500]="activeOs() !== 'windows'" class="flex-1 py-4 text-sm font-semibold border-b-2 hover:text-zinc-900 transition text-center">
+            Windows
+          </button>
+        </div>
+
+        <div class="p-8">
+          @if (activeOs() === 'linux') {
+            <div>
+              <h3 class="text-lg font-bold text-zinc-900 mb-4">Install on Linux via Terminal</h3>
+              <div class="rounded-xl bg-zinc-900 p-5 border border-zinc-700 shadow-inner mb-4 relative group">
+                <button (click)="copySnippetText(snippetLinux, 'linux')" class="absolute top-4 right-4 text-zinc-400 hover:text-white">
+                  @if (copiedSnippet() === 'linux') { <span class="text-xs text-green-400 font-semibold">Copied!</span> } @else { <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> }
+                </button>
+                <pre class="font-mono text-sm text-green-400 overflow-x-auto"><code><span class="text-zinc-500"># 1. Download the JAR file</span>
+<span class="text-zinc-300">curl -LO http://localhost:8080/api/public/download/portal-sso.jar</span>
+
+<span class="text-zinc-500"># 2. Run with Java 25</span>
+<span class="text-zinc-300">java -jar portal-sso.jar --httpPort=8080</span></code></pre>
+              </div>
+            </div>
+          }
+
+          @if (activeOs() === 'mac') {
+            <div>
+              <h3 class="text-lg font-bold text-zinc-900 mb-4">Install on macOS via Terminal</h3>
+              <div class="rounded-xl bg-zinc-900 p-5 border border-zinc-700 shadow-inner mb-4 relative group">
+                <button (click)="copySnippetText(snippetMac, 'mac')" class="absolute top-4 right-4 text-zinc-400 hover:text-white">
+                  @if (copiedSnippet() === 'mac') { <span class="text-xs text-green-400 font-semibold">Copied!</span> } @else { <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> }
+                </button>
+                <pre class="font-mono text-sm text-green-400 overflow-x-auto"><code><span class="text-zinc-500"># 1. Download the JAR file using curl</span>
+<span class="text-zinc-300">curl -LO http://localhost:8080/api/public/download/portal-sso.jar</span>
+
+<span class="text-zinc-500"># 2. Start the server (Requires Java 25 installed via Homebrew: brew install openjdk@25)</span>
+<span class="text-zinc-300">java -jar portal-sso.jar --httpPort=8080</span></code></pre>
+              </div>
+            </div>
+          }
+
+          @if (activeOs() === 'windows') {
+            <div>
+              <h3 class="text-lg font-bold text-zinc-900 mb-4">Install on Windows via PowerShell</h3>
+              <div class="rounded-xl bg-zinc-900 p-5 border border-zinc-700 shadow-inner mb-4 relative group">
+                <button (click)="copySnippetText(snippetWindows, 'windows')" class="absolute top-4 right-4 text-zinc-400 hover:text-white">
+                  @if (copiedSnippet() === 'windows') { <span class="text-xs text-green-400 font-semibold">Copied!</span> } @else { <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> }
+                </button>
+                <pre class="font-mono text-sm text-green-400 overflow-x-auto"><code><span class="text-zinc-500"># 1. Download using PowerShell</span>
+<span class="text-zinc-300">Invoke-WebRequest -Uri "http://localhost:8080/api/public/download/portal-sso.jar" -OutFile "portal-sso.jar"</span>
+
+<span class="text-zinc-500"># 2. Run using Java</span>
+<span class="text-zinc-300">java -jar portal-sso.jar --httpPort=8080</span></code></pre>
+              </div>
+            </div>
+          }
+          <p class="mt-4 text-sm text-zinc-500">After starting the server, open <a href="http://localhost:8080" class="text-brand-600 hover:underline">http://localhost:8080</a> in your browser to access the admin console and complete the initial setup.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-zinc-200 bg-zinc-50 py-16 mt-auto">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-8">
+        <div class="flex items-center gap-3">
+          <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 shadow-sm">
+            <img src="logo.svg" alt="Portal SSO" class="h-4 w-4 brightness-0 invert" />
+          </div>
+          <span class="text-base font-bold text-zinc-900">Portal SSO</span>
+        </div>
+        
+        <nav class="flex gap-6 text-sm font-medium text-zinc-500">
+          <a routerLink="/product" class="hover:text-zinc-900 transition">About</a>
+          <a href="#" class="hover:text-zinc-900 transition">GitHub</a>
+          <a href="#" class="hover:text-zinc-900 transition">Twitter</a>
+          <a href="#" class="hover:text-zinc-900 transition">Privacy</a>
+        </nav>
+
+        <div class="text-sm text-zinc-500 text-center md:text-right">
+          <p>© 2026 Portal SSO.<br class="block sm:hidden" /> Developed by <a href="https://tanmaysinghx.com" target="_blank" class="text-zinc-900 hover:underline font-semibold transition">Tanmay Singh</a>.</p>
+        </div>
+      </div>
+    </div>
+  </footer>
+</div>

@@ -1,162 +1,237 @@
-<div class="relative min-h-screen bg-zinc-950 text-zinc-100 selection:bg-zinc-800 selection:text-white font-sans">
+<div class="relative min-h-screen bg-white text-zinc-900 font-sans selection:bg-brand-500 selection:text-white overflow-hidden">
+  
+  <!-- Ambient Animated Background Gradients -->
+  <div class="pointer-events-none absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80" aria-hidden="true">
+    <div class="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-20 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]" style="clip-path: polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)"></div>
+  </div>
+
   <!-- Header Navigation -->
-  <header class="sticky top-0 z-50 border-b border-zinc-900 bg-zinc-950/80 backdrop-blur-md">
-    <div class="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-      <a routerLink="/product" class="flex items-center gap-2.5 hover:opacity-80 transition">
-        <img src="logo.svg" alt="Portal SSO" class="h-6 w-6 rounded-md" />
-        <span class="text-sm font-semibold tracking-tight text-white">Portal SSO</span>
+  <header class="sticky top-0 z-50 border-b border-zinc-200/80 bg-white/70 backdrop-blur-xl">
+    <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <a routerLink="/product" class="flex items-center gap-3 hover:opacity-80 transition">
+        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 shadow-sm">
+          <img src="logo.svg" alt="Portal SSO" class="h-5 w-5 brightness-0 invert" />
+        </div>
+        <span class="text-base font-bold tracking-tight text-zinc-900">Portal SSO</span>
       </a>
 
-      <nav class="hidden items-center gap-6 md:flex">
-        <a href="#download" class="text-sm text-zinc-400 transition hover:text-white">Download</a>
-        <a routerLink="/docs" class="text-sm text-zinc-400 transition hover:text-white">Docs</a>
-        <a href="#endpoints" class="text-sm text-zinc-400 transition hover:text-white">Endpoints</a>
+      <nav class="hidden items-center gap-8 md:flex">
+        <a href="#features" class="text-sm font-medium text-zinc-500 transition hover:text-zinc-900">Features</a>
+        <a routerLink="/download" class="text-sm font-medium text-zinc-500 transition hover:text-zinc-900">Download</a>
+        <a routerLink="/docs" class="text-sm font-medium text-zinc-500 transition hover:text-zinc-900">Documentation</a>
+        <a href="#endpoints" class="text-sm font-medium text-zinc-500 transition hover:text-zinc-900">Endpoints</a>
       </nav>
 
       <div class="flex items-center gap-4">
         <a
           routerLink="/sign-in"
-          class="text-sm font-medium text-white transition hover:text-zinc-300"
+          class="hidden sm:block text-sm font-semibold text-zinc-600 transition hover:text-zinc-900"
         >
           Sign In
+        </a>
+        <a
+          routerLink="/download"
+          class="rounded-full bg-zinc-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-zinc-800 transition transform hover:-translate-y-0.5 active:translate-y-0"
+        >
+          Get Started
         </a>
       </div>
     </div>
   </header>
 
-  <main class="relative z-10">
+  <main class="relative z-10 pb-24">
     <!-- Hero Section -->
-    <section class="mx-auto max-w-7xl px-4 pt-24 pb-16 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-3xl text-center">
-        <div class="mb-6 inline-flex items-center rounded-full border border-zinc-800 bg-zinc-900/50 px-3 py-1 text-xs font-medium text-zinc-300">
-          <span>v{{ version }} {{ releaseChannel }}</span>
+    <section class="mx-auto max-w-7xl px-4 pt-28 pb-12 sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-4xl text-center">
+        
+        <div class="mb-8 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-1.5 text-sm font-medium text-zinc-600 shadow-sm transition hover:border-zinc-300">
+          <span class="flex h-2 w-2 rounded-full bg-brand-500"></span>
+          <span>Portal SSO v{{ version }} {{ releaseChannel }} is now available</span>
+          <svg class="h-4 w-4 text-zinc-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
+          </svg>
         </div>
 
-        <h1 class="text-4xl font-semibold tracking-tight text-white sm:text-5xl">
-          Identity & Access Management, simplified.
+        <h1 class="text-5xl font-extrabold tracking-tight text-zinc-900 sm:text-7xl mb-6 bg-clip-text text-transparent bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-600">
+          Identity & Access Management,<br class="hidden sm:block" /> brilliantly simplified.
         </h1>
 
-        <p class="mt-6 text-base text-zinc-400 sm:text-lg leading-relaxed">
-          Portal SSO is an open-source OAuth 2.1 and OpenID Connect identity provider. 
-          Deploy as a single Java executable with an embedded database, or scale with PostgreSQL. 
-          Built for simplicity and speed.
+        <p class="mt-6 text-lg text-zinc-600 sm:text-xl leading-relaxed max-w-2xl mx-auto">
+          An enterprise-grade OAuth 2.1 and OpenID Connect identity provider that runs anywhere. 
+          Deploy as a single Java executable with zero external dependencies, or scale with PostgreSQL.
         </p>
 
         <!-- CTA Buttons -->
-        <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
+        <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
           <a
-            href="#download"
-            class="rounded-md bg-white px-5 py-2.5 text-sm font-medium text-black transition hover:bg-zinc-200"
+            routerLink="/download"
+            class="w-full sm:w-auto rounded-full bg-zinc-900 px-8 py-4 text-base font-semibold text-white shadow-xl hover:bg-zinc-800 hover:shadow-2xl transition-all transform hover:-translate-y-1 active:translate-y-0"
           >
-            Download v{{ version }}
+            Download Now
           </a>
           <a
-            routerLink="/docs"
-            class="rounded-md border border-zinc-700 bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800"
+            (click)="copySnippetText('java -jar portal-sso.jar --httpPort=8080', 'heroCopy')"
+            class="w-full sm:w-auto cursor-pointer group flex items-center justify-center gap-3 rounded-full border border-zinc-200 bg-white px-8 py-4 text-base font-semibold text-zinc-700 shadow-sm hover:border-zinc-300 hover:bg-zinc-50 transition-all"
           >
-            Read Documentation
+            <span class="font-mono text-sm text-zinc-500 group-hover:text-zinc-700 transition">java -jar portal-sso.jar</span>
+            <span class="text-brand-600">{{ copiedSnippet() === 'heroCopy' ? 'Copied!' : 'Copy' }}</span>
           </a>
         </div>
       </div>
     </section>
 
-    <!-- Download Section -->
-    <section id="download" class="scroll-mt-20 mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8 border-t border-zinc-900">
-      <div class="mb-8">
-        <h2 class="text-xl font-semibold text-white">Download & Install</h2>
-        <p class="mt-2 text-sm text-zinc-400">
-          Run Portal SSO anywhere Java 25 is installed. No complex containers required.
-        </p>
+    <!-- Product Mockup Preview -->
+    <section class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-12 mb-32 relative">
+      <div class="absolute inset-0 -top-24 -z-10 transform-gpu overflow-hidden blur-3xl" aria-hidden="true">
+        <div class="relative left-[calc(50%+3rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 bg-gradient-to-tr from-[#9089fc] to-[#ff80b5] opacity-20 sm:left-[calc(50%+36rem)] sm:w-[72.1875rem]"></div>
+      </div>
+      
+      <!-- Tabs Navigation -->
+      <div class="flex flex-wrap justify-center gap-2 mb-8">
+        @for (tab of tabs; track tab.id) {
+          <button
+            type="button"
+            (click)="activeTab.set(tab.id)"
+            [class.bg-zinc-900]="activeTab() === tab.id"
+            [class.text-white]="activeTab() === tab.id"
+            [class.bg-white]="activeTab() !== tab.id"
+            [class.text-zinc-600]="activeTab() !== tab.id"
+            [class.hover:bg-zinc-50]="activeTab() !== tab.id"
+            class="rounded-full px-4 py-2 text-sm font-semibold shadow-sm ring-1 ring-inset ring-zinc-200 transition-all"
+          >
+            {{ tab.name }}
+          </button>
+        }
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
-          <h3 class="text-sm font-medium text-white">Standalone Executable (.jar)</h3>
-          <p class="mt-2 text-xs text-zinc-400 mb-6">
-            The standard distribution. Contains the backend server, embedded database, and compiled admin dashboard.
-          </p>
-          
-          <a
-            [href]="jarDownloadUrl"
-            download="portal-sso.jar"
-            class="inline-flex items-center gap-2 rounded-md bg-zinc-100 px-4 py-2 text-xs font-medium text-zinc-900 transition hover:bg-white"
-          >
-            Download .jar
-          </a>
-          
-          <div class="mt-4 text-[10px] text-zinc-500 font-mono">
-            SHA-256: <span class="select-all">{{ jarChecksum }}</span>
+      <!-- Tab Content (Mockups) -->
+      <div class="rounded-2xl bg-zinc-900/5 p-2 sm:p-4 ring-1 ring-inset ring-zinc-900/10 shadow-2xl backdrop-blur-xl">
+        @for (tab of tabs; track tab.id) {
+          <div [class.hidden]="activeTab() !== tab.id" class="animate-in fade-in zoom-in-95 duration-300">
+            <div class="mb-4 px-2 sm:px-4 flex flex-col items-center text-center">
+              <span class="inline-block rounded bg-brand-100 px-2.5 py-0.5 text-xs font-semibold text-brand-700 mb-2">{{ tab.badge }}</span>
+              <p class="text-sm text-zinc-600 max-w-xl">{{ tab.description }}</p>
+            </div>
+            <img 
+              [src]="tab.imageSrc" 
+              [alt]="tab.imageAlt" 
+              class="w-full rounded-xl ring-1 ring-zinc-200/50 shadow-sm"
+            />
           </div>
+        }
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="scroll-mt-24 mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8 border-t border-zinc-100">
+      <div class="mx-auto max-w-2xl text-center mb-16">
+        <h2 class="text-base font-semibold leading-7 text-brand-600">Built for modern stacks</h2>
+        <p class="mt-2 text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">Everything you need in one binary</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Feature 1 -->
+        <div class="rounded-3xl border border-zinc-100 bg-white p-8 shadow-sm hover:shadow-md transition-shadow">
+          <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-900 text-white mb-6 shadow-sm">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-zinc-900">Standard OIDC & OAuth 2.1</h3>
+          <p class="mt-4 text-sm text-zinc-600 leading-relaxed">
+            Strictly enforces PKCE for all clients. Completely passwordless-ready with robust crypto including persistent RSA keypairs and BCrypt.
+          </p>
         </div>
 
-        <div class="rounded-xl border border-zinc-800 bg-zinc-950 p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-sm font-medium text-white">Quick Start</h3>
-            <button
-              type="button"
-              (click)="copySnippetText('java -jar portal-sso.jar --httpPort=8080', 'quickJar')"
-              class="text-xs text-zinc-500 hover:text-zinc-300 transition"
-            >
-              {{ copiedSnippet() === 'quickJar' ? 'Copied!' : 'Copy' }}
-            </button>
+        <!-- Feature 2 -->
+        <div class="rounded-3xl border border-zinc-100 bg-white p-8 shadow-sm hover:shadow-md transition-shadow">
+          <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-900 text-white mb-6 shadow-sm">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.45m.31-.31c.019-.104.039-.208.06-.311m7.13-2.814a6.25 6.25 0 11-11.25 0 6.25 6.25 0 0111.25 0z" />
+            </svg>
           </div>
-          <pre class="font-mono text-[11px] text-zinc-300 overflow-x-auto"><code>java -jar portal-sso.jar --httpPort=8080</code></pre>
-          <p class="mt-4 text-xs text-zinc-500">
-            This will start the server on port 8080 using the embedded H2 database.
-            An admin password will be generated and printed to the console on first boot.
+          <h3 class="text-lg font-semibold text-zinc-900">Zero-Friction Boot</h3>
+          <p class="mt-4 text-sm text-zinc-600 leading-relaxed">
+            A single Spring Boot JAR embeds the compiled Angular SPA. Boots with an embedded H2 database instantly—no external containers required.
+          </p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="rounded-3xl border border-zinc-100 bg-white p-8 shadow-sm hover:shadow-md transition-shadow">
+          <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-900 text-white mb-6 shadow-sm">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-zinc-900">Seamless Migrations</h3>
+          <p class="mt-4 text-sm text-zinc-600 leading-relaxed">
+            Automated migration wizard allows zero-data-loss transfer from the embedded H2 directly into PostgreSQL or MySQL when you're ready to scale.
           </p>
         </div>
       </div>
     </section>
+
 
     <!-- Standard Endpoints Table -->
-    <section id="endpoints" class="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8 border-t border-zinc-900">
-      <div class="mb-8">
-        <h2 class="text-xl font-semibold text-white">OIDC Protocol Endpoints</h2>
-        <p class="mt-2 text-sm text-zinc-400">
-          Standard REST endpoints for integrating your client applications.
+    <section id="endpoints" class="scroll-mt-24 mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8 border-t border-zinc-100">
+      <div class="mb-12 text-center sm:text-left">
+        <h2 class="text-3xl font-bold tracking-tight text-zinc-900">OIDC Protocol Endpoints</h2>
+        <p class="mt-4 text-lg text-zinc-600 max-w-2xl">
+          Standard REST endpoints for integrating your client applications. Portal SSO implements the complete OpenID Connect Core specification.
         </p>
       </div>
 
-      <div class="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900/50">
-        <table class="w-full text-left text-sm">
-          <thead>
-            <tr class="border-b border-zinc-800 text-zinc-400">
-              <th class="px-4 py-3 font-medium">Endpoint</th>
-              <th class="px-4 py-3 font-medium">Method</th>
-              <th class="px-4 py-3 font-medium">Path</th>
-              <th class="px-4 py-3 font-medium">Description</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-zinc-800/50 text-zinc-300">
-            @for (ep of endpoints; track ep.path) {
-              <tr class="hover:bg-zinc-800/30 transition">
-                <td class="px-4 py-3 text-white">{{ ep.name }}</td>
-                <td class="px-4 py-3">
-                  <span class="rounded bg-zinc-800 px-1.5 py-0.5 text-[10px] font-mono font-medium text-zinc-300">
-                    {{ ep.method }}
-                  </span>
-                </td>
-                <td class="px-4 py-3 font-mono text-zinc-400 text-xs">{{ ep.path }}</td>
-                <td class="px-4 py-3 text-zinc-500 text-xs">{{ ep.desc }}</td>
+      <div class="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm ring-1 ring-zinc-900/5">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm whitespace-nowrap">
+            <thead class="bg-zinc-50 border-b border-zinc-200">
+              <tr>
+                <th scope="col" class="px-6 py-4 font-semibold text-xs text-zinc-500 uppercase tracking-wider">Endpoint</th>
+                <th scope="col" class="px-6 py-4 font-semibold text-xs text-zinc-500 uppercase tracking-wider">Method</th>
+                <th scope="col" class="px-6 py-4 font-semibold text-xs text-zinc-500 uppercase tracking-wider">Path</th>
+                <th scope="col" class="px-6 py-4 font-semibold text-xs text-zinc-500 uppercase tracking-wider w-full">Description</th>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody class="divide-y divide-zinc-100 text-zinc-700">
+              @for (ep of endpoints; track ep.path) {
+                <tr class="hover:bg-zinc-50/80 transition-colors">
+                  <td class="px-6 py-4 font-semibold text-zinc-900">{{ ep.name }}</td>
+                  <td class="px-6 py-4">
+                    <span class="inline-flex items-center rounded-md bg-zinc-100 px-2 py-1 text-xs font-mono font-medium text-zinc-600 border border-zinc-200 shadow-sm">
+                      {{ ep.method }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 font-mono text-zinc-500 text-xs">{{ ep.path }}</td>
+                  <td class="px-6 py-4 text-zinc-500 text-sm whitespace-normal">{{ ep.desc }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
   </main>
 
   <!-- Footer -->
-  <footer class="border-t border-zinc-900 bg-zinc-950 py-12">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center sm:text-left">
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-6">
-        <div class="flex items-center gap-2">
-          <img src="logo.svg" alt="Portal SSO" class="h-5 w-5 rounded-md grayscale opacity-50" />
-          <span class="text-sm font-medium text-zinc-500">Portal SSO</span>
+  <footer class="border-t border-zinc-200 bg-zinc-50 py-16 mt-auto">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-8">
+        <div class="flex items-center gap-3">
+          <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 shadow-sm">
+            <img src="logo.svg" alt="Portal SSO" class="h-4 w-4 brightness-0 invert" />
+          </div>
+          <span class="text-base font-bold text-zinc-900">Portal SSO</span>
         </div>
-        <div class="text-xs text-zinc-600">
-          <p>© 2026 Portal SSO. Developed by <a href="https://tanmaysinghx.com" target="_blank" class="text-zinc-400 hover:text-white transition">Tanmay Singh</a>.</p>
+        
+        <nav class="flex gap-6 text-sm font-medium text-zinc-500">
+          <a href="#" class="hover:text-zinc-900 transition">About</a>
+          <a href="#" class="hover:text-zinc-900 transition">GitHub</a>
+          <a href="#" class="hover:text-zinc-900 transition">Twitter</a>
+          <a href="#" class="hover:text-zinc-900 transition">Privacy</a>
+        </nav>
+
+        <div class="text-sm text-zinc-500 text-center md:text-right">
+          <p>© 2026 Portal SSO.<br class="block sm:hidden" /> Developed by <a href="https://tanmaysinghx.com" target="_blank" class="text-zinc-900 hover:underline font-semibold transition">Tanmay Singh</a>.</p>
         </div>
       </div>
     </div>

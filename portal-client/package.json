@@ -1,6 +1,6 @@
 {
   "name": "portal-client",
-  "version": "25.0.14",
+  "version": "25.0.25",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",

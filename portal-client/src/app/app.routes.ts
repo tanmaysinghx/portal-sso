@@ -18,6 +18,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/docs/docs').then((m) => m.Docs),
   },
   {
+    path: 'download',
+    loadComponent: () => import('./features/download/download').then((m) => m.Download),
+  },
+  {
     path: 'sign-in',
     loadComponent: () => import('./features/auth/login/login').then((m) => m.Login),
   },

@@ -1,3 +1,4 @@
+import { environment } from '../../../environments/environment';
 import { Component, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
@@ -25,14 +26,14 @@ interface CodeSnippet {
   styleUrl: './product.scss',
 })
 export class Product {
-  readonly activeTab = signal<'dashboard' | 'launchpad' | 'clients' | 'mfa' | 'migration' | 'users'>('dashboard');
+  readonly activeTab = signal<string>('dashboard');
   readonly activeCodeSnippet = signal<string>('curl');
   readonly activeDownloadFlavor = signal<'jar' | 'docker' | 'compose' | 'systemd'>('jar');
   readonly copied = signal<boolean>(false);
   readonly copiedChecksum = signal<boolean>(false);
   readonly copiedSnippet = signal<string | null>(null);
 
-  readonly version = 'v25.0.8';
+  readonly version = environment.version;
   readonly releaseChannel = 'LTS (Long-Term Support)';
   readonly jarDownloadUrl = '/api/public/download/portal-sso.jar';
   readonly jarChecksum = '4f8b9e2a7c6109e3bb88251e6b8c4c782729a6741b01c3e3a47da4f64722880b';
