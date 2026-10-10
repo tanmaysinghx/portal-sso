@@ -73,4 +73,7 @@ public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificat
     /** Every user holding a role, so the association can be cleared before the role is deleted. */
     @Query("select u from User u join u.roles r where r.id = :roleId")
     List<User> findAllByRoleId(@Param("roleId") UUID roleId);
+
+    @Query("SELECT DISTINCT u FROM User u JOIN u.roles r WHERE r.name = :roleName AND u.enabled = true")
+    List<User> findEnabledUsersByRoleName(@Param("roleName") String roleName);
 }

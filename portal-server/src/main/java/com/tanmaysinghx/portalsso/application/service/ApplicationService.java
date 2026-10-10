@@ -2,6 +2,7 @@ package com.tanmaysinghx.portalsso.application.service;
 
 import com.tanmaysinghx.portalsso.application.entity.Application;
 import com.tanmaysinghx.portalsso.application.entity.ApplicationAccessType;
+import com.tanmaysinghx.portalsso.application.repository.AccessRequestRepository;
 import com.tanmaysinghx.portalsso.application.repository.ApplicationRepository;
 import com.tanmaysinghx.portalsso.application.web.dto.ApplicationResponse;
 import com.tanmaysinghx.portalsso.application.web.dto.CreateApplicationRequest;
@@ -13,12 +14,14 @@ import com.tanmaysinghx.portalsso.common.error.ErrorCode;
 import com.tanmaysinghx.portalsso.common.error.ResourceNotFoundException;
 import com.tanmaysinghx.portalsso.user.entity.Role;
 import com.tanmaysinghx.portalsso.user.repository.RoleRepository;
+import com.tanmaysinghx.portalsso.user.repository.UserRepository;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -32,16 +35,22 @@ public class ApplicationService {
     private final RoleRepository roleRepository;
     private final AuditService auditService;
     private final PasswordEncoder passwordEncoder;
+    private final AccessRequestRepository accessRequestRepository;
+    private final UserRepository userRepository;
 
     public ApplicationService(
             ApplicationRepository applicationRepository,
             RoleRepository roleRepository,
             AuditService auditService,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            AccessRequestRepository accessRequestRepository,
+            UserRepository userRepository) {
         this.applicationRepository = applicationRepository;
         this.roleRepository = roleRepository;
         this.auditService = auditService;
         this.passwordEncoder = passwordEncoder;
+        this.accessRequestRepository = accessRequestRepository;
+        this.userRepository = userRepository;
     }
 
     @Transactional(readOnly = true)
@@ -88,8 +97,12 @@ public class ApplicationService {
         app.setClientId(request.clientId() != null && !request.clientId().isBlank() ? request.clientId().trim() : null);
         app.setAccessType(request.accessType() != null ? request.accessType() : ApplicationAccessType.ALL_USERS);
         app.setEnabled(request.enabled() != null ? request.enabled() : true);
-        app.setDisplayOrder(request.displayOrder() != null ? request.displayOrder() : 0);
         app.setExternalAuthEnabled(Boolean.TRUE.equals(request.externalAuthEnabled()));
+        app.setDisplayOrder(request.displayOrder() != null ? request.displayOrder() : 0);
+
+        if (request.externalRegistrationEnabled() != null) {
+            app.setExternalRegistrationEnabled(request.externalRegistrationEnabled());
+        }
 
         if (app.getAccessType() == ApplicationAccessType.RESTRICTED && request.roleIds() != null && !request.roleIds().isEmpty()) {
             List<Role> roles = roleRepository.findAllById(request.roleIds());
@@ -121,8 +134,12 @@ public class ApplicationService {
         app.setClientId(request.clientId() != null && !request.clientId().isBlank() ? request.clientId().trim() : null);
         app.setAccessType(request.accessType() != null ? request.accessType() : ApplicationAccessType.ALL_USERS);
         app.setEnabled(request.enabled() != null ? request.enabled() : true);
-        app.setDisplayOrder(request.displayOrder() != null ? request.displayOrder() : 0);
         app.setExternalAuthEnabled(Boolean.TRUE.equals(request.externalAuthEnabled()));
+        app.setDisplayOrder(request.displayOrder() != null ? request.displayOrder() : 0);
+
+        if (request.externalRegistrationEnabled() != null) {
+            app.setExternalRegistrationEnabled(request.externalRegistrationEnabled());
+        }
 
         if (app.getAccessType() == ApplicationAccessType.RESTRICTED && request.roleIds() != null) {
             List<Role> roles = roleRepository.findAllById(request.roleIds());
@@ -191,23 +208,37 @@ public class ApplicationService {
         boolean isAdmin = auth.getAuthorities().stream()
                 .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
 
-        List<Application> apps;
-        if (isAdmin) {
-            apps = applicationRepository.findAllEnabled();
-        } else {
-            List<String> roleNames = auth.getAuthorities().stream()
-                    .map(GrantedAuthority::getAuthority)
-                    .toList();
+        List<Application> allApps = applicationRepository.findAllEnabledWithRoles();
 
-            if (roleNames.isEmpty()) {
-                apps = applicationRepository.findAllUsersEnabled();
-            } else {
-                apps = applicationRepository.findAccessibleApplications(roleNames);
+        Set<String> userRoleNames = auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toSet());
+
+        Set<UUID> pendingAppIds = Set.of();
+        if (!isAdmin) {
+            var userOpt = userRepository.findByEmail(auth.getName());
+            if (userOpt.isPresent()) {
+                pendingAppIds = accessRequestRepository.findPendingByUserId(userOpt.get().getId()).stream()
+                        .map(ar -> ar.getApplication().getId())
+                        .collect(Collectors.toSet());
             }
         }
 
-        return apps.stream()
-                .map(UserApplicationResponse::from)
+        Set<UUID> finalPendingAppIds = pendingAppIds;
+        return allApps.stream()
+                .map(app -> {
+                    boolean accessible;
+                    if (isAdmin) {
+                        accessible = true;
+                    } else if (app.getAccessType() == ApplicationAccessType.ALL_USERS) {
+                        accessible = true;
+                    } else {
+                        accessible = app.getRoles().stream()
+                                .anyMatch(r -> userRoleNames.contains(r.getName()));
+                    }
+                    String pendingStatus = finalPendingAppIds.contains(app.getId()) ? "PENDING" : null;
+                    return UserApplicationResponse.from(app, accessible, pendingStatus);
+                })
                 .toList();
     }
 }

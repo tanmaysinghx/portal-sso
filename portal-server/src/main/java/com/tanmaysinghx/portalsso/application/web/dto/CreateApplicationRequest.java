@@ -37,4 +37,6 @@ public record CreateApplicationRequest(
 
         Integer displayOrder,
 
-        Boolean externalAuthEnabled) {}
+        Boolean externalAuthEnabled,
+
+        Boolean externalRegistrationEnabled) {}

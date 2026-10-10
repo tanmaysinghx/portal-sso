@@ -49,6 +49,9 @@ public class Application extends BaseEntity {
     @Column(name = "external_auth_enabled", nullable = false)
     private boolean externalAuthEnabled = false;
 
+    @Column(name = "external_registration_enabled", nullable = false)
+    private boolean externalRegistrationEnabled = true;
+
     @Column(name = "external_auth_api_key_hash", length = 255)
     private String externalAuthApiKeyHash;
 
@@ -149,6 +152,14 @@ public class Application extends BaseEntity {
 
     public void setExternalAuthEnabled(boolean externalAuthEnabled) {
         this.externalAuthEnabled = externalAuthEnabled;
+    }
+
+    public boolean isExternalRegistrationEnabled() {
+        return externalRegistrationEnabled;
+    }
+
+    public void setExternalRegistrationEnabled(boolean externalRegistrationEnabled) {
+        this.externalRegistrationEnabled = externalRegistrationEnabled;
     }
 
     public String getExternalAuthApiKeyHash() {

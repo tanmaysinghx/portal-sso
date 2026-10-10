@@ -23,6 +23,7 @@ export interface Application {
   externalAuthApiKeyPrefix: string | null;
   createdAt: string;
   updatedAt: string;
+  externalRegistrationEnabled: boolean;
 }
 
 export interface UserApplication {
@@ -33,6 +34,8 @@ export interface UserApplication {
   iconUrl: string | null;
   category: string;
   clientId: string | null;
+  accessible: boolean;
+  pendingRequestStatus: string | null;
 }
 
 export interface CreateApplicationRequest {
@@ -47,6 +50,7 @@ export interface CreateApplicationRequest {
   enabled?: boolean;
   displayOrder?: number;
   externalAuthEnabled?: boolean;
+  externalRegistrationEnabled?: boolean;
 }
 
 export interface UpdateApplicationRequest {
@@ -61,6 +65,7 @@ export interface UpdateApplicationRequest {
   enabled?: boolean;
   displayOrder?: number;
   externalAuthEnabled?: boolean;
+  externalRegistrationEnabled?: boolean;
 }
 
 export interface ApplicationApiKeyResponse {

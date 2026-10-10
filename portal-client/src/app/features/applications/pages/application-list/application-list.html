@@ -598,6 +598,22 @@
             </span>
           </div>
         </label>
+
+        @if (form.get('externalAuthEnabled')?.value) {
+          <label class="ml-6 flex cursor-pointer items-start gap-2.5 rounded-lg border border-ink-200 px-3.5 py-3 transition hover:bg-ink-50">
+            <input
+              type="checkbox"
+              formControlName="externalRegistrationEnabled"
+              class="mt-0.5 h-4 w-4 rounded border-ink-300 text-brand-600 focus:ring-brand-500"
+            />
+            <div>
+              <span class="block text-[13px] font-medium text-ink-800">Allow user registration</span>
+              <span class="block text-xs text-ink-500">
+                Uncheck for internal apps where users already have Portal SSO accounts. Only the login endpoint will be available.
+              </span>
+            </div>
+          </label>
+        }
       </div>
 
       <div class="flex items-center justify-end gap-2.5 border-t border-ink-100 bg-ink-50/60 px-6 py-4">

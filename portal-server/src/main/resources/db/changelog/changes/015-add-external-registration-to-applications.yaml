@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 015-add-external-registration-to-applications
+      author: ai-agent
+      changes:
+        - addColumn:
+            tableName: applications
+            columns:
+              - column:
+                  name: external_registration_enabled
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false

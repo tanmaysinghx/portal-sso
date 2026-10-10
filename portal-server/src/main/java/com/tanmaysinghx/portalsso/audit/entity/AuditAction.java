@@ -38,7 +38,10 @@ public enum AuditAction {
 
     APPLICATION_CREATED(TargetType.APPLICATION, "Application added"),
     APPLICATION_UPDATED(TargetType.APPLICATION, "Application updated"),
-    APPLICATION_DELETED(TargetType.APPLICATION, "Application deleted");
+    APPLICATION_DELETED(TargetType.APPLICATION, "Application deleted"),
+    ACCESS_REQUEST_SUBMITTED(TargetType.APPLICATION, "Access request submitted"),
+    ACCESS_REQUEST_APPROVED(TargetType.APPLICATION, "Access request approved"),
+    ACCESS_REQUEST_DENIED(TargetType.APPLICATION, "Access request denied");
 
     /** What the action operates on. Stored so the log can be filtered by object as well as verb. */
     public enum TargetType {

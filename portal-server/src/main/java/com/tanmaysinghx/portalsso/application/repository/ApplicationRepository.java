@@ -27,4 +27,7 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
 
     @Query("SELECT DISTINCT a FROM Application a LEFT JOIN a.roles r WHERE a.enabled = true AND (a.accessType = com.tanmaysinghx.portalsso.application.entity.ApplicationAccessType.ALL_USERS OR r.name IN :roleNames) ORDER BY a.displayOrder ASC, a.name ASC")
     List<Application> findAccessibleApplications(@Param("roleNames") Collection<String> roleNames);
+
+    @Query("SELECT DISTINCT a FROM Application a LEFT JOIN FETCH a.roles WHERE a.enabled = true ORDER BY a.displayOrder ASC, a.name ASC")
+    List<Application> findAllEnabledWithRoles();
 }

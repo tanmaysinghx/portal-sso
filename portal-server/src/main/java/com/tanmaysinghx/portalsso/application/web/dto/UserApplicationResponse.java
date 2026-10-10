@@ -10,9 +10,11 @@ public record UserApplicationResponse(
         String appUrl,
         String iconUrl,
         String category,
-        String clientId) {
+        String clientId,
+        boolean accessible,
+        String pendingRequestStatus) {
 
-    public static UserApplicationResponse from(Application app) {
+    public static UserApplicationResponse from(Application app, boolean accessible, String pendingRequestStatus) {
         return new UserApplicationResponse(
                 app.getId(),
                 app.getName(),
@@ -20,6 +22,8 @@ public record UserApplicationResponse(
                 app.getAppUrl(),
                 app.getIconUrl(),
                 app.getCategory() == null ? "General" : app.getCategory(),
-                app.getClientId());
+                app.getClientId(),
+                accessible,
+                pendingRequestStatus);
     }
 }

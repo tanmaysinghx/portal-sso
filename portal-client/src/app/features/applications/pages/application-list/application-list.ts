@@ -77,6 +77,7 @@ export class ApplicationList {
     emailScope: [true],
     confidential: [false],
     externalAuthEnabled: [false],
+    externalRegistrationEnabled: [true],
     accessType: ['ALL_USERS' as ApplicationAccessType],
     enabled: [true],
     displayOrder: [0],
@@ -186,6 +187,7 @@ export class ApplicationList {
       emailScope: true,
       confidential: false,
       externalAuthEnabled: false,
+      externalRegistrationEnabled: true,
       accessType: 'ALL_USERS',
       enabled: true,
       displayOrder: 0,
@@ -212,6 +214,7 @@ export class ApplicationList {
       emailScope: true,
       confidential: false,
       externalAuthEnabled: app.externalAuthEnabled,
+      externalRegistrationEnabled: app.externalRegistrationEnabled ?? true,
       accessType: app.accessType,
       enabled: app.enabled,
       displayOrder: app.displayOrder,
@@ -348,6 +351,7 @@ export class ApplicationList {
         enabled: val.enabled,
         displayOrder: val.displayOrder,
         externalAuthEnabled: val.externalAuthEnabled,
+        externalRegistrationEnabled: val.externalRegistrationEnabled,
       };
 
       const createApplication$ = createLinkedClient
@@ -414,6 +418,7 @@ export class ApplicationList {
         enabled: val.enabled,
         displayOrder: val.displayOrder,
         externalAuthEnabled: val.externalAuthEnabled,
+        externalRegistrationEnabled: val.externalRegistrationEnabled,
       };
 
       this.applicationService.updateApplication(current.id, payload).subscribe({

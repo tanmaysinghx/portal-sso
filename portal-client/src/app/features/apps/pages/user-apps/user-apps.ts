@@ -5,6 +5,9 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { BrandingService } from '../../../../core/services/branding.service';
 import { UserApplication } from '../../../applications/models/application.model';
 import { ApplicationService } from '../../../applications/services/application.service';
+import { AccessRequestService } from '../../../access-requests/services/access-request.service';
+import { AdminSummary } from '../../../access-requests/models/access-request.model';
+import { SnackbarService } from '../../../../core/services/snackbar.service';
 
 @Component({
   selector: 'app-user-apps',
@@ -17,6 +20,8 @@ export class UserApps {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   readonly brandingService = inject(BrandingService);
+  private readonly accessRequestService = inject(AccessRequestService);
+  private readonly snackbar = inject(SnackbarService);
 
   readonly currentUser = this.authService.currentUser;
   readonly isAdmin = this.authService.isAdmin;
@@ -27,6 +32,12 @@ export class UserApps {
 
   readonly searchQuery = signal('');
   readonly selectedCategory = signal('all');
+
+  readonly showRequestModal = signal<UserApplication | null>(null);
+  readonly admins = signal<AdminSummary[]>([]);
+  readonly selectedAdminId = signal<string>('');
+  readonly requestReason = signal('');
+  readonly submittingRequest = signal(false);
 
   readonly userInitial = computed(() => {
     const email = this.currentUser()?.email ?? '';
@@ -66,6 +77,9 @@ export class UserApps {
       return matchesSearch && matchesCat;
     });
   });
+
+  readonly accessibleApps = computed(() => this.filteredApplications().filter(a => a.accessible));
+  readonly requestableApps = computed(() => this.filteredApplications().filter(a => !a.accessible));
 
   constructor() {
     this.loadApplications();
@@ -114,6 +128,56 @@ export class UserApps {
   logout(): void {
     this.authService.logout().subscribe(() => {
       this.router.navigateByUrl('/sign-in');
+    });
+  }
+
+  openRequestModal(app: UserApplication): void {
+    this.showRequestModal.set(app);
+    if (this.admins().length === 0) {
+      this.accessRequestService.getAdmins().subscribe({
+        next: (admins) => {
+          this.admins.set(admins);
+          if (admins.length > 0) {
+            this.selectedAdminId.set(admins[0].id);
+          }
+        },
+        error: () => this.snackbar.error('Failed to load administrators')
+      });
+    } else {
+      if (this.admins().length > 0) {
+        this.selectedAdminId.set(this.admins()[0].id);
+      }
+    }
+  }
+
+  closeRequestModal(): void {
+    this.showRequestModal.set(null);
+    this.requestReason.set('');
+    this.selectedAdminId.set(this.admins().length > 0 ? this.admins()[0].id : '');
+  }
+
+  submitAccessRequest(): void {
+    const app = this.showRequestModal();
+    if (!app || !this.selectedAdminId()) return;
+
+    this.submittingRequest.set(true);
+    this.accessRequestService.submitRequest({
+      applicationId: app.id,
+      reviewerId: this.selectedAdminId(),
+      reason: this.requestReason() || undefined
+    }).subscribe({
+      next: () => {
+        this.applications.update(apps => 
+          apps.map(a => a.id === app.id ? { ...a, pendingRequestStatus: 'PENDING' } : a)
+        );
+        this.snackbar.success(`Access request sent for ${app.name}`);
+        this.closeRequestModal();
+        this.submittingRequest.set(false);
+      },
+      error: () => {
+        this.snackbar.error(`Failed to request access for ${app.name}`);
+        this.submittingRequest.set(false);
+      }
     });
   }
 }

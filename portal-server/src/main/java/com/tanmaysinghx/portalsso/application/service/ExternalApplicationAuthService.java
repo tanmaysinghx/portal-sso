@@ -56,6 +56,11 @@ public class ExternalApplicationAuthService {
     @Transactional
     public ExternalAppAuthResponse register(UUID applicationId, String apiKey, RegisterRequest request) {
         Application app = requireExternalAuthApp(applicationId, apiKey);
+        if (!app.isExternalRegistrationEnabled()) {
+            throw new BusinessRuleViolationException(
+                    ErrorCode.EXTERNAL_REGISTRATION_DISABLED,
+                    "Registration is not enabled for this application.");
+        }
         passwordPolicy.validate(request.password());
 
         String email = normalizeEmail(request.email());

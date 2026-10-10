@@ -44,6 +44,10 @@ public enum ErrorCode {
     INVALID_CLIENT_METADATA("PRTL-3003", "Provided OAuth client metadata is invalid.", HttpStatus.BAD_REQUEST),
     CLIENT_SECRET_UNAVAILABLE("PRTL-3004", "A client secret is shown only once, when the client is created.", HttpStatus.BAD_REQUEST),
     APPLICATION_NOT_FOUND("PRTL-3005", "The requested application was not found.", HttpStatus.NOT_FOUND),
+    ACCESS_REQUEST_DUPLICATE("PRTL-3006", "A pending access request already exists", HttpStatus.CONFLICT),
+    ACCESS_REQUEST_NOT_FOUND("PRTL-3007", "Access request not found", HttpStatus.NOT_FOUND),
+    ACCESS_ALREADY_GRANTED("PRTL-3008", "User already has access to this application", HttpStatus.BAD_REQUEST),
+    EXTERNAL_REGISTRATION_DISABLED("PRTL-3009", "External registration is not enabled for this application", HttpStatus.FORBIDDEN),
 
     // =========================================================================
     // 4000 Series: Validation, Formatting & Generic Client Errors

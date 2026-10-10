@@ -52,6 +52,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'access-requests',
+        loadComponent: () =>
+          import('./features/access-requests/pages/access-request-list/access-request-list').then(
+            (m) => m.AccessRequestList,
+          ),
+      },
+      {
         path: 'clients',
         loadComponent: () =>
           import('./features/clients/pages/client-list/client-list').then((m) => m.ClientList),
