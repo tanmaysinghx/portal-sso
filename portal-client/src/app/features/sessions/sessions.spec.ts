@@ -83,12 +83,13 @@ describe('Sessions Component', () => {
     expect(others[0].device.displayName).toBe('Safari on iPhone');
   });
 
-  it('toggles session details expansion', () => {
-    expect(component.isExpanded('session-curr-123')).toBe(false);
-    component.toggleDetails('session-curr-123');
-    expect(component.isExpanded('session-curr-123')).toBe(true);
-    component.toggleDetails('session-curr-123');
-    expect(component.isExpanded('session-curr-123')).toBe(false);
+  it('opens and closes session details modal', () => {
+    const target = component.sessions()[0];
+    expect(component.detailsSession()).toBeNull();
+    component.openDetailsModal(target);
+    expect(component.detailsSession()).toBe(target);
+    component.closeDetailsModal();
+    expect(component.detailsSession()).toBeNull();
   });
 
   it('opens and closes single session revoke modal', () => {

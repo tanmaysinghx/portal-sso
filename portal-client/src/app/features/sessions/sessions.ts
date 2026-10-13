@@ -3,12 +3,13 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { SessionService } from './services/session.service';
 import { EnrichedUserSession } from './models/session.model';
 import { SnackbarService } from '../../core/services/snackbar.service';
+import { Badge } from '../../shared/components/badge/badge';
 import { getIpType, getRelativeTime, parseUserAgent } from './utils/user-agent-parser';
 
 @Component({
   selector: 'app-sessions',
   standalone: true,
-  imports: [CommonModule, DatePipe],
+  imports: [CommonModule, DatePipe, Badge],
   templateUrl: './sessions.html',
 })
 export class Sessions implements OnInit {
@@ -23,9 +24,7 @@ export class Sessions implements OnInit {
   // Modals state
   readonly sessionToRevoke = signal<EnrichedUserSession | null>(null);
   readonly confirmRevokeAllOpen = signal(false);
-
-  // Expanded details state (set of expanded session IDs)
-  readonly expandedSessions = signal<Set<string>>(new Set());
+  readonly detailsSession = signal<EnrichedUserSession | null>(null);
 
   // Copied feedback
   readonly copiedSessionId = signal<string | null>(null);
@@ -69,18 +68,12 @@ export class Sessions implements OnInit {
     });
   }
 
-  toggleDetails(sessionId: string): void {
-    const current = new Set(this.expandedSessions());
-    if (current.has(sessionId)) {
-      current.delete(sessionId);
-    } else {
-      current.add(sessionId);
-    }
-    this.expandedSessions.set(current);
+  openDetailsModal(session: EnrichedUserSession): void {
+    this.detailsSession.set(session);
   }
 
-  isExpanded(sessionId: string): boolean {
-    return this.expandedSessions().has(sessionId);
+  closeDetailsModal(): void {
+    this.detailsSession.set(null);
   }
 
   copySessionId(sessionId: string): void {
