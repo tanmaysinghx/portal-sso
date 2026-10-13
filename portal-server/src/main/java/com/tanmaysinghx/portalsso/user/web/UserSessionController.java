@@ -48,6 +48,22 @@ public class UserSessionController {
                 .toList();
     }
 
+    @DeleteMapping("/others")
+    public void revokeOtherSessions(Principal principal, HttpServletRequest request) {
+        if (principal == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        }
+
+        String currentSessionId = request.getSession(false) != null ? request.getSession(false).getId() : null;
+        Map<String, ? extends Session> userSessions = sessionRepository.findByPrincipalName(principal.getName());
+
+        for (String sessionId : userSessions.keySet()) {
+            if (currentSessionId == null || !sessionId.equals(currentSessionId)) {
+                sessionRepository.deleteById(sessionId);
+            }
+        }
+    }
+
     @DeleteMapping("/{sessionId}")
     public void revokeMySession(@PathVariable String sessionId, Principal principal) {
         if (principal == null) {

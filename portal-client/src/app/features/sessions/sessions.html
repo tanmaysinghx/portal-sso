@@ -1,75 +1,571 @@
 <div class="space-y-6">
-  <div class="flex items-center justify-between">
+  <!-- Page Header -->
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
     <div>
-      <h1 class="text-2xl font-bold tracking-tight text-ink-950">Active Sessions</h1>
-      <p class="mt-1 text-sm text-ink-500">Manage devices and browsers currently signed in to your account.</p>
+      <div class="flex items-center gap-2.5">
+        <h1 class="text-2xl font-bold tracking-tight text-ink-950">Active Sessions</h1>
+        @if (!loading() && sessions().length > 0) {
+          <span class="inline-flex items-center rounded-full bg-ink-100 px-2.5 py-0.5 text-xs font-semibold tabular-nums text-ink-700">
+            {{ sessions().length }}
+          </span>
+        }
+      </div>
+      <p class="mt-1 text-sm text-ink-500">
+        Review devices and browsers currently signed in to your Portal SSO account. Revoke any unfamiliar session immediately.
+      </p>
     </div>
-    <button
-      type="button"
-      (click)="loadSessions()"
-      class="flex items-center gap-2 rounded-lg border border-ink-200 bg-white px-3 py-1.5 text-sm font-medium text-ink-700 shadow-xs hover:bg-ink-50 hover:text-ink-900 transition"
-      [disabled]="loading()"
-    >
-      <svg class="h-4 w-4" [class.animate-spin]="loading()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-      </svg>
-      Refresh
-    </button>
+
+    <div class="flex items-center gap-2.5">
+      <button
+        type="button"
+        (click)="loadSessions()"
+        [disabled]="loading()"
+        class="inline-flex items-center gap-2 rounded-lg border border-ink-200 bg-white px-3.5 py-2 text-xs font-semibold text-ink-700 shadow-xs transition hover:bg-ink-50 hover:text-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <svg
+          class="h-4 w-4 text-ink-500 transition-transform"
+          [class.animate-spin]="loading()"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        <span>Refresh</span>
+      </button>
+
+      @if (!loading() && otherSessions().length > 0) {
+        <button
+          type="button"
+          (click)="promptRevokeAllOthers()"
+          [disabled]="revokingAllOthers()"
+          class="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50/80 px-3.5 py-2 text-xs font-semibold text-red-600 shadow-xs transition hover:bg-red-100 hover:border-red-300 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l3 3m0 0l-3 3m3-3H2.25" />
+          </svg>
+          <span>Sign Out Other Sessions ({{ otherSessions().length }})</span>
+        </button>
+      }
+    </div>
   </div>
 
-  <div class="overflow-hidden rounded-xl border border-ink-200 bg-white shadow-xs">
-    @if (loading()) {
-      <div class="flex items-center justify-center py-12">
-        <svg class="h-8 w-8 animate-spin text-brand-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
-          <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path>
+  <!-- Loading Skeletons -->
+  @if (loading()) {
+    <div class="space-y-4">
+      @for (item of [1, 2]; track item) {
+        <div class="animate-pulse rounded-2xl border border-ink-200 bg-white p-5 shadow-xs sm:p-6">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex items-center gap-4">
+              <div class="h-12 w-12 rounded-xl bg-ink-200"></div>
+              <div class="space-y-2">
+                <div class="h-4 w-48 rounded bg-ink-200"></div>
+                <div class="h-3 w-32 rounded bg-ink-100"></div>
+              </div>
+            </div>
+            <div class="h-8 w-20 rounded-lg bg-ink-100"></div>
+          </div>
+          <div class="mt-5 grid grid-cols-1 gap-3 border-t border-ink-100 pt-4 sm:grid-cols-3">
+            <div class="h-10 rounded-lg bg-ink-50"></div>
+            <div class="h-10 rounded-lg bg-ink-50"></div>
+            <div class="h-10 rounded-lg bg-ink-50"></div>
+          </div>
+        </div>
+      }
+    </div>
+  } @else if (sessions().length === 0) {
+    <!-- Empty State -->
+    <div class="rounded-2xl border border-ink-200 bg-white px-6 py-16 text-center shadow-xs">
+      <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-ink-100 text-ink-500">
+        <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+          <rect width="18" height="12" x="3" y="4" rx="2" ry="2"/>
+          <line x1="2" x2="22" y1="20" y2="20"/>
         </svg>
       </div>
-    } @else {
-      <ul class="divide-y divide-ink-100">
-        @for (session of sessions(); track session.id) {
-          <li class="p-5 flex items-center justify-between gap-6 transition hover:bg-ink-50/50">
-            <div class="flex items-start gap-4">
-              <div class="mt-1 shrink-0 rounded-full p-2" [class]="session.currentSession ? 'bg-emerald-100 text-emerald-600' : 'bg-ink-100 text-ink-500'">
-                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
-                </svg>
-              </div>
-              <div>
-                <div class="flex items-center gap-2">
-                  <span class="font-medium text-ink-900">{{ session.userAgent }}</span>
-                  @if (session.currentSession) {
-                    <span class="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">This Device</span>
-                  }
-                </div>
-                <div class="mt-1 flex items-center gap-4 text-xs text-ink-500">
-                  <span class="flex items-center gap-1">
-                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+      <h3 class="mt-4 text-base font-semibold text-ink-900">No active sessions found</h3>
+      <p class="mx-auto mt-1 max-w-sm text-sm text-ink-500">
+        You do not currently have any active session records stored in the session registry.
+      </p>
+    </div>
+  } @else {
+    <div class="space-y-6">
+      <!-- Current Session Section (Hero Card) -->
+      @if (currentSession(); as curr) {
+        <div>
+          <div class="mb-2.5 flex items-center gap-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-ink-500">Current Session</span>
+          </div>
+
+          <div class="relative overflow-hidden rounded-2xl border border-emerald-300/80 bg-gradient-to-b from-emerald-50/30 via-white to-white p-5 shadow-xs ring-1 ring-emerald-500/10 transition hover:shadow-sm sm:p-6">
+            <!-- Top Status Row -->
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div class="flex items-start gap-4">
+                <!-- Device Icon with glow & active indicator -->
+                <div class="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-100/90 text-emerald-700 ring-1 ring-emerald-600/20 shadow-2xs">
+                  @if (curr.device.deviceType === 'mobile') {
+                    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/>
+                      <line x1="12" x2="12.01" y1="18" y2="18"/>
                     </svg>
-                    {{ session.ipAddress }}
+                  } @else if (curr.device.deviceType === 'tablet') {
+                    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect width="16" height="20" x="4" y="2" rx="2" ry="2"/>
+                      <line x1="12" x2="12.01" y1="18" y2="18"/>
+                    </svg>
+                  } @else {
+                    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect width="20" height="14" x="2" y="3" rx="2"/>
+                      <line x1="8" x2="16" y1="21" y2="21"/>
+                      <line x1="12" x2="12" y1="17" y2="21"/>
+                    </svg>
+                  }
+
+                  <!-- Live Active Dot Badge -->
+                  <span class="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-white ring-2 ring-white">
+                    <span class="absolute inline-flex h-2.5 w-2.5 animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
                   </span>
-                  <span>•</span>
-                  <span>Created: {{ session.creationTime | date:'medium' }}</span>
-                  <span>•</span>
-                  <span>Last Active: {{ session.lastAccessedTime | date:'medium' }}</span>
+                </div>
+
+                <div class="min-w-0">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <h2 class="text-base font-bold text-ink-950 sm:text-lg">
+                      {{ curr.device.displayName }}
+                    </h2>
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-100/90 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 ring-1 ring-inset ring-emerald-600/20">
+                      <span class="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
+                      This Device
+                    </span>
+                    <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                      Active Now
+                    </span>
+                  </div>
+
+                  <p class="mt-1 text-xs text-ink-500 sm:text-sm">
+                    {{ curr.device.browser }} @if(curr.device.browserVersion){ v{{ curr.device.browserVersion }} } on {{ curr.device.os }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Sign out current session action -->
+              <button
+                type="button"
+                (click)="promptRevoke(curr)"
+                class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-ink-200 bg-white px-3.5 py-2 text-xs font-semibold text-ink-700 shadow-2xs transition hover:border-red-300 hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+              >
+                <svg class="h-3.5 w-3.5 text-ink-400 group-hover:text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l3 3m0 0l-3 3m3-3H2.25" />
+                </svg>
+                <span>Sign Out</span>
+              </button>
+            </div>
+
+            <!-- Metadata Tiles Grid -->
+            <div class="mt-5 grid grid-cols-1 gap-2.5 border-t border-emerald-100/70 pt-4 sm:grid-cols-3">
+              <!-- IP Address -->
+              <div class="flex items-center gap-3 rounded-xl border border-ink-200/60 bg-white/80 p-3 shadow-2xs">
+                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-ink-100 text-ink-600">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+                    <path d="M2 12h20"/>
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-[11px] font-medium text-ink-400">IP Address</p>
+                  <div class="flex items-center gap-1.5">
+                    <p class="truncate font-mono text-xs font-semibold text-ink-900" [title]="curr.ipAddress">
+                      {{ curr.ipAddress }}
+                    </p>
+                    @if (curr.ipType) {
+                      <span class="rounded bg-ink-100 px-1.5 py-0.2 text-[9px] font-semibold text-ink-600">{{ curr.ipType }}</span>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <!-- Signed In -->
+              <div class="flex items-center gap-3 rounded-xl border border-ink-200/60 bg-white/80 p-3 shadow-2xs">
+                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-ink-100 text-ink-600">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+                    <line x1="16" x2="16" y1="2" y2="6"/>
+                    <line x1="8" x2="8" y1="2" y2="6"/>
+                    <line x1="3" x2="21" y1="10" y2="10"/>
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-[11px] font-medium text-ink-400">First Signed In</p>
+                  <p class="truncate text-xs font-semibold text-ink-900" [title]="curr.creationTime">
+                    {{ curr.creationTime | date:'mediumDate' }}, {{ curr.creationTime | date:'shortTime' }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Last Active -->
+              <div class="flex items-center gap-3 rounded-xl border border-ink-200/60 bg-white/80 p-3 shadow-2xs">
+                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-[11px] font-medium text-ink-400">Last Activity</p>
+                  <div class="flex items-center gap-1.5">
+                    <span class="inline-block h-2 w-2 rounded-full bg-emerald-500"></span>
+                    <p class="truncate text-xs font-semibold text-emerald-800" [title]="curr.lastAccessedTime">
+                      Active right now
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-            
-            <button
-              type="button"
-              (click)="revokeSession(session.id, session.currentSession)"
-              class="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-100 hover:text-red-700"
-            >
-              {{ session.currentSession ? 'Sign Out' : 'Revoke' }}
-            </button>
-          </li>
-        }
-        @if (sessions().length === 0) {
-          <div class="p-8 text-center text-sm text-ink-500">No active sessions found.</div>
-        }
-      </ul>
-    }
-  </div>
+
+            <!-- Technical details toggle -->
+            <div class="mt-3.5 pt-2">
+              <button
+                type="button"
+                (click)="toggleDetails(curr.id)"
+                class="inline-flex items-center gap-1.5 text-xs font-medium text-ink-500 transition hover:text-ink-800"
+              >
+                <svg
+                  class="h-3.5 w-3.5 transition-transform"
+                  [class.rotate-180]="isExpanded(curr.id)"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+                <span>{{ isExpanded(curr.id) ? 'Hide details' : 'Device details & Session ID' }}</span>
+              </button>
+
+              @if (isExpanded(curr.id)) {
+                <div class="mt-2.5 rounded-xl border border-ink-200/80 bg-ink-50/70 p-3.5 text-xs">
+                  <div class="flex flex-col gap-2.5">
+                    <div>
+                      <div class="flex items-center justify-between">
+                        <span class="font-semibold text-ink-700">Session ID</span>
+                        <button
+                          type="button"
+                          (click)="copySessionId(curr.id)"
+                          class="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-semibold text-ink-600 transition hover:bg-ink-200"
+                        >
+                          @if (copiedSessionId() === curr.id) {
+                            <svg class="h-3 w-3 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                              <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            <span class="text-emerald-700">Copied</span>
+                          } @else {
+                            <svg class="h-3 w-3 text-ink-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                              <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
+                              <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+                            </svg>
+                            <span>Copy ID</span>
+                          }
+                        </button>
+                      </div>
+                      <code class="mt-1 block font-mono text-[11px] text-ink-600 select-all">{{ curr.id }}</code>
+                    </div>
+
+                    <div class="border-t border-ink-200/60 pt-2">
+                      <span class="font-semibold text-ink-700">User Agent</span>
+                      <p class="mt-1 rounded-md bg-white p-2 font-mono text-[11px] text-ink-600 break-all select-all border border-ink-200/50">
+                        {{ curr.userAgent }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Other Active Sessions Section -->
+      @if (otherSessions().length > 0) {
+        <div>
+          <div class="mb-3 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-ink-500">Other Active Devices</span>
+              <span class="inline-flex items-center rounded-full bg-ink-100 px-2 py-0.5 text-[11px] font-semibold text-ink-600">
+                {{ otherSessions().length }}
+              </span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            @for (session of otherSessions(); track session.id) {
+              <div class="flex flex-col justify-between rounded-2xl border border-ink-200 bg-white p-5 shadow-xs transition hover:border-ink-300 hover:shadow-sm sm:p-6">
+                <div>
+                  <!-- Header row -->
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="flex items-start gap-3.5">
+                      <!-- Device Icon -->
+                      <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-ink-100 text-ink-600 ring-1 ring-ink-900/5 shadow-2xs">
+                        @if (session.device.deviceType === 'mobile') {
+                          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/>
+                            <line x1="12" x2="12.01" y1="18" y2="18"/>
+                          </svg>
+                        } @else if (session.device.deviceType === 'tablet') {
+                          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect width="16" height="20" x="4" y="2" rx="2" ry="2"/>
+                            <line x1="12" x2="12.01" y1="18" y2="18"/>
+                          </svg>
+                        } @else {
+                          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect width="20" height="14" x="2" y="3" rx="2"/>
+                            <line x1="8" x2="16" y1="21" y2="21"/>
+                            <line x1="12" x2="12" y1="17" y2="21"/>
+                          </svg>
+                        }
+                      </div>
+
+                      <div class="min-w-0">
+                        <h3 class="truncate text-sm font-bold text-ink-950 sm:text-base">
+                          {{ session.device.displayName }}
+                        </h3>
+                        <p class="mt-0.5 truncate text-xs text-ink-500">
+                          {{ session.device.browser }} @if(session.device.browserVersion){ v{{ session.device.browserVersion }} } on {{ session.device.os }}
+                        </p>
+                      </div>
+                    </div>
+
+                    <!-- Revoke button -->
+                    <button
+                      type="button"
+                      (click)="promptRevoke(session)"
+                      [disabled]="revokingId() === session.id"
+                      class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-red-200/80 bg-red-50/60 px-3 py-1.5 text-xs font-semibold text-red-600 shadow-2xs transition hover:border-red-300 hover:bg-red-100 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      @if (revokingId() === session.id) {
+                        <svg class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+                          <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path>
+                        </svg>
+                        <span>Revoking…</span>
+                      } @else {
+                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
+                        <span>Revoke</span>
+                      }
+                    </button>
+                  </div>
+
+                  <!-- Details row -->
+                  <div class="mt-4 space-y-2 border-t border-ink-100 pt-3 text-xs">
+                    <div class="flex items-center justify-between text-ink-600">
+                      <span class="flex items-center gap-1.5 text-ink-500">
+                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <circle cx="12" cy="12" r="10"/>
+                          <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+                          <path d="M2 12h20"/>
+                        </svg>
+                        IP Address
+                      </span>
+                      <div class="flex items-center gap-1.5">
+                        <span class="font-mono font-medium text-ink-800">{{ session.ipAddress }}</span>
+                        @if (session.ipType) {
+                          <span class="rounded bg-ink-100 px-1.5 py-0.2 text-[9px] font-semibold text-ink-600">{{ session.ipType }}</span>
+                        }
+                      </div>
+                    </div>
+
+                    <div class="flex items-center justify-between text-ink-600">
+                      <span class="flex items-center gap-1.5 text-ink-500">
+                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <circle cx="12" cy="12" r="10"/>
+                          <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        Last Active
+                      </span>
+                      <span class="font-medium text-ink-800" [title]="session.lastAccessedTime | date:'medium'">
+                        {{ session.relativeLastActive }}
+                      </span>
+                    </div>
+
+                    <div class="flex items-center justify-between text-ink-600">
+                      <span class="flex items-center gap-1.5 text-ink-500">
+                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+                          <line x1="16" x2="16" y1="2" y2="6"/>
+                          <line x1="8" x2="8" y1="2" y2="6"/>
+                          <line x1="3" x2="21" y1="10" y2="10"/>
+                        </svg>
+                        First Signed In
+                      </span>
+                      <span class="text-ink-700">
+                        {{ session.creationTime | date:'mediumDate' }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Technical details toggle -->
+                <div class="mt-3 border-t border-ink-100/60 pt-2">
+                  <button
+                    type="button"
+                    (click)="toggleDetails(session.id)"
+                    class="inline-flex items-center gap-1 text-[11px] font-medium text-ink-400 transition hover:text-ink-700"
+                  >
+                    <svg
+                      class="h-3 w-3 transition-transform"
+                      [class.rotate-180]="isExpanded(session.id)"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                    <span>{{ isExpanded(session.id) ? 'Hide details' : 'Device details & Session ID' }}</span>
+                  </button>
+
+                  @if (isExpanded(session.id)) {
+                    <div class="mt-2 rounded-lg border border-ink-200/70 bg-ink-50/60 p-2.5 text-[11px]">
+                      <div class="flex items-center justify-between">
+                        <span class="font-semibold text-ink-600">Session ID</span>
+                        <button
+                          type="button"
+                          (click)="copySessionId(session.id)"
+                          class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-ink-600 hover:bg-ink-200"
+                        >
+                          @if (copiedSessionId() === session.id) {
+                            <span class="text-emerald-700 font-semibold">Copied</span>
+                          } @else {
+                            <span>Copy ID</span>
+                          }
+                        </button>
+                      </div>
+                      <code class="mt-0.5 block font-mono text-[10px] text-ink-500 select-all">{{ session.id }}</code>
+
+                      <div class="mt-2 border-t border-ink-200/50 pt-1.5">
+                        <span class="font-semibold text-ink-600">User Agent</span>
+                        <p class="mt-0.5 rounded bg-white p-1.5 font-mono text-[10px] text-ink-600 break-all select-all border border-ink-200/50">
+                          {{ session.userAgent }}
+                        </p>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
 </div>
+
+<!-- Revoke Confirmation Modal -->
+@if (sessionToRevoke(); as target) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4 sm:p-6" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-ink-950/60 backdrop-blur-xs transition-opacity" (click)="closeRevokeModal()"></div>
+
+    <div class="relative z-10 w-full max-w-md rounded-2xl border border-ink-200 bg-white p-6 shadow-2xl transition-all">
+      <div class="flex items-start gap-4">
+        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600 ring-1 ring-inset ring-red-600/15">
+          <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+        </div>
+
+        <div class="min-w-0">
+          <h3 class="text-base font-bold text-ink-950">
+            {{ target.isCurrent ? 'Sign out of this session?' : 'Revoke session?' }}
+          </h3>
+          <p class="mt-1.5 text-xs text-ink-600 leading-relaxed">
+            @if (target.isCurrent) {
+              This is your <strong>current session</strong>. Revoking it will log you out of Portal SSO immediately and return you to the sign-in screen.
+            } @else {
+              This will revoke access for <strong>{{ target.device.displayName }}</strong> ({{ target.ipAddress }}). Anyone currently browsing with this session will be logged out immediately.
+            }
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-6 flex items-center justify-end gap-2.5">
+        <button
+          type="button"
+          (click)="closeRevokeModal()"
+          class="rounded-lg border border-ink-200 bg-white px-4 py-2 text-xs font-semibold text-ink-700 shadow-2xs hover:bg-ink-50 hover:text-ink-900 transition"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          (click)="confirmRevoke()"
+          [disabled]="revokingId() === target.id"
+          class="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-red-700 transition disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          @if (revokingId() === target.id) {
+            <svg class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+              <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path>
+            </svg>
+            <span>Revoking…</span>
+          } @else {
+            <span>{{ target.isCurrent ? 'Sign Out Now' : 'Revoke Session' }}</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Revoke All Other Sessions Confirmation Modal -->
+@if (confirmRevokeAllOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4 sm:p-6" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-ink-950/60 backdrop-blur-xs transition-opacity" (click)="closeRevokeAllModal()"></div>
+
+    <div class="relative z-10 w-full max-w-md rounded-2xl border border-ink-200 bg-white p-6 shadow-2xl transition-all">
+      <div class="flex items-start gap-4">
+        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600 ring-1 ring-inset ring-red-600/15">
+          <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l3 3m0 0l-3 3m3-3H2.25" />
+          </svg>
+        </div>
+
+        <div class="min-w-0">
+          <h3 class="text-base font-bold text-ink-950">
+            Sign out of all other devices?
+          </h3>
+          <p class="mt-1.5 text-xs text-ink-600 leading-relaxed">
+            This will immediately sign out all <strong>{{ otherSessions().length }} other active session(s)</strong> across your other devices and browsers. Your <strong>current device</strong> will stay signed in.
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-6 flex items-center justify-end gap-2.5">
+        <button
+          type="button"
+          (click)="closeRevokeAllModal()"
+          class="rounded-lg border border-ink-200 bg-white px-4 py-2 text-xs font-semibold text-ink-700 shadow-2xs hover:bg-ink-50 hover:text-ink-900 transition"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          (click)="confirmRevokeAllOthers()"
+          [disabled]="revokingAllOthers()"
+          class="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-red-700 transition disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          @if (revokingAllOthers()) {
+            <svg class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+              <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path>
+            </svg>
+            <span>Revoking All…</span>
+          } @else {
+            <span>Sign Out Other Devices</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

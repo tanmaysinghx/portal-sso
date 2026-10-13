@@ -17,6 +17,11 @@ export class SessionService {
     return this.http.delete<void>(`/api/user/sessions/${sessionId}`);
   }
 
+  /** Revoke all other active sessions for the currently logged-in user */
+  revokeOtherSessions(): Observable<void> {
+    return this.http.delete<void>('/api/user/sessions/others');
+  }
+
   /** [ADMIN ONLY] Get active sessions for a specific user */
   getUserSessions(userId: string): Observable<UserSession[]> {
     return this.http.get<UserSession[]>(`/api/admin/users/${userId}/sessions`);

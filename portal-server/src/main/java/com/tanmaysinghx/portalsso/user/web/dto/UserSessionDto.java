@@ -1,5 +1,6 @@
 package com.tanmaysinghx.portalsso.user.web.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
 
 public record UserSessionDto(
@@ -8,5 +9,10 @@ public record UserSessionDto(
         Instant lastAccessedTime,
         String ipAddress,
         String userAgent,
-        boolean isCurrent) {
+        @JsonProperty("isCurrent") boolean isCurrent) {
+
+    @JsonProperty("currentSession")
+    public boolean currentSession() {
+        return isCurrent;
+    }
 }
