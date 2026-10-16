@@ -1,82 +1,145 @@
 <div class="animate-fade-in-up">
-  <div class="mb-7 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+  <!-- Header with title & actions -->
+  <div class="mb-7 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
     <div>
-      <h1 class="text-[22px] font-semibold tracking-tight text-slate-950">Access Requests</h1>
-      <p class="mt-1 text-sm text-slate-500">
-        Review and manage user requests for application access.
+      <h1 class="text-[22px] font-semibold tracking-tight text-ink-900">Access Requests</h1>
+      <p class="mt-1 text-sm text-ink-500">
+        Review, approve, and manage user requests for organizational application access.
       </p>
     </div>
+
+    <div class="flex items-center gap-2.5">
+      <button
+        type="button"
+        (click)="loadRequests()"
+        [disabled]="loading()"
+        class="flex items-center gap-1.5 rounded-lg border border-ink-300 bg-white px-3.5 py-2 text-[13px] font-medium text-ink-700 shadow-sm transition hover:bg-ink-50 focus:outline-none focus:ring-2 focus:ring-brand-500/25 disabled:opacity-60"
+      >
+        <svg
+          class="h-4 w-4 text-ink-500"
+          [class.animate-spin]="loading()"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        <span class="whitespace-nowrap">Refresh</span>
+      </button>
+    </div>
   </div>
 
-  <div class="mb-6 flex gap-4">
-    <div class="flex items-center rounded-lg border border-slate-200 bg-white p-4 shadow-sm min-w-32">
-      <div>
-        <div class="text-xs font-medium text-slate-500 uppercase tracking-wide">Pending</div>
-        <div class="mt-1 text-2xl font-semibold text-slate-900">{{ stats().pending }}</div>
+  <!-- Metric summary cards -->
+  <div class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+    <div class="rounded-xl border border-ink-200/80 bg-white p-4 shadow-sm">
+      <p class="text-xs font-medium uppercase tracking-wider text-ink-500">Total Requests</p>
+      <p class="mt-1 text-2xl font-bold tracking-tight text-ink-900">{{ stats().total }}</p>
+    </div>
+    <div class="rounded-xl border border-ink-200/80 bg-white p-4 shadow-sm">
+      <p class="text-xs font-medium uppercase tracking-wider text-ink-500">Pending Review</p>
+      <div class="mt-1 flex items-baseline gap-2">
+        <span class="text-2xl font-bold tracking-tight text-brand-600">{{ stats().pending }}</span>
       </div>
     </div>
-    <div class="flex items-center rounded-lg border border-slate-200 bg-white p-4 shadow-sm min-w-32">
-      <div>
-        <div class="text-xs font-medium text-slate-500 uppercase tracking-wide">Approved</div>
-        <div class="mt-1 text-2xl font-semibold text-slate-900">{{ stats().approved }}</div>
-      </div>
+    <div class="rounded-xl border border-ink-200/80 bg-white p-4 shadow-sm">
+      <p class="text-xs font-medium uppercase tracking-wider text-ink-500">Approved</p>
+      <p class="mt-1 text-2xl font-bold tracking-tight text-emerald-600">{{ stats().approved }}</p>
     </div>
-    <div class="flex items-center rounded-lg border border-slate-200 bg-white p-4 shadow-sm min-w-32">
-      <div>
-        <div class="text-xs font-medium text-slate-500 uppercase tracking-wide">Denied</div>
-        <div class="mt-1 text-2xl font-semibold text-slate-900">{{ stats().denied }}</div>
-      </div>
+    <div class="rounded-xl border border-ink-200/80 bg-white p-4 shadow-sm">
+      <p class="text-xs font-medium uppercase tracking-wider text-ink-500">Denied</p>
+      <p class="mt-1 text-2xl font-bold tracking-tight text-red-600">{{ stats().denied }}</p>
     </div>
   </div>
 
-  <div class="mb-4 flex flex-wrap items-center gap-2">
-    <button type="button" (click)="statusFilter.set('PENDING')"
-      [class]="statusFilter() === 'PENDING' ? 'bg-slate-900 text-white' : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200'"
-      class="rounded-full border px-4 py-1.5 text-sm font-medium transition-colors shadow-sm">
-      Pending
-      @if (stats().pending > 0) {
-        <span class="ml-1.5 rounded-full bg-slate-100 px-1.5 py-0.5 text-xs text-slate-900" [class.bg-white]="statusFilter() === 'PENDING'" [class.text-slate-900]="statusFilter() === 'PENDING'">{{ stats().pending }}</span>
-      }
-    </button>
-    <button type="button" (click)="statusFilter.set('APPROVED')"
-      [class]="statusFilter() === 'APPROVED' ? 'bg-slate-900 text-white' : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200'"
-      class="rounded-full border px-4 py-1.5 text-sm font-medium transition-colors shadow-sm">
-      Approved
-    </button>
-    <button type="button" (click)="statusFilter.set('DENIED')"
-      [class]="statusFilter() === 'DENIED' ? 'bg-slate-900 text-white' : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200'"
-      class="rounded-full border px-4 py-1.5 text-sm font-medium transition-colors shadow-sm">
-      Denied
-    </button>
-    <button type="button" (click)="statusFilter.set('ALL')"
-      [class]="statusFilter() === 'ALL' ? 'bg-slate-900 text-white' : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200'"
-      class="rounded-full border px-4 py-1.5 text-sm font-medium transition-colors shadow-sm">
-      All
-    </button>
+  <!-- Filters row -->
+  <div class="mb-4 flex flex-wrap items-center gap-2.5">
+    <div class="relative">
+      <svg
+        class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        stroke-width="1.75"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+      </svg>
+      <input
+        type="search"
+        [value]="searchQuery()"
+        (input)="searchQuery.set($any($event.target).value)"
+        placeholder="Search user, app, or reason"
+        aria-label="Search access requests"
+        class="w-72 rounded-lg border border-ink-300 py-2 pl-9 pr-3 text-[13px] text-ink-900 shadow-sm placeholder:text-ink-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+      />
+    </div>
+
+    <select
+      [value]="statusFilter()"
+      (change)="statusFilter.set($any($event.target).value)"
+      aria-label="Filter by status"
+      class="rounded-lg border border-ink-300 bg-white py-2 pl-3 pr-8 text-[13px] text-ink-900 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+    >
+      <option value="ALL">All statuses</option>
+      <option value="PENDING">Pending ({{ stats().pending }})</option>
+      <option value="APPROVED">Approved ({{ stats().approved }})</option>
+      <option value="DENIED">Denied ({{ stats().denied }})</option>
+    </select>
+
+    @if (hasActiveFilters()) {
+      <button
+        type="button"
+        (click)="clearFilters()"
+        class="rounded-lg px-2.5 py-2 text-[13px] font-medium text-ink-500 transition hover:text-ink-900"
+      >
+        Clear
+      </button>
+    }
+
+    <span class="ml-auto text-[12px] tabular-nums text-ink-500">{{ rangeLabel() }}</span>
   </div>
 
-  <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+  <!-- Table Card Container -->
+  <div class="overflow-hidden rounded-xl border border-ink-200 bg-white shadow-sm">
     @if (loading()) {
-      <div class="divide-y divide-slate-100">
+      <div class="divide-y divide-ink-100">
         @for (row of [1, 2, 3, 4, 5]; track row) {
           <div class="flex items-center gap-4 px-5 py-4">
-            <div class="h-4 w-32 animate-pulse rounded bg-slate-200"></div>
-            <div class="h-4 w-44 animate-pulse rounded bg-slate-100"></div>
-            <div class="ml-auto h-5 w-24 animate-pulse rounded-full bg-slate-100"></div>
+            <div class="h-8 w-8 animate-pulse rounded-full bg-ink-200"></div>
+            <div class="h-4 w-40 animate-pulse rounded bg-ink-200"></div>
+            <div class="h-4 w-32 animate-pulse rounded bg-ink-100"></div>
+            <div class="ml-auto h-5 w-20 animate-pulse rounded-full bg-ink-100"></div>
           </div>
         }
       </div>
     } @else if (filteredRequests().length === 0) {
-      <div class="px-6 py-16 text-center">
-        <p class="text-sm text-slate-500">
-          No requests match this filter.
+      <div class="flex flex-col items-center px-6 py-16 text-center">
+        <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600 ring-1 ring-inset ring-brand-500/15">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+        <h3 class="mt-4 text-sm font-semibold text-ink-900">
+          {{ hasActiveFilters() ? 'No requests match these filters' : 'No access requests yet' }}
+        </h3>
+        <p class="mt-1 max-w-sm text-[13px] text-ink-500">
+          {{ hasActiveFilters() ? 'Try adjusting your search query or status filter.' : 'When users request access to protected applications, they will appear here for administrator review.' }}
         </p>
+        @if (hasActiveFilters()) {
+          <button
+            type="button"
+            (click)="clearFilters()"
+            class="mt-4 rounded-lg border border-ink-300 bg-white px-3 py-1.5 text-[12px] font-medium text-ink-700 transition hover:bg-ink-50"
+          >
+            Clear filters
+          </button>
+        }
       </div>
     } @else {
       <div class="overflow-x-auto">
         <table class="w-full text-left">
-          <thead class="border-b border-slate-200 bg-slate-50/60">
-            <tr class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+          <thead class="border-b border-ink-200 bg-ink-50/60">
+            <tr class="text-[11px] font-semibold uppercase tracking-wider text-ink-500">
               <th class="px-5 py-3">Requester</th>
               <th class="px-5 py-3">Application</th>
               <th class="px-5 py-3">Reason</th>
@@ -85,66 +148,91 @@
               <th class="px-5 py-3 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-100">
+          <tbody class="divide-y divide-ink-100">
             @for (req of filteredRequests(); track req.id) {
-              <tr class="transition-colors hover:bg-slate-50/60">
+              <tr class="transition-colors hover:bg-ink-50/60">
+                <!-- Requester column -->
                 <td class="px-5 py-3.5">
                   <div class="flex items-center gap-3">
-                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-xs font-medium text-slate-600">
+                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink-100 text-[11px] font-semibold text-ink-700 border border-ink-200">
                       {{ getInitials(req.user.firstName, req.user.lastName) }}
                     </div>
-                    <div class="flex flex-col">
-                      <span class="text-sm font-medium text-slate-900">{{ req.user.firstName }} {{ req.user.lastName }}</span>
-                      <span class="text-xs text-slate-500">{{ req.user.email }}</span>
+                    <div class="min-w-0">
+                      <div class="truncate text-[13px] font-medium text-ink-900">
+                        {{ req.user.firstName || '' }} {{ req.user.lastName || '' }}
+                      </div>
+                      <div class="truncate text-[11px] text-ink-500">{{ req.user.email }}</div>
                     </div>
                   </div>
                 </td>
+
+                <!-- Application column -->
                 <td class="px-5 py-3.5">
-                  <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-2.5">
                     @if (req.application.iconUrl) {
-                      <img [src]="req.application.iconUrl" alt="" class="h-6 w-6 rounded object-contain" />
+                      <img
+                        [src]="req.application.iconUrl"
+                        alt=""
+                        class="h-7 w-7 shrink-0 rounded-lg border border-ink-200 bg-white object-contain p-0.5"
+                      />
                     } @else {
-                      <div class="flex h-6 w-6 items-center justify-center rounded bg-slate-100 text-[10px] font-bold text-slate-500">
-                        {{ req.application.name.charAt(0) }}
+                      <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-ink-200 bg-ink-100 text-[11px] font-bold text-ink-600">
+                        {{ req.application.name.charAt(0).toUpperCase() }}
                       </div>
                     }
-                    <span class="text-sm font-medium text-slate-900">{{ req.application.name }}</span>
+                    <div class="min-w-0">
+                      <div class="truncate text-[13px] font-medium text-ink-900">{{ req.application.name }}</div>
+                      <div class="truncate text-[11px] text-ink-500">{{ req.application.category || 'General' }}</div>
+                    </div>
                   </div>
                 </td>
+
+                <!-- Reason column -->
                 <td class="px-5 py-3.5 max-w-xs">
-                  <div class="truncate text-sm text-slate-600" [title]="req.reason || ''">
+                  <div class="truncate text-[13px] text-ink-600" [title]="req.reason || 'No reason provided'">
                     {{ req.reason || '—' }}
                   </div>
                 </td>
-                <td class="whitespace-nowrap px-5 py-3.5 text-sm tabular-nums text-slate-600">
-                  {{ formatDate(req.createdAt) }}
+
+                <!-- Submitted column -->
+                <td class="whitespace-nowrap px-5 py-3.5 text-[13px] tabular-nums text-ink-600">
+                  {{ req.createdAt | date:'MMM d, y, HH:mm' }}
                 </td>
-                <td class="px-5 py-3.5">
-                  @if (req.status === 'PENDING') {
-                    <span class="inline-flex items-center rounded-full bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">Pending</span>
-                  } @else if (req.status === 'APPROVED') {
-                    <span class="inline-flex items-center rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">Approved</span>
-                  } @else if (req.status === 'DENIED') {
-                    <span class="inline-flex items-center rounded-full bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">Denied</span>
-                  }
+
+                <!-- Status column -->
+                <td class="px-5 py-3.5 whitespace-nowrap">
+                  <app-badge [tone]="getStatusTone(req.status)">
+                    {{ req.status === 'PENDING' ? 'Pending' : req.status === 'APPROVED' ? 'Approved' : 'Denied' }}
+                  </app-badge>
                 </td>
-                <td class="px-5 py-3.5 text-right align-middle">
-                  @if (req.status === 'PENDING') {
-                    <div class="flex items-center justify-end gap-2">
-                      <button type="button" (click)="openReviewModal(req, 'approve')" class="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300">
+
+                <!-- Actions column -->
+                <td class="px-5 py-3.5 text-right whitespace-nowrap">
+                  <div class="flex items-center justify-end gap-1.5">
+                    @if (req.status === 'PENDING') {
+                      <button
+                        type="button"
+                        (click)="openReviewModal(req, 'approve')"
+                        class="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-medium text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100"
+                      >
                         Approve
                       </button>
-                      <button type="button" (click)="openReviewModal(req, 'deny')" class="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-100 hover:border-red-300">
+                      <button
+                        type="button"
+                        (click)="openReviewModal(req, 'deny')"
+                        class="rounded-md border border-red-200 bg-red-50 px-2 py-1 text-[11px] font-medium text-red-600 transition hover:border-red-300 hover:bg-red-100"
+                      >
                         Deny
                       </button>
-                    </div>
-                  } @else {
-                    @if (req.reviewerComment) {
-                      <span class="text-xs text-slate-500 italic" [title]="req.reviewerComment">See comment</span>
-                    } @else {
-                      <span class="text-xs text-slate-400">—</span>
                     }
-                  }
+                    <button
+                      type="button"
+                      (click)="openDetailsModal(req)"
+                      class="rounded-md border border-ink-300 px-2 py-1 text-[11px] font-medium text-ink-600 transition hover:border-ink-400 hover:text-ink-900"
+                    >
+                      Details
+                    </button>
+                  </div>
                 </td>
               </tr>
             }
@@ -155,32 +243,185 @@
   </div>
 </div>
 
-@if (reviewModal()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" (click)="closeReviewModal()">
-    <div class="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl" (click)="$event.stopPropagation()">
-      <h3 class="text-lg font-semibold text-slate-950">
-        {{ reviewModal()!.action === 'approve' ? 'Approve Access Request' : 'Deny Access Request' }}
-      </h3>
-      <p class="mt-1 text-sm text-slate-500">
-        {{ reviewModal()!.action === 'approve' ? 'Grant' : 'Deny' }} access to <span class="font-medium text-slate-700">{{ reviewModal()!.request.application.name }}</span> for <span class="font-medium text-slate-700">{{ reviewModal()!.request.user.firstName }} {{ reviewModal()!.request.user.lastName }}</span>.
-      </p>
-      
-      <div class="mt-5 space-y-4">
-        <div>
-          <label class="mb-1.5 block text-sm font-medium text-slate-700">Comment (optional)</label>
-          <textarea [value]="reviewComment()" (input)="reviewComment.set($any($event.target).value)"
-            rows="3" maxlength="500" placeholder="Add a note for the user..."
-            class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"></textarea>
+<!-- Review Modal (Approve / Deny) -->
+@if (reviewModal(); as modal) {
+  <div class="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto p-4 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="review-modal-title">
+    <div class="fixed inset-0 bg-ink-950/70 backdrop-blur-sm" (click)="closeReviewModal()" aria-hidden="true"></div>
+
+    <div class="animate-fade-in-up relative z-10 w-full max-w-md rounded-2xl border border-ink-200 bg-white p-6 shadow-2xl">
+      <div class="flex items-start gap-3">
+        <div
+          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset"
+          [class]="modal.action === 'approve' ? 'bg-emerald-50 text-emerald-600 ring-emerald-600/20' : 'bg-red-50 text-red-600 ring-red-600/15'"
+        >
+          @if (modal.action === 'approve') {
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+          } @else {
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          }
+        </div>
+
+        <div class="min-w-0">
+          <h3 id="review-modal-title" class="text-base font-semibold text-ink-900">
+            {{ modal.action === 'approve' ? 'Approve Access Request' : 'Deny Access Request' }}
+          </h3>
+          <p class="mt-1.5 text-[13px] leading-relaxed text-ink-600">
+            {{ modal.action === 'approve' ? 'Grant' : 'Deny' }} access to
+            <strong class="text-ink-900">{{ modal.request.application.name }}</strong>
+            for
+            <strong class="text-ink-900">{{ modal.request.user.firstName }} {{ modal.request.user.lastName }}</strong>
+            ({{ modal.request.user.email }}).
+          </p>
         </div>
       </div>
-      
-      <div class="mt-6 flex items-center justify-end gap-3">
-        <button type="button" (click)="closeReviewModal()" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</button>
-        <button type="button" (click)="submitReview()" [disabled]="submitting()"
-          [class]="reviewModal()!.action === 'approve' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white'"
-          class="rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-50">
-          {{ reviewModal()!.action === 'approve' ? 'Approve Access' : 'Deny Access' }}
+
+      <div class="mt-5 space-y-3">
+        <div>
+          <label for="reviewComment" class="mb-1.5 block text-[13px] font-medium text-ink-800">
+            Note / Comment (optional)
+          </label>
+          <textarea
+            id="reviewComment"
+            [value]="reviewComment()"
+            (input)="reviewComment.set($any($event.target).value)"
+            rows="3"
+            maxlength="500"
+            placeholder="Add an optional explanation or feedback for the requester..."
+            class="block w-full resize-y rounded-lg border border-ink-300 px-3.5 py-2.5 text-[13px] text-ink-900 shadow-sm placeholder:text-ink-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="mt-6 flex items-center justify-end gap-2.5">
+        <button
+          type="button"
+          (click)="closeReviewModal()"
+          class="rounded-lg px-4 py-2 text-[13px] font-medium text-ink-600 transition hover:text-ink-900"
+        >
+          Cancel
         </button>
+        <button
+          type="button"
+          (click)="submitReview()"
+          [disabled]="submitting()"
+          [class]="modal.action === 'approve' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'"
+          class="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {{ submitting() ? 'Submitting…' : (modal.action === 'approve' ? 'Approve Access' : 'Deny Access') }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Details Modal -->
+@if (detailsModal(); as req) {
+  <div class="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto p-4 sm:p-6" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-ink-950/70 backdrop-blur-sm" (click)="closeDetailsModal()" aria-hidden="true"></div>
+
+    <div class="animate-fade-in-up relative z-10 w-full max-w-lg rounded-2xl border border-ink-200 bg-white shadow-2xl">
+      <div class="flex items-start justify-between gap-4 border-b border-ink-100 px-6 py-4">
+        <div>
+          <h3 class="text-base font-semibold text-ink-900">Access Request Details</h3>
+          <p class="mt-0.5 text-xs text-ink-500">{{ req.application.name }} &bull; {{ req.user.email }}</p>
+        </div>
+        <button
+          type="button"
+          (click)="closeDetailsModal()"
+          class="rounded-lg p-1.5 text-ink-400 transition hover:bg-ink-100 hover:text-ink-600"
+          aria-label="Close"
+        >
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="space-y-4 px-6 py-5 text-[13px]">
+        <div>
+          <span class="block text-xs font-medium uppercase tracking-wider text-ink-400">Status</span>
+          <div class="mt-1 flex items-center gap-2">
+            <app-badge [tone]="getStatusTone(req.status)">
+              {{ req.status === 'PENDING' ? 'Pending Review' : req.status === 'APPROVED' ? 'Approved' : 'Denied' }}
+            </app-badge>
+            @if (req.resolvedAt) {
+              <span class="text-xs text-ink-500">
+                Resolved on {{ req.resolvedAt | date:'medium' }}
+              </span>
+            }
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <span class="block text-xs font-medium uppercase tracking-wider text-ink-400">Requester</span>
+            <p class="mt-1 font-medium text-ink-900">
+              {{ req.user.firstName || '' }} {{ req.user.lastName || '' }}
+            </p>
+            <p class="text-xs text-ink-500">{{ req.user.email }}</p>
+          </div>
+          <div>
+            <span class="block text-xs font-medium uppercase tracking-wider text-ink-400">Application</span>
+            <p class="mt-1 font-medium text-ink-900">{{ req.application.name }}</p>
+            <p class="text-xs text-ink-500">{{ req.application.category || 'General' }}</p>
+          </div>
+          <div>
+            <span class="block text-xs font-medium uppercase tracking-wider text-ink-400">Submitted</span>
+            <p class="mt-1 text-ink-700">{{ req.createdAt | date:'medium' }}</p>
+          </div>
+          <div>
+            <span class="block text-xs font-medium uppercase tracking-wider text-ink-400">Assigned Reviewer</span>
+            <p class="mt-1 text-ink-700">
+              {{ req.reviewer.firstName || '' }} {{ req.reviewer.lastName || '' }} ({{ req.reviewer.email }})
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <span class="block text-xs font-medium uppercase tracking-wider text-ink-400">Reason for Request</span>
+          <p class="mt-1 rounded-lg border border-ink-200 bg-ink-50 p-3 text-[13px] text-ink-800 leading-relaxed">
+            {{ req.reason || 'No reason was provided by the requester.' }}
+          </p>
+        </div>
+
+        @if (req.reviewerComment) {
+          <div>
+            <span class="block text-xs font-medium uppercase tracking-wider text-ink-400">Reviewer Note / Feedback</span>
+            <p class="mt-1 rounded-lg border border-ink-200 bg-ink-50 p-3 text-[13px] text-ink-800 leading-relaxed italic">
+              "{{ req.reviewerComment }}"
+            </p>
+          </div>
+        }
+      </div>
+
+      <div class="flex items-center justify-end gap-2.5 border-t border-ink-100 bg-ink-50/60 px-6 py-4">
+        <button
+          type="button"
+          (click)="closeDetailsModal()"
+          class="rounded-lg px-4 py-2.5 text-[13px] font-medium text-ink-600 transition hover:text-ink-900"
+        >
+          Close
+        </button>
+        @if (req.status === 'PENDING') {
+          <button
+            type="button"
+            (click)="closeDetailsModal(); openReviewModal(req, 'deny')"
+            class="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-[13px] font-semibold text-red-600 shadow-sm transition hover:bg-red-100"
+          >
+            Deny
+          </button>
+          <button
+            type="button"
+            (click)="closeDetailsModal(); openReviewModal(req, 'approve')"
+            class="rounded-lg bg-emerald-600 px-4 py-2.5 text-[13px] font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+          >
+            Approve Access
+          </button>
+        }
       </div>
     </div>
   </div>
