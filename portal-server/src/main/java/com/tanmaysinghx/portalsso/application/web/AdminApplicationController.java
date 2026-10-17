@@ -75,6 +75,12 @@ public class AdminApplicationController {
         return onboardingService.credentials(id);
     }
 
+    /** New secret for the linked confidential client, shown once; the old one stops working. */
+    @PostMapping("/{id}/credentials/client-secret")
+    public ApplicationCredentialsResponse regenerateClientSecret(@PathVariable UUID id) {
+        return onboardingService.regenerateClientSecret(id);
+    }
+
     @PutMapping("/{id}")
     public ApplicationResponse update(@PathVariable UUID id, @Valid @RequestBody UpdateApplicationRequest request) {
         return applicationService.update(id, request);

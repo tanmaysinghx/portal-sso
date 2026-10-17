@@ -81,6 +81,14 @@ public class AdminOAuthClientController {
         return registrationService.create(request);
     }
 
+    /** Issues a new secret for a confidential client, returned once. The old secret stops working. */
+    @PostMapping("/{id}/secret")
+    public OAuthClientCreatedResponse regenerateSecret(@PathVariable UUID id) {
+        OAuthClient client = oAuthClientRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.CLIENT_NOT_FOUND, "No OAuth client found with ID: " + id));
+        return registrationService.regenerateSecret(client.getClientId());
+    }
+
     /**
      * Edits a client in place. Written through the JPA entity rather than
      * {@link RegisteredClientRepository#save} because that path rebuilds the whole record from a

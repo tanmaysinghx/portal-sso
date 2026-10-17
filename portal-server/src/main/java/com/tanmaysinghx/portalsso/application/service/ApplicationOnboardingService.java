@@ -96,6 +96,18 @@ public class ApplicationOnboardingService {
         return credentialsFor(applicationId, null, null);
     }
 
+    /** Regenerates the linked confidential client's secret; the bundle carries the new value once. */
+    @Transactional
+    public ApplicationCredentialsResponse regenerateClientSecret(UUID applicationId) {
+        Application app = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.APPLICATION_NOT_FOUND, "Application not found: " + applicationId));
+        if (app.getClientId() == null) {
+            throw new BusinessRuleViolationException(ErrorCode.CLIENT_NOT_FOUND, "This application is not linked to an OAuth client.");
+        }
+        String secret = clientRegistrationService.regenerateSecret(app.getClientId()).clientSecret();
+        return credentialsFor(applicationId, secret, null);
+    }
+
     private ApplicationCredentialsResponse credentialsFor(UUID applicationId, String clientSecret, String apiKey) {
         Application app = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.APPLICATION_NOT_FOUND, "Application not found: " + applicationId));

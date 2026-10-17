@@ -115,6 +115,42 @@ class ApplicationOnboardingIntegrationTest {
     }
 
     @Test
+    void lostClientSecretCanBeRegeneratedAndTheOldOneIsReplaced() throws Exception {
+        String body = onboard(app("Billing", null, false), new OnboardApplicationRequest.NewOAuthClient("billing", null, null, true, null))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        JsonNode created = jsonMapper.readTree(body);
+        String appId = created.get("application").get("id").asString();
+        String originalSecret = created.get("credentials").get("oidc").get("clientSecret").asString();
+        String originalHash = oAuthClientRepository.findByClientId("billing").orElseThrow().getClientSecret();
+
+        String rotated = mockMvc.perform(post("/api/admin/applications/" + appId + "/credentials/client-secret")
+                        .with(user("admin@portalsso.local").roles("ADMIN"))
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.oidc.clientSecret").isString())
+                .andReturn().getResponse().getContentAsString();
+
+        String newSecret = jsonMapper.readTree(rotated).get("oidc").get("clientSecret").asString();
+        assertThat(newSecret).isNotEqualTo(originalSecret);
+        assertThat(oAuthClientRepository.findByClientId("billing").orElseThrow().getClientSecret())
+                .isNotEqualTo(originalHash)
+                .isNotEqualTo(newSecret);
+    }
+
+    @Test
+    void publicClientsHaveNoSecretToRegenerate() throws Exception {
+        String body = onboard(app("Spa", null, false), new OnboardApplicationRequest.NewOAuthClient("spa", null, null, false, null))
+                .andReturn().getResponse().getContentAsString();
+        String appId = jsonMapper.readTree(body).get("application").get("id").asString();
+
+        mockMvc.perform(post("/api/admin/applications/" + appId + "/credentials/client-secret")
+                        .with(user("admin@portalsso.local").roles("ADMIN"))
+                        .with(csrf()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void duplicateClientIdIsRejectedAndNoApplicationIsCreated() throws Exception {
         onboard(app("First", null, false), new OnboardApplicationRequest.NewOAuthClient("shared-id", null, null, null, null))
                 .andExpect(status().isCreated());

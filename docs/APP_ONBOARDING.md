@@ -53,7 +53,7 @@ The **Keys & setup** modal then opens. It is the single place every credential i
 |---|---|---|
 | Issuer URL, discovery URL | Always | From `ISSUER_URL`. This is the `iss` in every token. |
 | Client ID, type, redirect URIs, scopes | Always | The real registered values, read from the client. |
-| **Client secret** | **Once**, at creation | Stored as a hash. If it is lost, create a new client and re-link it. |
+| **Client secret** | **Once**, at creation or regeneration | Stored as a hash, so it can't be shown again. If lost, click **Regenerate secret** to get a new one. |
 | **External API key** | **Once**, at creation or rotation | Stored as a hash. The `apiKeyPrefix` identifies the active key later. |
 | Login/register endpoints | Always | Absolute URLs. |
 | `.env` block | Always | Contains real secret values only while they are on screen; placeholders otherwise. |
@@ -94,6 +94,8 @@ All endpoints require `ROLE_ADMIN` and a CSRF token.
 | `POST /api/admin/applications/onboard` | App + optional new client + optional API key, atomically | Yes, once |
 | `GET /api/admin/applications/{id}/credentials` | Issuer, client, redirect URIs, scopes, external endpoints | Never |
 | `POST /api/admin/applications/{id}/external-auth/api-key` | Issue or rotate the API key | Yes, once |
+| `POST /api/admin/applications/{id}/credentials/client-secret` | Regenerate the linked confidential client's secret | Yes, once |
+| `POST /api/admin/oauth-clients/{id}/secret` | Same, addressed by client UUID | Yes, once |
 | `POST /api/admin/applications` | Create app only (link an existing `clientId` or none) | No |
 | `PUT /api/admin/applications/{id}` | Update app | No |
 | `DELETE /api/admin/applications/{id}` | Delete app (client untouched) | No |
@@ -167,7 +169,7 @@ Validation:
 | `invalid_request` mentioning `code_challenge` | The app isn't sending PKCE. | PKCE S256 is mandatory for every client, including confidential ones. |
 | External API returns `403 PRTL-1002` | App disabled, external API off, or no key issued yet. | Enable it and click **Generate key**. |
 | External API returns `401 PRTL-1001` | Wrong or missing `X-Portal-App-Key`. | Rotate the key and update the app's backend env. |
-| Client secret lost | Only the hash is stored. | Create a new confidential client and re-link the app. |
+| Client secret lost | Only the hash is stored. | **Keys & setup → Regenerate secret**, then update the app's `PORTAL_CLIENT_SECRET`. The old secret stops working immediately. |
 | Keys & setup says the linked client no longer exists | The client was deleted on OAuth Clients. | Edit the app and link another client. |
 
 ---

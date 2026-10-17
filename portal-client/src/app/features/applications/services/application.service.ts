@@ -52,6 +52,11 @@ export class ApplicationService {
     return this.http.get<ApplicationCredentials>(`/api/admin/applications/${id}/credentials`);
   }
 
+  /** New secret for the linked confidential client, returned once. The old one stops working. */
+  regenerateClientSecret(id: string): Observable<ApplicationCredentials> {
+    return this.http.post<ApplicationCredentials>(`/api/admin/applications/${id}/credentials/client-secret`, {});
+  }
+
   updateApplication(id: string, request: UpdateApplicationRequest): Observable<Application> {
     return this.http.put<Application>(`/api/admin/applications/${id}`, request);
   }

@@ -7,6 +7,7 @@ import com.tanmaysinghx.portalsso.client.repository.OAuthClientRepository;
 import com.tanmaysinghx.portalsso.client.web.dto.CreateOAuthClientRequest;
 import com.tanmaysinghx.portalsso.client.web.dto.OAuthClientCreatedResponse;
 import com.tanmaysinghx.portalsso.client.web.dto.OAuthClientResponse;
+import com.tanmaysinghx.portalsso.common.error.BusinessRuleViolationException;
 import com.tanmaysinghx.portalsso.common.error.ErrorCode;
 import com.tanmaysinghx.portalsso.common.error.ResourceConflictException;
 import com.tanmaysinghx.portalsso.common.error.ResourceNotFoundException;
@@ -119,6 +120,34 @@ public class OAuthClientRegistrationService {
                 // The client TYPE is recorded, never the secret itself.
                 "redirectUris=%s, scopes=%s, confidential=%s"
                         .formatted(saved.getRedirectUris(), saved.getScopes(), confidential));
+
+        return new OAuthClientCreatedResponse(OAuthClientResponse.from(saved), rawSecret);
+    }
+
+    /**
+     * Replaces a confidential client's secret and returns the new one, once. The old secret stops
+     * working immediately (the token endpoint reads the hash on every request). There is no way to
+     * reveal the current secret: only its hash exists, so regeneration is the recovery path.
+     *
+     * <p>Existing grants are kept: refresh tokens still require client authentication, so they
+     * can only be used with the new secret anyway.
+     */
+    @Transactional
+    public OAuthClientCreatedResponse regenerateSecret(String clientId) {
+        OAuthClient client = oAuthClientRepository.findByClientId(clientId)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.CLIENT_NOT_FOUND, "No OAuth client registered with client_id: " + clientId));
+        if (!OAuthClientResponse.from(client).confidential()) {
+            throw new BusinessRuleViolationException(
+                    ErrorCode.INVALID_CLIENT_METADATA, "Public clients use PKCE only and have no secret to regenerate.");
+        }
+
+        String rawSecret = generateClientSecret();
+        client.setClientSecret(passwordEncoder.encode(rawSecret));
+        client.setClientSecretExpiresAt(null);
+        OAuthClient saved = oAuthClientRepository.save(client);
+
+        // Recorded so "who rotated the secret, and when" is answerable; the value never is.
+        auditService.record(AuditAction.CLIENT_UPDATED, saved.getId(), saved.getClientId(), "clientSecret=regenerated");
 
         return new OAuthClientCreatedResponse(OAuthClientResponse.from(saved), rawSecret);
     }

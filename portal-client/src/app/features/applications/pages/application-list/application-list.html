@@ -804,7 +804,18 @@
                     {{ copiedKey() === 'secret' ? 'Copied!' : 'Copy secret' }}
                   </button>
                 } @else {
-                  <p class="mt-1 text-xs text-ink-500">Shown only at creation. If it was lost, create a new client on the OAuth Clients page and re-link it.</p>
+                  <div class="mt-1 flex flex-wrap items-center justify-between gap-2">
+                    <span class="text-xs text-ink-600">Stored hashed — it can't be shown again, only replaced.</span>
+                    <button
+                      type="button"
+                      (click)="regenerateClientSecret()"
+                      [disabled]="regeneratingSecret() || !oidc.clientExists"
+                      class="rounded-md px-2.5 py-1 text-[11px] font-semibold shadow-xs transition disabled:opacity-60"
+                      [class]="secretArmed() ? 'bg-red-600 text-white hover:bg-red-700' : 'border border-ink-300 bg-white text-ink-700 hover:bg-ink-50'"
+                    >
+                      {{ regeneratingSecret() ? 'Generating…' : secretArmed() ? 'Confirm — old secret stops working' : 'Regenerate secret' }}
+                    </button>
+                  </div>
                 }
               </div>
             }

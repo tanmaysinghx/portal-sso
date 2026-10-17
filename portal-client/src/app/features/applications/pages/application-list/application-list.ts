@@ -80,6 +80,8 @@ export class ApplicationList {
   readonly copiedKey = signal<string | null>(null);
   readonly rotateArmed = signal(false);
   readonly rotating = signal(false);
+  readonly secretArmed = signal(false);
+  readonly regeneratingSecret = signal(false);
 
   readonly envSnippet = computed(() => {
     const view = this.credentialsView();
@@ -391,6 +393,7 @@ export class ApplicationList {
   closeCredentials(): void {
     this.credentialsView.set(null);
     this.rotateArmed.set(false);
+    this.secretArmed.set(false);
     this.copiedKey.set(null);
   }
 
@@ -468,6 +471,39 @@ export class ApplicationList {
           this.snackbarService.error(err?.error?.message ?? 'Failed to generate API key.');
         },
       });
+  }
+
+  /**
+   * Secrets are stored hashed, so a lost one cannot be shown again — it can only be replaced.
+   * First click arms, second click regenerates; apps using the old secret stop authenticating.
+   */
+  regenerateClientSecret(): void {
+    const view = this.credentialsView();
+    if (!view) return;
+    if (!this.secretArmed()) {
+      this.secretArmed.set(true);
+      return;
+    }
+
+    this.regeneratingSecret.set(true);
+    this.applicationService.regenerateClientSecret(view.app.id).subscribe({
+      next: (creds) => {
+        // Keep a freshly issued API key on screen if one is showing.
+        const apiKey = view.creds.externalAuth?.apiKey ?? null;
+        this.credentialsView.set({
+          app: view.app,
+          creds: { ...creds, externalAuth: creds.externalAuth && { ...creds.externalAuth, apiKey } },
+        });
+        this.regeneratingSecret.set(false);
+        this.secretArmed.set(false);
+        this.snackbarService.success(`New client secret issued for "${view.app.name}". Copy it now.`);
+      },
+      error: (err) => {
+        this.regeneratingSecret.set(false);
+        this.secretArmed.set(false);
+        this.snackbarService.error(err?.error?.message ?? 'Failed to regenerate client secret.');
+      },
+    });
   }
 
   copy(key: string, text: string | null | undefined): void {
