@@ -177,10 +177,20 @@ cd portal-server && ./mvnw test              # backend
 cd portal-client && npx ng test --watch=false  # frontend
 ```
 
-CI (`.github/workflows/ci.yml`) runs the backend suite (including MySQL via Testcontainers),
-builds the console, and boots the Docker image against PostgreSQL. It fails if fewer than 150
-tests ran or any class ran zero, which guards against `@Nested` + `@SpringBootTest` silently
-skipping tests.
+CI (`.github/workflows/ci.yml`) runs in six stages:
+
+| Stage | Jobs |
+|---|---|
+| 1 · Security gates | Secret scan, dependency audit (Maven + npm, blocks on fixable CRITICAL), dependency review on PRs |
+| 2 · Build & test | Backend suite incl. MySQL via Testcontainers, console unit tests + production build, SDK build with a check that the committed `dist/` is current |
+| 3 · Static analysis | CodeQL `security-extended` for Java and TypeScript |
+| 4 · Package | Docker image build, image vulnerability scan, boot against PostgreSQL |
+| 5 · Gate | `✅ All checks passed`, the single check to mark required in branch protection |
+| 6 · Release | Tagged GitHub release with jar + SHA-256 (pushes to `main`) |
+
+The backend job fails if fewer than 150 tests ran or any class ran zero, which guards against
+`@Nested` + `@SpringBootTest` silently skipping tests. Each job writes a summary (test counts,
+bundle size, image size and boot time) to the run page.
 
 ---
 
