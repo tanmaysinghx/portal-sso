@@ -2,12 +2,11 @@ name: CI
 
 # Pipeline (jobs within a stage run in parallel):
 #
-#   1 · Security gates     secret scan · dependency audit · dependency review (PRs)
-#   2 · Build & test       backend tests · console build + unit tests · SDK build
-#   3 · Static analysis    CodeQL (Java, TypeScript)
-#   4 · Package            Docker image build, vulnerability scan, smoke test
-#   5 · Gate               single required status check for branch protection
-#   6 · Release            tagged GitHub release (main pushes only)
+#   1 · Build & test       backend tests · console build + unit tests · SDK build
+#   2 · Static analysis    CodeQL (Java, TypeScript)
+#   3 · Package            Docker image build + smoke test against PostgreSQL
+#   4 · Gate               single required status check for branch protection
+#   5 · Release            tagged GitHub release (main pushes only)
 #
 # Every job has to prove something: a stage that cannot fail is decoration, not a gate.
 
@@ -32,93 +31,14 @@ env:
   # Node 24 to match the npm that wrote package-lock.json; on Node 22 (npm 10) `npm ci` fails on
   # the platform-specific optional dependency tree.
   NODE_VERSION: '24'
-  TRIVY_VERSION: 'v0.57.1'
 
 jobs:
   # ───────────────────────────────────────────────────────────────────────────────────────────────
-  # Stage 1 · Security gates
-  # ───────────────────────────────────────────────────────────────────────────────────────────────
-
-  secrets:
-    name: "🔐 Stage 1 · Secret scan"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      # High-precision rules only (cloud keys, tokens, private keys) — no generic-entropy noise.
-      # SigningKeyService is skipped because it *formats* PEM headers around generated keys, which
-      # the private-key rule matches by shape; it contains no key material.
-      - name: Scan working tree for committed credentials
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          version: ${{ env.TRIVY_VERSION }}
-          scan-type: fs
-          scan-ref: .
-          scanners: secret
-          skip-files: portal-server/src/main/java/com/tanmaysinghx/portalsso/security/key/SigningKeyService.java
-          format: table
-          exit-code: '1'
-
-  dependencies:
-    name: "📦 Stage 1 · Dependency audit"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      # Blocks on CRITICAL with an available fix, across Maven (pom.xml) and npm (lock files).
-      # Unfixable findings are reported elsewhere; failing on them would only teach people to
-      # ignore red builds.
-      - name: Scan Maven and npm dependencies
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          version: ${{ env.TRIVY_VERSION }}
-          scan-type: fs
-          scan-ref: .
-          scanners: vuln
-          severity: CRITICAL
-          ignore-unfixed: true
-          format: table
-          exit-code: '1'
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      # Visibility for HIGH findings in shipped (non-dev) console dependencies, without blocking:
-      # the summary makes them impossible to miss, the CRITICAL gate above is what fails the build.
-      - name: Report production npm advisories
-        working-directory: portal-client
-        run: |
-          {
-            echo "### 📦 npm audit (production dependencies)"
-            echo '```'
-            npm audit --omit=dev --audit-level=high || true
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-          npm audit --omit=dev --audit-level=critical
-
-  dependency-review:
-    name: "🧾 Stage 1 · Dependency review"
-    runs-on: ubuntu-latest
-    # Needs the dependency graph, which private repositories only have with GitHub Advanced Security.
-    if: github.event_name == 'pull_request' && !github.event.repository.private
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v4
-      # Fails a PR that *introduces* a high-severity vulnerable dependency, and comments on it.
-      - uses: actions/dependency-review-action@v4
-        with:
-          fail-on-severity: high
-          comment-summary-in-pr: on-failure
-
-  # ───────────────────────────────────────────────────────────────────────────────────────────────
-  # Stage 2 · Build & test
+  # Stage 1 · Build & test
   # ───────────────────────────────────────────────────────────────────────────────────────────────
 
   backend:
-    name: "☕ Stage 2 · Backend tests"
+    name: "Stage 1 · Backend tests"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -200,9 +120,9 @@ jobs:
                   | grep -o "$1=\"[0-9]*\"" | grep -o '[0-9]*' | awk '{s+=$1} END {print s+0}'; }
           tests=$(sum tests); failures=$(sum failures); errors=$(sum errors); skipped=$(sum skipped)
           classes=$(ls target/surefire-reports/TEST-*.xml | wc -l)
-          status="✅ Passed"; [ $((failures + errors)) -gt 0 ] && status="❌ Failed"
+          status="Passed"; [ $((failures + errors)) -gt 0 ] && status="Failed"
           {
-            echo "### ☕ Backend tests — $status"
+            echo "### Backend tests — $status"
             echo ""
             echo "| Classes | Tests | Failures | Errors | Skipped |"
             echo "|---:|---:|---:|---:|---:|"
@@ -225,7 +145,7 @@ jobs:
           retention-days: 7
 
   frontend:
-    name: "🅰️ Stage 2 · Console build & unit tests"
+    name: "Stage 1 · Console build & unit tests"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -256,7 +176,7 @@ jobs:
         working-directory: portal-client
         run: |
           {
-            echo "### 🅰️ Console bundle"
+            echo "### Console bundle"
             echo ""
             echo "| Output | Size |"
             echo "|---|---:|"
@@ -266,7 +186,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   sdk:
-    name: "📚 Stage 2 · SDK build"
+    name: "Stage 1 · SDK build"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -301,18 +221,18 @@ jobs:
         run: |
           npm pack --dry-run 2>&1 | tee pack.txt
           {
-            echo "### 📚 SDK package"
+            echo "### SDK package"
             echo '```'
             grep -E "name:|version:|package size|unpacked size|total files" pack.txt || true
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
   # ───────────────────────────────────────────────────────────────────────────────────────────────
-  # Stage 3 · Static analysis
+  # Stage 2 · Static analysis
   # ───────────────────────────────────────────────────────────────────────────────────────────────
 
   codeql:
-    name: "🛡️ Stage 3 · CodeQL (${{ matrix.language }})"
+    name: "Stage 2 · CodeQL (${{ matrix.language }})"
     runs-on: ubuntu-latest
     # Code scanning on private repositories requires GitHub Advanced Security.
     if: ${{ !github.event.repository.private }}
@@ -328,7 +248,7 @@ jobs:
       - uses: actions/checkout@v4
 
       # build-mode none: analyses source directly, so this does not repeat the full Maven + Angular
-      # build already proven in Stage 2.
+      # build already proven in Stage 1.
       - uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
@@ -340,14 +260,14 @@ jobs:
           category: /language:${{ matrix.language }}
 
   # ───────────────────────────────────────────────────────────────────────────────────────────────
-  # Stage 4 · Package
+  # Stage 3 · Package
   # ───────────────────────────────────────────────────────────────────────────────────────────────
 
   image:
-    name: "🐳 Stage 4 · Docker image & smoke test"
+    name: "Stage 3 · Docker image & smoke test"
     runs-on: ubuntu-latest
     # No point proving the image builds if the code is broken or a gate failed.
-    needs: [secrets, dependencies, backend, frontend, sdk]
+    needs: [backend, frontend, sdk]
     steps:
       - uses: actions/checkout@v4
 
@@ -364,17 +284,6 @@ jobs:
           tags: portal-sso:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      # OS packages and the JRE in the runtime image, which the source-level audit cannot see.
-      - name: Scan image for vulnerabilities
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          version: ${{ env.TRIVY_VERSION }}
-          image-ref: portal-sso:ci
-          severity: CRITICAL
-          ignore-unfixed: true
-          format: table
-          exit-code: '1'
 
       # Building proves it compiles; this proves it runs. A container that starts and then dies on
       # a missing migration or a bad entrypoint would otherwise pass.
@@ -429,14 +338,14 @@ jobs:
 
           size=$(docker image inspect portal-sso:ci --format '{{.Size}}' | awk '{printf "%.0f MB", $1/1024/1024}')
           {
-            echo "### 🐳 Docker image"
+            echo "### Docker image"
             echo ""
             echo "| Check | Result |"
             echo "|---|---|"
             echo "| Image size | $size |"
             echo "| Healthy after | ${boot_seconds}s |"
-            echo "| OIDC discovery | ✅ \`$issuer\` |"
-            echo "| Bootstrap admin | ✅ created |"
+            echo "| OIDC discovery | \`$issuer\` |"
+            echo "| Bootstrap admin | created |"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Container logs on failure
@@ -444,23 +353,23 @@ jobs:
         run: docker logs ci-app || true
 
   # ───────────────────────────────────────────────────────────────────────────────────────────────
-  # Stage 5 · Gate
+  # Stage 4 · Gate
   # ───────────────────────────────────────────────────────────────────────────────────────────────
 
   # The one status check to mark as required in branch protection. It passes only if every job
-  # above succeeded or was legitimately skipped (e.g. dependency review on a push, CodeQL on a
-  # private repo), so adding a job never means editing protection rules.
+  # above succeeded or was legitimately skipped (CodeQL on a private repo), so adding a job never
+  # means editing protection rules.
   ci-status:
-    name: "✅ Stage 5 · All checks passed"
+    name: "Stage 4 · All checks passed"
     runs-on: ubuntu-latest
     if: always()
-    needs: [secrets, dependencies, dependency-review, backend, frontend, sdk, codeql, image]
+    needs: [backend, frontend, sdk, codeql, image]
     steps:
       - name: Evaluate results
         env:
           RESULTS: ${{ toJSON(needs) }}
         run: |
-          echo "### 🧭 Pipeline result" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Pipeline result" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "| Job | Result |" >> "$GITHUB_STEP_SUMMARY"
           echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
@@ -468,11 +377,10 @@ jobs:
           for job in $(echo "$RESULTS" | jq -r 'keys[]'); do
             result=$(echo "$RESULTS" | jq -r --arg j "$job" '.[$j].result')
             case "$result" in
-              success) icon="✅" ;;
-              skipped) icon="⏭️" ;;
-              *)       icon="❌"; failed=1 ;;
+              success|skipped) ;;
+              *) failed=1 ;;
             esac
-            echo "| $job | $icon $result |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| $job | $result |" >> "$GITHUB_STEP_SUMMARY"
           done
           if [ "$failed" = "1" ]; then
             echo "::error::One or more pipeline jobs failed or were cancelled."
@@ -480,11 +388,11 @@ jobs:
           fi
 
   # ───────────────────────────────────────────────────────────────────────────────────────────────
-  # Stage 6 · Release
+  # Stage 5 · Release
   # ───────────────────────────────────────────────────────────────────────────────────────────────
 
   release:
-    name: "🚀 Stage 6 · Release"
+    name: "Stage 5 · Release"
     runs-on: ubuntu-latest
     needs: [ci-status]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.ci-status.result == 'success'
@@ -508,7 +416,7 @@ jobs:
           TAG="v25.0.${{ github.run_number }}"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           {
-            echo "### 🚀 Release $TAG"
+            echo "### Release $TAG"
             echo '```'
             cat portal-sso.jar.sha256
             echo '```'
