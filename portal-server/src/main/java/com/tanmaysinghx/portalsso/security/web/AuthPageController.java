@@ -30,11 +30,13 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.savedrequest.SavedRequest;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
  * Serves the server-rendered screens an <em>end user</em> meets during an authentication flow:
@@ -224,6 +226,86 @@ public class AuthPageController {
         return clientRepository.findByClientId(values[0]);
     }
 
+    /**
+     * Standard auto-closing popup callback relay for OAuth 2.1 authorization code grant.
+     * Posts the authorization code and state back to window.opener, enabling single-click
+     * popup login without requiring the client application to host its own callback page.
+     */
+    @GetMapping(value = "/oauth2/popup-callback", produces = MediaType.TEXT_HTML_VALUE)
+    @ResponseBody
+    public String popupCallback() {
+        return """
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1">
+              <title>Authenticating...</title>
+              <style>
+                body {
+                  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  height: 100vh;
+                  margin: 0;
+                  background: #0f172a;
+                  color: #f8fafc;
+                }
+                .loader { text-align: center; }
+                .spinner {
+                  width: 36px;
+                  height: 36px;
+                  border: 3px solid rgba(255,255,255,0.15);
+                  border-top-color: #6366f1;
+                  border-radius: 50%;
+                  animation: spin 0.8s linear infinite;
+                  margin: 0 auto 16px;
+                }
+                @keyframes spin { to { transform: rotate(360deg); } }
+              </style>
+            </head>
+            <body>
+              <div class="loader">
+                <div class="spinner"></div>
+                <p>Completing authentication...</p>
+              </div>
+              <script>
+                (function() {
+                  try {
+                    var params = new URLSearchParams(window.location.search);
+                    var code = params.get('code');
+                    var state = params.get('state');
+                    var error = params.get('error');
+                    var errorDescription = params.get('error_description');
+
+                    var message = {
+                      type: 'PORTAL_SSO_POPUP_CALLBACK',
+                      code: code,
+                      state: state,
+                      error: error,
+                      errorDescription: errorDescription
+                    };
+
+                    if (window.opener) {
+                      window.opener.postMessage(message, '*');
+                      setTimeout(function() {
+                        window.close();
+                      }, 100);
+                    } else {
+                      document.body.innerHTML = '<p style="text-align:center;padding:2rem;">Authentication completed. You can safely close this window.</p>';
+                    }
+                  } catch (e) {
+                    console.error('Popup callback error:', e);
+                  }
+                })();
+              </script>
+            </body>
+            </html>
+            """;
+    }
+
     /** @param approved whether the user granted this scope on a previous visit. */
     public record ScopeView(String scope, String description, boolean approved) {}
 }
+

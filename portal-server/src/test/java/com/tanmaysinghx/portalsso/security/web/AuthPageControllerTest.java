@@ -106,4 +106,15 @@ class AuthPageControllerTest {
                 // openid is implicit in an OIDC request and cannot meaningfully be declined.
                 .andExpect(model().attribute("scopes", org.hamcrest.Matchers.hasSize(2)));
     }
+
+    @Test
+    void popupCallbackReturnsRelayHtml() throws Exception {
+        mockMvc.perform(get("/oauth2/popup-callback")
+                        .param("code", "sample-auth-code")
+                        .param("state", "sample-state"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(org.springframework.http.MediaType.TEXT_HTML))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("PORTAL_SSO_POPUP_CALLBACK")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("window.opener.postMessage")));
+    }
 }

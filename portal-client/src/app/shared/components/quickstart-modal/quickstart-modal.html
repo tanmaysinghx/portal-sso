@@ -35,6 +35,23 @@
       <div class="mt-4 flex flex-wrap gap-1.5 border-b border-ink-100 pb-3">
         <button
           type="button"
+          (click)="activeStack.set('popup')"
+          [class.bg-brand-600]="activeStack() === 'popup'"
+          [class.text-white]="activeStack() === 'popup'"
+          [class.bg-brand-50]="activeStack() !== 'popup'"
+          [class.text-brand-700]="activeStack() !== 'popup'"
+          [class.ring-1]="activeStack() !== 'popup'"
+          [class.ring-brand-200]="activeStack() !== 'popup'"
+          class="rounded-full px-3.5 py-1.5 text-xs font-bold transition hover:opacity-95 flex items-center gap-1.5 shadow-xs"
+        >
+          <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <span>Popup Login</span>
+          <span class="rounded bg-white/25 px-1.5 py-0.2 text-[9px] font-bold">Zero Setup</span>
+        </button>
+        <button
+          type="button"
           (click)="activeStack.set('react')"
           [class.bg-ink-900]="activeStack() === 'react'"
           [class.text-white]="activeStack() === 'react'"
@@ -122,6 +139,7 @@
             <span class="h-2.5 w-2.5 rounded-full bg-emerald-500/80"></span>
             <span class="ml-2 font-mono text-[11px] text-ink-400">
               @switch (activeStack()) {
+                @case ('popup') { index.html &bull; portal-sso.js (Popup SDK) }
                 @case ('react') { auth.ts &bull; oidc-client-ts }
                 @case ('angular') { app.config.ts &bull; angular-auth-oidc-client }
                 @case ('spring') { application.yml &bull; spring-security }

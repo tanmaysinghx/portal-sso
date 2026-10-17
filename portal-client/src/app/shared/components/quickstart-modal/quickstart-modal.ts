@@ -1,6 +1,6 @@
 import { Component, computed, input, output, signal } from '@angular/core';
 
-export type TechStack = 'react' | 'angular' | 'spring' | 'jsp' | 'nodejs' | 'python' | 'go';
+export type TechStack = 'popup' | 'react' | 'angular' | 'spring' | 'jsp' | 'nodejs' | 'python' | 'go';
 
 @Component({
   selector: 'app-quickstart-modal',
@@ -14,7 +14,7 @@ export class QuickstartModal {
   readonly appUrl = input('http://localhost:3000');
   readonly dismiss = output<void>();
 
-  readonly activeStack = signal<TechStack>('react');
+  readonly activeStack = signal<TechStack>('popup');
   readonly copied = signal(false);
 
   readonly issuerUri = computed(() => {
@@ -45,6 +45,38 @@ export class QuickstartModal {
     const redirect = this.redirectUri();
 
     switch (stack) {
+      case 'popup':
+        return `<!-- 1. Include Portal SSO lightweight SDK in your HTML (or bundle into React / Angular / Vue / JSP): -->
+<script src="${issuer}/portal-sso.js"></script>
+
+<!-- 2. Trigger login popup from any button: -->
+<button onclick="handleLogin()">Sign in with Portal SSO</button>
+
+<script>
+  const sso = new PortalSSO({
+    portalUrl: '${issuer}',
+    clientId: '${client}'
+    // redirectUri defaults automatically to: ${issuer}/oauth2/popup-callback
+  });
+
+  async function handleLogin() {
+    try {
+      // Opens popup login window (OAuth 2.1 + PKCE), resolves on success
+      const { user, accessToken, idToken } = await sso.loginWithPopup();
+      console.log('Logged in user:', user.email, user.name);
+      alert('Welcome, ' + user.name + ' (' + user.email + ')');
+    } catch (err) {
+      console.error('Sign-in cancelled or failed:', err);
+    }
+  }
+
+  // Check if user is already signed in on page load:
+  const currentUser = sso.getCurrentUser();
+  if (currentUser) {
+    console.log('Already logged in:', currentUser);
+  }
+</script>`;
+
       case 'react':
         return `// 1. Install OIDC Client:
 // npm install oidc-client-ts
