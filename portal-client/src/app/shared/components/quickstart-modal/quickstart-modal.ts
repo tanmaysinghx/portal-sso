@@ -39,6 +39,119 @@ export class QuickstartModal {
     });
   }
 
+  downloadAgentPrompt(): void {
+    const issuer = this.issuerUri();
+    const client = this.clientId() || 'portal-client-id';
+    const appName = this.appName();
+    const appUrl = this.appUrl();
+    const redirect = `${issuer}/oauth2/popup-callback`;
+
+    const content = `# Portal SSO Integration Instructions for ${appName}
+
+> Give this file directly to an AI agent (Cursor, Claude Code, GitHub Copilot, ChatGPT, or Antigravity):
+> **"Integrate Portal SSO authentication into this repository following the instructions below."**
+
+---
+
+## 1. Credentials & Configuration
+
+- **Portal URL**: \`${issuer}\`
+- **Client ID**: \`${client}\`
+- **Popup Callback URI**: \`${redirect}\`
+- **Application URL**: \`${appUrl}\`
+- **Default Scopes**: \`openid profile email\`
+
+### Environment Variables (\`.env\`)
+\`\`\`env
+PORTAL_URL=${issuer}
+PORTAL_CLIENT_ID=${client}
+PORTAL_REDIRECT_URI=${redirect}
+PORTAL_SCOPES=openid profile email
+\`\`\`
+
+---
+
+## 2. Package Installation
+
+Install the official client SDK:
+
+\`\`\`bash
+# Official NPM registry:
+npm install @tanmaysinghx/portal-sso
+
+# Or direct from GitHub repository:
+npm install github:tanmaysinghx/portal-sso#path:packages/portal-sso
+\`\`\`
+
+---
+
+## 3. Implementation Code
+
+### Option A: Drop-in UI Button (Any Framework / HTML)
+In your entry file (\`main.ts\` or \`index.tsx\`):
+\`\`\`ts
+import '@tanmaysinghx/portal-sso';
+\`\`\`
+
+In your template:
+\`\`\`html
+<portal-login-button
+  portal-url="${issuer}"
+  client-id="${client}"
+  theme="dark">
+</portal-login-button>
+
+<script>
+  document.querySelector('portal-login-button').addEventListener('login-success', (e) => {
+    const { user, session } = e.detail;
+    console.log('Logged in user:', user.name, user.email);
+  });
+</script>
+\`\`\`
+
+### Option B: React / Next.js
+\`\`\`tsx
+import { PortalSSO } from '@tanmaysinghx/portal-sso';
+
+export const sso = new PortalSSO({
+  portalUrl: '${issuer}',
+  clientId: '${client}',
+});
+
+// Inside your login component:
+async function handleLogin() {
+  const { user, accessToken } = await sso.loginWithPopup();
+  console.log('Signed in:', user.name, user.email);
+}
+\`\`\`
+
+### Option C: Angular (Standalone & Signals)
+\`\`\`typescript
+import { PortalSSO } from '@tanmaysinghx/portal-sso';
+
+const sso = new PortalSSO({
+  portalUrl: '${issuer}',
+  clientId: '${client}',
+});
+
+async function login() {
+  const session = await sso.loginWithPopup();
+  console.log('User:', session.user);
+}
+\`\`\`
+`;
+
+    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `PORTAL_SSO_${appName.toUpperCase().replace(/[^A-Z0-9]/g, '_')}_INSTRUCTIONS.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   getSnippet(stack: TechStack): string {
     const issuer = this.issuerUri();
     const client = this.clientId() || 'portal-client-id';

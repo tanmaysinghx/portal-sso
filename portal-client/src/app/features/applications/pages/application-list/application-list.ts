@@ -31,6 +31,7 @@ export interface CreatedAppSummary {
   redirectUris?: string[];
   scopes?: string[];
   envSnippet: string;
+  isNew?: boolean;
 }
 
 const CATEGORY_PRESETS = ['General', 'Productivity', 'Engineering', 'Operations', 'Finance', 'Communication'];
@@ -157,6 +158,262 @@ export class ApplicationList {
     this.selectedQuickstartApp.set(null);
   }
 
+  openAppCredentials(app: Application): void {
+    const issuerUrl = typeof window !== 'undefined' ? window.location.origin : 'https://portal.tanmaysinghx.com';
+    const envLines = [
+      `# Portal SSO Configuration for ${app.name}`,
+      `PORTAL_URL=${issuerUrl}`,
+    ];
+    if (app.clientId) {
+      envLines.push(`PORTAL_CLIENT_ID=${app.clientId}`);
+      envLines.push(`PORTAL_REDIRECT_URI=${issuerUrl}/oauth2/popup-callback`);
+      envLines.push(`PORTAL_SCOPES=openid profile email`);
+    }
+    if (app.externalAuthEnabled) {
+      if (app.externalAuthApiKeyPrefix) {
+        envLines.push(`PORTAL_API_KEY=${app.externalAuthApiKeyPrefix}...`);
+      } else {
+        envLines.push(`# PORTAL_API_KEY=(generate key below)`);
+      }
+    }
+
+    this.createdAppSummary.set({
+      appName: app.name,
+      appUrl: app.appUrl,
+      clientId: app.clientId || undefined,
+      externalApiKey: app.externalAuthApiKeyPrefix ? `${app.externalAuthApiKeyPrefix}...` : undefined,
+      headerName: 'X-Portal-App-Key',
+      issuerUrl,
+      redirectUris: app.clientId ? [`${issuerUrl}/oauth2/popup-callback`, app.appUrl] : undefined,
+      scopes: app.clientId ? ['openid', 'profile', 'email'] : undefined,
+      envSnippet: envLines.join('\n'),
+      isNew: false,
+    });
+  }
+
+  downloadAgentInstructions(app: Application): void {
+    const issuerUrl = typeof window !== 'undefined' ? window.location.origin : 'https://portal.tanmaysinghx.com';
+    const clientId = app.clientId || 'your-client-id';
+    const redirectUri = `${issuerUrl}/oauth2/popup-callback`;
+
+    const content = `# Portal SSO Integration Instructions for ${app.name}
+
+> Give this file directly to an AI agent (Cursor, Claude Code, GitHub Copilot, ChatGPT, or Antigravity):
+> **"Integrate Portal SSO authentication into this repository following the instructions below."**
+
+---
+
+## 1. Credentials & Configuration
+
+- **Portal URL**: \`${issuerUrl}\`
+- **Client ID**: \`${clientId}\`
+- **Popup Callback URI**: \`${redirectUri}\`
+- **Application URL**: \`${app.appUrl}\`
+- **Default Scopes**: \`openid profile email\`
+
+### Environment Variables (\`.env\`)
+\`\`\`env
+PORTAL_URL=${issuerUrl}
+PORTAL_CLIENT_ID=${clientId}
+PORTAL_REDIRECT_URI=${redirectUri}
+PORTAL_SCOPES=openid profile email
+\`\`\`
+
+---
+
+## 2. Package Installation
+
+Install the official client SDK:
+
+\`\`\`bash
+# Official NPM registry:
+npm install @tanmaysinghx/portal-sso
+
+# Or direct from GitHub repository:
+npm install github:tanmaysinghx/portal-sso#path:packages/portal-sso
+\`\`\`
+
+---
+
+## 3. Implementation Code
+
+### Option A: Drop-in UI Button (Any Framework / HTML)
+In your entry file (\`main.ts\` or \`index.tsx\`):
+\`\`\`ts
+import '@tanmaysinghx/portal-sso';
+\`\`\`
+
+In your template:
+\`\`\`html
+<portal-login-button
+  portal-url="${issuerUrl}"
+  client-id="${clientId}"
+  theme="dark">
+</portal-login-button>
+
+<script>
+  document.querySelector('portal-login-button').addEventListener('login-success', (e) => {
+    const { user, session } = e.detail;
+    console.log('Logged in user:', user.name, user.email);
+  });
+</script>
+\`\`\`
+
+### Option B: React / Next.js
+\`\`\`tsx
+import { PortalSSO } from '@tanmaysinghx/portal-sso';
+
+export const sso = new PortalSSO({
+  portalUrl: '${issuerUrl}',
+  clientId: '${clientId}',
+});
+
+// Inside your login component:
+async function handleLogin() {
+  const { user, accessToken } = await sso.loginWithPopup();
+  console.log('Signed in:', user.name, user.email);
+}
+\`\`\`
+
+### Option C: Angular (Standalone & Signals)
+\`\`\`typescript
+import { PortalSSO } from '@tanmaysinghx/portal-sso';
+
+const sso = new PortalSSO({
+  portalUrl: '${issuerUrl}',
+  clientId: '${clientId}',
+});
+
+async function login() {
+  const session = await sso.loginWithPopup();
+  console.log('User:', session.user);
+}
+\`\`\`
+`;
+
+    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `PORTAL_SSO_${app.name.toUpperCase().replace(/[^A-Z0-9]/g, '_')}_INSTRUCTIONS.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    this.snackbarService.success(`Downloaded AI Agent instructions for "${app.name}".`);
+  }
+
+  downloadAgentInstructionsFromSummary(): void {
+    const summary = this.createdAppSummary();
+    if (!summary) return;
+    const issuerUrl = summary.issuerUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://portal.tanmaysinghx.com');
+    const clientId = summary.clientId || 'your-client-id';
+    const redirectUri = `${issuerUrl}/oauth2/popup-callback`;
+
+    const content = `# Portal SSO Integration Instructions for ${summary.appName}
+
+> Give this file directly to an AI agent (Cursor, Claude Code, GitHub Copilot, ChatGPT, or Antigravity):
+> **"Integrate Portal SSO authentication into this repository following the instructions below."**
+
+---
+
+## 1. Credentials & Configuration
+
+- **Portal URL**: \`${issuerUrl}\`
+- **Client ID**: \`${clientId}\`
+- **Popup Callback URI**: \`${redirectUri}\`
+- **Application URL**: \`${summary.appUrl}\`
+- **Default Scopes**: \`${summary.scopes?.join(' ') || 'openid profile email'}\`
+
+### Environment Variables (\`.env\`)
+\`\`\`env
+${summary.envSnippet}
+\`\`\`
+
+---
+
+## 2. Package Installation
+
+Install the official client SDK:
+
+\`\`\`bash
+# Official NPM registry:
+npm install @tanmaysinghx/portal-sso
+
+# Or direct from GitHub repository:
+npm install github:tanmaysinghx/portal-sso#path:packages/portal-sso
+\`\`\`
+
+---
+
+## 3. Implementation Code
+
+### Option A: Drop-in UI Button (Any Framework / HTML)
+In your entry file (\`main.ts\` or \`index.tsx\`):
+\`\`\`ts
+import '@tanmaysinghx/portal-sso';
+\`\`\`
+
+In your template:
+\`\`\`html
+<portal-login-button
+  portal-url="${issuerUrl}"
+  client-id="${clientId}"
+  theme="dark">
+</portal-login-button>
+
+<script>
+  document.querySelector('portal-login-button').addEventListener('login-success', (e) => {
+    const { user, session } = e.detail;
+    console.log('Logged in user:', user.name, user.email);
+  });
+</script>
+\`\`\`
+
+### Option B: React / Next.js
+\`\`\`tsx
+import { PortalSSO } from '@tanmaysinghx/portal-sso';
+
+export const sso = new PortalSSO({
+  portalUrl: '${issuerUrl}',
+  clientId: '${clientId}',
+});
+
+// Inside your login component:
+async function handleLogin() {
+  const { user, accessToken } = await sso.loginWithPopup();
+  console.log('Signed in:', user.name, user.email);
+}
+\`\`\`
+
+### Option C: Angular (Standalone & Signals)
+\`\`\`typescript
+import { PortalSSO } from '@tanmaysinghx/portal-sso';
+
+const sso = new PortalSSO({
+  portalUrl: '${issuerUrl}',
+  clientId: '${clientId}',
+});
+
+async function login() {
+  const session = await sso.loginWithPopup();
+  console.log('User:', session.user);
+}
+\`\`\`
+`;
+
+    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `PORTAL_SSO_${summary.appName.toUpperCase().replace(/[^A-Z0-9]/g, '_')}_INSTRUCTIONS.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    this.snackbarService.success(`Downloaded AI Agent instructions for "${summary.appName}".`);
+  }
+
   readonly categoryPresets = CATEGORY_PRESETS;
 
   readonly form = this.fb.nonNullable.group({
@@ -226,6 +483,25 @@ export class ApplicationList {
   constructor() {
     this.loadApplications();
     this.loadPrerequisites();
+
+    this.form.controls.name.valueChanges.subscribe((name) => {
+      if (this.modalMode() === 'create' && this.form.controls.createOAuthClient.value) {
+        if (!this.form.controls.newClientId.dirty || !this.form.controls.newClientId.value) {
+          this.form.controls.newClientId.setValue(this.toClientId(name || ''), { emitEvent: false });
+        }
+      }
+    });
+
+    this.form.controls.appUrl.valueChanges.subscribe((url) => {
+      if (this.modalMode() === 'create' && this.form.controls.createOAuthClient.value) {
+        if (!this.form.controls.redirectUris.dirty || !this.form.controls.redirectUris.value) {
+          const trimmed = (url || '').trim();
+          if (trimmed) {
+            this.form.controls.redirectUris.setValue(`${trimmed}/auth/callback\n${trimmed}`, { emitEvent: false });
+          }
+        }
+      }
+    });
   }
 
   @HostListener('document:keydown.escape')
@@ -276,13 +552,13 @@ export class ApplicationList {
       iconUrl: '',
       category: 'General',
       clientId: '',
-      createOAuthClient: false,
+      createOAuthClient: true,
       newClientId: '',
       redirectUris: '',
       profileScope: true,
       emailScope: true,
       confidential: false,
-      externalAuthEnabled: false,
+      externalAuthEnabled: true,
       externalRegistrationEnabled: true,
       accessType: 'ALL_USERS',
       enabled: true,
@@ -435,6 +711,18 @@ export class ApplicationList {
         this.modalError.set('Enter a Client ID using letters, numbers, dots, underscores, or hyphens.');
         return;
       }
+
+      const issuerUrl = typeof window !== 'undefined' ? window.location.origin : 'https://portal.tanmaysinghx.com';
+      let parsedRedirects = this.parseRedirectUris(val.redirectUris);
+      if (parsedRedirects.length === 0 && val.appUrl) {
+        const trimmed = val.appUrl.trim();
+        parsedRedirects = [`${trimmed}/auth/callback`, trimmed];
+      }
+      const popupCallbackUri = `${issuerUrl}/oauth2/popup-callback`;
+      if (!parsedRedirects.includes(popupCallbackUri)) {
+        parsedRedirects.push(popupCallbackUri);
+      }
+
       const payload: CreateApplicationRequest = {
         name: val.name.trim(),
         description: val.description.trim() || undefined,
@@ -455,7 +743,7 @@ export class ApplicationList {
             .create({
               clientId,
               clientName: val.name.trim(),
-              redirectUris: this.parseRedirectUris(val.redirectUris),
+              redirectUris: parsedRedirects,
               scopes: [
                 'openid',
                 ...(val.profileScope ? ['profile'] : []),
@@ -478,12 +766,6 @@ export class ApplicationList {
               }),
             )
         : this.applicationService.createApplication(payload);
-
-      if (createLinkedClient && this.parseRedirectUris(val.redirectUris).length === 0) {
-        this.submitting.set(false);
-        this.modalError.set('Add at least one redirect URI for the linked OAuth client.');
-        return;
-      }
 
       createApplication$
         .pipe(
@@ -511,7 +793,6 @@ export class ApplicationList {
             this.submitting.set(false);
             this.closeModal();
 
-            const issuerUrl = typeof window !== 'undefined' ? window.location.origin : 'https://portal.tanmaysinghx.com';
             const envLines = [
               `# Portal SSO Configuration for ${created.name}`,
               `PORTAL_URL=${issuerUrl}`,
@@ -528,9 +809,8 @@ export class ApplicationList {
             }
             if (createLinkedClient) {
               envLines.push(`PORTAL_SCOPES=openid${val.profileScope ? ' profile' : ''}${val.emailScope ? ' email' : ''}`);
-              const uris = this.parseRedirectUris(val.redirectUris);
-              if (uris.length > 0) {
-                envLines.push(`PORTAL_REDIRECT_URI=${uris[0]}`);
+              if (parsedRedirects.length > 0) {
+                envLines.push(`PORTAL_REDIRECT_URI=${parsedRedirects[0]}`);
               }
             }
 
@@ -544,9 +824,10 @@ export class ApplicationList {
               registerEndpoint: keyResp?.registerEndpoint,
               loginEndpoint: keyResp?.loginEndpoint,
               issuerUrl,
-              redirectUris: createLinkedClient ? this.parseRedirectUris(val.redirectUris) : undefined,
+              redirectUris: createLinkedClient ? parsedRedirects : undefined,
               scopes: createLinkedClient ? ['openid', ...(val.profileScope ? ['profile'] : []), ...(val.emailScope ? ['email'] : [])] : undefined,
               envSnippet: envLines.join('\n'),
+              isNew: true,
             });
 
             const suffix = createLinkedClient ? ' and linked OAuth client' : '';

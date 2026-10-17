@@ -82,6 +82,28 @@ public class AuthPageController {
             @RequestParam(required = false) String logout,
             Model model) {
 
+        // Auto-login: If user is already authenticated and not logging out / erroring, resume flow immediately
+        if (error == null && logout == null) {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated() && !(auth instanceof org.springframework.security.authentication.AnonymousAuthenticationToken)) {
+                SavedRequest saved = new HttpSessionRequestCache().getRequest(request, response);
+                if (saved != null) {
+                    return "redirect:" + saved.getRedirectUrl();
+                }
+                String returnUrl = request.getParameter("return_url");
+                if (returnUrl == null || returnUrl.isBlank()) {
+                    returnUrl = request.getParameter("returnUrl");
+                }
+                if (returnUrl == null || returnUrl.isBlank()) {
+                    returnUrl = request.getParameter("redirect_uri");
+                }
+                if (returnUrl != null && !returnUrl.isBlank()) {
+                    return "redirect:" + returnUrl;
+                }
+                return "redirect:/";
+            }
+        }
+
         model.addAttribute("error", error != null);
         model.addAttribute("loggedOut", logout != null);
 

@@ -3,55 +3,131 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="dark">
-  <title th:text="${clientName} != null ? 'Sign in to ' + ${clientName} : 'Sign in · Portal SSO'">Sign in</title>
+  <title th:text="${clientName} != null ? 'Sign in to ' + ${clientName} : 'Sign In · Portal SSO'">Sign In</title>
   <link rel="icon" type="image/svg+xml" href="/logo.svg">
   <th:block th:replace="~{_styles :: styles}"></th:block>
 </head>
 <body>
-  <div class="glow"></div>
-
-  <main class="shell">
-    <div class="brandmark">
-      <!-- Co-branded lockup when the sign-in belongs to a specific application, so the user can see
-           what they are signing in to. Falls back to the plain mark for a direct console visit. -->
-      <div th:if="${clientLogoUrl != null}" class="lockup">
-        <img src="/logo.svg" alt="Portal SSO">
-        <span class="divider"></span>
-        <img th:src="${clientLogoUrl}" th:alt="${clientName}">
+  <div class="widget-container">
+    <div class="widget-card">
+      <!-- Okta-style Header: Centered App/Portal Logo -->
+      <div class="widget-header">
+        <div th:if="${clientLogoUrl != null}" class="lockup">
+          <img src="/logo.svg" alt="Portal SSO">
+          <span class="divider"></span>
+          <img th:src="${clientLogoUrl}" th:alt="${clientName}">
+        </div>
+        <div th:if="${clientLogoUrl == null}" class="logo-fallback">
+          <img src="/logo.svg" alt="Portal SSO">
+          <span>Portal SSO</span>
+        </div>
       </div>
-      <img th:if="${clientLogoUrl == null}" class="logo" src="/logo.svg" alt="Portal SSO">
 
-      <h1 th:text="${clientName} != null ? 'Sign in to ' + ${clientName} : 'Welcome back'">Welcome back</h1>
-      <p class="sub" th:text="${clientName} != null ? 'Continue with your Portal SSO account' : 'Sign in to continue'">
-        Sign in to continue
-      </p>
+      <!-- Okta-style Card Body -->
+      <div class="widget-body">
+        <h1 class="widget-title">Sign In</h1>
+
+        <form method="post" th:action="@{/login}">
+          <!-- Error alert banner -->
+          <div th:if="${error}" class="alert-banner alert-error" role="alert">
+            <svg style="flex-shrink:0;width:16px;height:16px;margin-top:1px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+            <span>Unable to sign in. Check your username and password, then try again.</span>
+          </div>
+
+          <!-- Logged out banner -->
+          <div th:if="${loggedOut}" class="alert-banner alert-ok" role="status">
+            <svg style="flex-shrink:0;width:16px;height:16px;margin-top:1px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>You have signed out.</span>
+          </div>
+
+          <!-- Username field -->
+          <div class="form-group">
+            <label for="username">Username</label>
+            <input
+              id="username"
+              name="username"
+              type="text"
+              autocomplete="username"
+              required
+              autofocus
+              placeholder=""
+            />
+          </div>
+
+          <!-- Password field with eye toggle icon -->
+          <div class="form-group">
+            <label for="password">Password</label>
+            <div class="input-wrapper input-with-toggle">
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                required
+                placeholder=""
+              />
+              <button
+                type="button"
+                id="togglePwBtn"
+                class="pw-toggle-btn"
+                onclick="togglePasswordVisibility()"
+                title="Toggle password visibility"
+                aria-label="Toggle password visibility"
+              >
+                <!-- Eye open -->
+                <svg id="eyeOpenIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <!-- Eye closed -->
+                <svg id="eyeClosedIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" style="display:none;">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Keep me signed in checkbox -->
+          <label class="remember-me-row">
+            <input type="checkbox" name="remember-me" id="rememberMe">
+            <span>Keep me signed in</span>
+          </label>
+
+          <!-- Primary Sign in button -->
+          <button type="submit" class="btn-sign-in">Sign in</button>
+        </form>
+
+        <!-- Okta-style left-aligned footer links -->
+        <div class="footer-links">
+          <a href="/login?help=forgot">Forgot password?</a>
+          <a href="/login?help=support">Help</a>
+        </div>
+      </div>
     </div>
 
-    <form class="card" method="post" th:action="@{/login}">
-      <div th:if="${error}" class="alert error" role="alert">
-        <span>That email and password combination isn't right. If you've tried several times, the account may be locked — an administrator can unlock it.</span>
-      </div>
-      <div th:if="${loggedOut}" class="alert ok" role="status">
-        <span>You have been signed out.</span>
-      </div>
+    <!-- Subtitle badge below widget -->
+    <p class="badge-powered">Powered by <strong>Portal SSO</strong></p>
+  </div>
 
-      <div class="field">
-        <label for="username">Email address</label>
-        <input id="username" name="username" type="email" autocomplete="username"
-               required autofocus placeholder="you@company.com">
-      </div>
-
-      <div class="field" style="margin-bottom:1.5rem">
-        <label for="password">Password</label>
-        <input id="password" name="password" type="password" autocomplete="current-password"
-               required placeholder="••••••••••">
-      </div>
-
-      <button class="primary" type="submit">Sign in</button>
-    </form>
-
-    <p class="foot">Secured by Portal SSO</p>
-  </main>
+  <script>
+    function togglePasswordVisibility() {
+      var pwInput = document.getElementById('password');
+      var openIcon = document.getElementById('eyeOpenIcon');
+      var closedIcon = document.getElementById('eyeClosedIcon');
+      if (pwInput.type === 'password') {
+        pwInput.type = 'text';
+        openIcon.style.display = 'none';
+        closedIcon.style.display = 'block';
+      } else {
+        pwInput.type = 'password';
+        openIcon.style.display = 'block';
+        closedIcon.style.display = 'none';
+      }
+    }
+  </script>
 </body>
 </html>

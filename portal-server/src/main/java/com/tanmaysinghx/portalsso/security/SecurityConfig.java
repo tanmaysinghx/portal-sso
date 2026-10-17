@@ -102,7 +102,10 @@ public class SecurityConfig {
 
     @Bean
     @Order(1)
-    SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain authorizationServerSecurityFilterChain(
+            HttpSecurity http,
+            PortalUserDetailsService userDetailsService,
+            @Value("${app.security.remember-me-key:portal-sso-remember-me-key-3b71e86a}") String rememberMeKey) throws Exception {
         // getEndpointsMatcher() defers to this exact instance's state, populated only once it is
         // init()-ed as part of http.build() — it must be the same instance wired in below via
         // apply(), not a separate one (e.g. from oauth2AuthorizationServer(customizer), which
@@ -131,7 +134,12 @@ public class SecurityConfig {
         http.authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
                 .exceptionHandling(exceptions -> exceptions.defaultAuthenticationEntryPointFor(
                         new LoginUrlAuthenticationEntryPoint("/login"), new MediaTypeRequestMatcher(MediaType.TEXT_HTML)))
-                .oauth2ResourceServer(resourceServer -> resourceServer.jwt(Customizer.withDefaults()));
+                .oauth2ResourceServer(resourceServer -> resourceServer.jwt(Customizer.withDefaults()))
+                .rememberMe(rememberMe -> rememberMe
+                        .userDetailsService(userDetailsService)
+                        .key(rememberMeKey)
+                        .tokenValiditySeconds(30 * 24 * 60 * 60)
+                        .rememberMeParameter("remember-me"));
 
         return http.build();
     }
