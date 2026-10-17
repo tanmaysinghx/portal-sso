@@ -1,429 +1,376 @@
-<div class="min-h-screen bg-[#FBFBF9] text-[#101114] font-sans antialiased selection:bg-[#FF5F00] selection:text-white">
-  
-  <!-- Top Announcement Bar (Spine Style) -->
-  <aside class="relative z-50 bg-[#101114] text-white">
-    <div class="mx-auto flex h-11 max-w-[1400px] items-center justify-between px-4 sm:px-6 lg:px-8 text-[13px]">
-      <div class="mx-auto flex items-center gap-2.5 sm:gap-3">
-        <span class="rounded-full bg-[#FF5F00] px-2 py-0.5 text-[11px] font-bold tracking-wide uppercase text-white">New</span>
-        <span class="hidden h-3 w-px bg-white/20 sm:block"></span>
-        <span class="font-medium text-white/90">Portal SSO v{{ version }} is live &bull; Enterprise OAuth 2.1 & OpenID Connect IdP</span>
-        <a routerLink="/download" class="hidden items-center gap-1 font-semibold text-white/70 transition-colors hover:text-white sm:inline-flex">
-          Download standalone JAR
-          <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
-        </a>
-      </div>
+<div class="min-h-screen bg-[#FBFBF9] font-sans text-[#101114] antialiased selection:bg-[#FF5F00] selection:text-white">
+
+  <!-- Announcement -->
+  <aside class="bg-[#101114] text-white">
+    <div class="mx-auto flex h-10 max-w-[1280px] items-center justify-center gap-3 px-4 text-[13px]">
+      <span class="rounded-full bg-[#FF5F00] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">New</span>
+      <span class="text-white/85">One-step app onboarding, Connect with Portal SSO and the popup login SDK.</span>
+      <a href="#connect" class="hidden font-semibold text-white/70 transition-colors hover:text-white sm:inline">See how &rarr;</a>
     </div>
   </aside>
 
-  <!-- Floating Pill Header Navigation -->
-  <header class="sticky top-4 z-40 px-4 sm:px-6 lg:px-8">
-    <div class="mx-auto flex h-[64px] max-w-[1400px] items-center justify-between rounded-full bg-white/85 px-6 shadow-[0_8px_30px_rgba(0,0,0,0.06)] ring-1 ring-black/[0.08] backdrop-blur-xl">
-      <a routerLink="/product" class="flex items-center gap-3 transition-opacity hover:opacity-85">
-        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#101114] shadow-sm">
-          <img src="logo.svg" alt="Portal SSO" class="h-5 w-5 brightness-0 invert" />
-        </div>
-        <div class="flex flex-col leading-none">
-          <span class="text-[16px] font-bold tracking-tight text-[#101114]">Portal SSO</span>
-          <span class="text-[10px] font-semibold uppercase tracking-widest text-[#FF5F00]">Identity</span>
-        </div>
+  <!-- Header -->
+  <header class="sticky top-0 z-40 border-b border-black/[0.06] bg-[#FBFBF9]/80 backdrop-blur-xl">
+    <div class="mx-auto flex h-16 max-w-[1280px] items-center justify-between px-4 sm:px-6 lg:px-8">
+      <a routerLink="/product" class="flex items-center gap-2.5" aria-label="Portal SSO home">
+        <img src="logo.svg" alt="" class="h-8 w-8 rounded-lg" />
+        <span class="text-[15px] font-bold tracking-tight">Portal SSO</span>
       </a>
 
-      <nav class="hidden items-center gap-1 md:flex">
-        <a href="#features" class="cursor-pointer rounded-full px-4 py-2 text-[14px] font-semibold text-[#3b424b] transition-colors hover:text-[#101114] hover:bg-black/[0.04]">Platform</a>
-        <a href="#architecture" class="cursor-pointer rounded-full px-4 py-2 text-[14px] font-semibold text-[#3b424b] transition-colors hover:text-[#101114] hover:bg-black/[0.04]">Architecture</a>
-        <a href="#endpoints" class="cursor-pointer rounded-full px-4 py-2 text-[14px] font-semibold text-[#3b424b] transition-colors hover:text-[#101114] hover:bg-black/[0.04]">Endpoints</a>
-        <a routerLink="/docs" class="cursor-pointer rounded-full px-4 py-2 text-[14px] font-semibold text-[#3b424b] transition-colors hover:text-[#101114] hover:bg-black/[0.04]">Docs</a>
-        <a routerLink="/download" class="cursor-pointer rounded-full px-4 py-2 text-[14px] font-semibold text-[#3b424b] transition-colors hover:text-[#101114] hover:bg-black/[0.04]">Download</a>
+      <nav class="hidden items-center gap-1 md:flex" aria-label="Primary">
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#setup" class="nav-link">Quick setup</a>
+        <a href="#connect" class="nav-link">Connect</a>
+        <a href="#developers" class="nav-link">Developers</a>
+        <a routerLink="/docs" class="nav-link">Docs</a>
       </nav>
 
-      <div class="flex items-center gap-3">
-        <a
-          routerLink="/sign-in"
-          class="hidden sm:inline-flex cursor-pointer rounded-full px-4 py-2 text-[14px] font-semibold text-[#3b424b] transition-colors hover:text-[#101114]"
+      <div class="flex items-center gap-2">
+        <a routerLink="/sign-in" class="hidden rounded-full px-4 py-2 text-[14px] font-semibold text-[#3b424b] transition-colors hover:text-[#101114] sm:inline-flex">Sign in</a>
+        <a routerLink="/download" class="hidden rounded-full bg-[#101114] px-4.5 py-2 text-[14px] font-semibold text-white transition-colors hover:bg-[#262626] sm:inline-flex">Download</a>
+        <button
+          type="button"
+          class="inline-flex h-9 w-9 items-center justify-center rounded-lg text-[#3b424b] hover:bg-black/[0.05] md:hidden"
+          (click)="mobileNavOpen.set(!mobileNavOpen())"
+          [attr.aria-expanded]="mobileNavOpen()"
+          aria-controls="mobile-nav"
+          aria-label="Toggle navigation"
         >
-          Sign In
-        </a>
-        <a
-          routerLink="/download"
-          class="cursor-pointer rounded-full bg-[#101114] px-5 py-2.5 text-[14px] font-semibold text-white shadow-sm transition-all hover:bg-[#262626] hover:scale-[1.02] active:scale-[0.98]"
-        >
-          Get Started
-        </a>
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            @if (mobileNavOpen()) {
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            } @else {
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
+            }
+          </svg>
+        </button>
       </div>
     </div>
+
+    @if (mobileNavOpen()) {
+      <nav id="mobile-nav" class="border-t border-black/[0.06] px-4 py-3 md:hidden" aria-label="Mobile">
+        <div class="grid gap-1" (click)="mobileNavOpen.set(false)">
+          <a href="#features" class="mobile-link">Features</a>
+          <a href="#setup" class="mobile-link">Quick setup</a>
+          <a href="#connect" class="mobile-link">Connect</a>
+          <a href="#developers" class="mobile-link">Developers</a>
+          <a routerLink="/docs" class="mobile-link">Docs</a>
+          <a routerLink="/sign-in" class="mobile-link">Sign in</a>
+          <a routerLink="/download" class="mt-2 rounded-lg bg-[#101114] px-3 py-2.5 text-center text-[14px] font-semibold text-white">Download</a>
+        </div>
+      </nav>
+    }
   </header>
 
   <main>
-    <!-- Hero Section -->
-    <section class="mx-auto max-w-[1400px] px-4 pt-20 pb-16 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-4xl text-center">
-        
-        <!-- Spine-style Eyebrow Pill -->
-        <div class="mb-6 inline-flex items-center gap-2 rounded-full bg-[#FF5F00]/[0.08] px-4 py-1.5 ring-1 ring-[#FF5F00]/25">
-          <span class="flex h-2 w-2 rounded-full bg-[#FF5F00]"></span>
-          <span class="text-[13px] font-semibold tracking-wide text-[#FF5F00]">Self-Hosted Identity &bull; OAuth 2.1 & OIDC</span>
+    <!-- Hero -->
+    <section class="relative overflow-hidden">
+      <div class="hero-grid pointer-events-none absolute inset-0" aria-hidden="true"></div>
+      <div class="hero-glow pointer-events-none absolute left-1/2 top-[-180px] h-[520px] w-[900px] -translate-x-1/2 rounded-full" aria-hidden="true"></div>
+
+      <div class="relative mx-auto max-w-[1280px] px-4 pb-16 pt-20 sm:px-6 sm:pt-28 lg:px-8">
+        <div class="mx-auto max-w-4xl text-center">
+          <span class="inline-flex items-center gap-2 rounded-full border border-black/[0.08] bg-white px-3.5 py-1 text-[12.5px] font-semibold text-[#3b424b] shadow-xs">
+            <span class="h-1.5 w-1.5 rounded-full bg-[#FF5F00]"></span>
+            Self-hosted OAuth 2.1 &amp; OpenID Connect
+          </span>
+
+          <h1 class="mt-6 text-[38px] font-extrabold leading-[1.06] tracking-[-0.035em] text-balance sm:text-6xl lg:text-[66px]">
+            Single sign-on for every app you run.
+            <span class="block text-[#FF5F00]">One jar. Minutes to set up.</span>
+          </h1>
+
+          <p class="mx-auto mt-6 max-w-2xl text-[17px] leading-relaxed text-[#555E68] sm:text-[19px]">
+            Portal SSO is an identity provider and admin console you host yourself. Run it, add your apps,
+            and give users one sign-in, with PKCE, MFA and audit logging switched on from the start.
+          </p>
+
+          <div class="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <a routerLink="/download" class="btn-primary w-full sm:w-auto">
+              Download v{{ version }}
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+            </a>
+            <button type="button" (click)="copy('hero', runCommand)" class="btn-command w-full sm:w-auto" aria-label="Copy run command">
+              <span class="text-[#8C95A0]">$</span>
+              <span>{{ runCommand }}</span>
+              <span class="rounded-md bg-[#101114]/[0.06] px-2 py-0.5 text-[11px] font-bold text-[#FF5F00]">{{ copied() === 'hero' ? 'Copied' : 'Copy' }}</span>
+            </button>
+          </div>
+
+          <ul class="mt-10 flex flex-wrap items-center justify-center gap-x-7 gap-y-2 text-[13px] font-medium text-[#6E7681]">
+            <li class="check">No database required to start</li>
+            <li class="check">PostgreSQL &amp; MySQL ready</li>
+            <li class="check">Spring Boot 4 · Java 25</li>
+            <li class="check">Angular 21 console built in</li>
+          </ul>
         </div>
 
-        <h1 class="text-4xl font-extrabold tracking-[-0.03em] text-[#101114] sm:text-6xl sm:leading-[1.1] lg:text-[68px]">
-          Replace your bloated IAM with a single, self-hosted binary.
-        </h1>
-
-        <p class="mx-auto mt-6 max-w-2xl text-[18px] leading-relaxed text-[#555E68] sm:text-[20px]">
-          Portal SSO is an enterprise-grade OAuth 2.1 and OpenID Connect identity provider. 
-          Boots in milliseconds with an embedded H2 database, provisions platform roles out of the box, and scales cleanly to PostgreSQL.
-        </p>
-
-        <!-- CTA Buttons -->
-        <div class="mt-9 flex flex-col sm:flex-row items-center justify-center gap-3.5">
-          <a
-            routerLink="/download"
-            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full bg-[#101114] px-7 py-3.5 text-[15px] font-semibold text-white shadow-md transition-all hover:bg-[#262626] hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <span>Download v{{ version }}</span>
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
-          </a>
-          <a
-            (click)="copySnippetText('java -jar portal-sso.jar --httpPort=8080', 'heroCommand')"
-            class="w-full sm:w-auto cursor-pointer inline-flex items-center justify-center gap-3 rounded-full bg-white px-6 py-3.5 text-[14px] font-semibold text-[#101114] ring-1 ring-black/10 shadow-xs transition-all hover:ring-black/20 hover:bg-[#F7F7F6]"
-          >
-            <span class="font-mono text-[13px] text-[#555E68]">java -jar portal-sso.jar</span>
-            <span class="rounded-full bg-[#101114]/[0.06] px-2.5 py-0.5 text-[11px] font-bold text-[#FF5F00]">
-              {{ copiedSnippet() === 'heroCommand' ? 'Copied' : 'Copy' }}
-            </span>
-          </a>
-        </div>
-
-        <!-- Trust / Spec Badges -->
-        <div class="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-[13px] font-medium text-[#6E7681]">
-          <span class="inline-flex items-center gap-2">
-            <svg class="h-4 w-4 text-[#FF5F00]" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
-            Strict PKCE (RFC 7636)
-          </span>
-          <span class="inline-flex items-center gap-2">
-            <svg class="h-4 w-4 text-[#FF5F00]" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
-            Zero Container Dependency
-          </span>
-          <span class="inline-flex items-center gap-2">
-            <svg class="h-4 w-4 text-[#FF5F00]" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
-            Spring Boot 4 + Java 25
-          </span>
-          <span class="inline-flex items-center gap-2">
-            <svg class="h-4 w-4 text-[#FF5F00]" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
-            Automated DB Migration Wizard
-          </span>
+        <!-- Product screens -->
+        <div class="mx-auto mt-16 max-w-[1120px]">
+          <div class="rounded-[22px] border border-black/[0.08] bg-white p-2 shadow-[0_30px_80px_-20px_rgba(16,17,20,0.25)] sm:p-3">
+            <div class="flex flex-wrap items-center justify-between gap-3 px-2 pb-3 pt-1 sm:px-3">
+              <div class="flex items-center gap-1.5" aria-hidden="true">
+                <span class="h-2.5 w-2.5 rounded-full bg-[#FF5F56]/80"></span>
+                <span class="h-2.5 w-2.5 rounded-full bg-[#FFBD2E]/80"></span>
+                <span class="h-2.5 w-2.5 rounded-full bg-[#27C93F]/80"></span>
+              </div>
+              <div class="flex flex-wrap gap-1 rounded-full bg-[#F4F4F3] p-1" role="tablist" aria-label="Product screens">
+                @for (s of screens; track s.id) {
+                  <button
+                    type="button"
+                    role="tab"
+                    [attr.aria-selected]="activeScreen() === s.id"
+                    (click)="activeScreen.set(s.id)"
+                    class="rounded-full px-3.5 py-1.5 text-[12.5px] font-semibold transition-all"
+                    [class]="activeScreen() === s.id ? 'bg-white text-[#101114] shadow-xs' : 'text-[#555E68] hover:text-[#101114]'"
+                  >{{ s.name }}</button>
+                }
+              </div>
+            </div>
+            <div class="overflow-hidden rounded-[14px] border border-black/[0.06] bg-[#FAFAF9]" role="tabpanel">
+              <img [src]="currentScreen().imageSrc" [alt]="currentScreen().imageAlt" class="block w-full" loading="lazy" />
+            </div>
+            <p class="px-3 pb-1 pt-3 text-center text-[13px] text-[#555E68]">{{ currentScreen().description }}</p>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- Product Showcase Frame (Spine High-Craft Browser Presentation) -->
-    <section class="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8 mb-28">
-      <div class="rounded-[28px] border border-black/[0.08] bg-white p-3 sm:p-5 shadow-[0_24px_60px_-12px_rgba(0,0,0,0.12)]">
-        
-        <!-- Tab Bar within Frame -->
-        <div class="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-black/[0.06] pb-4 px-2">
-          <div class="flex items-center gap-2">
-            <div class="flex gap-1.5">
-              <span class="h-3 w-3 rounded-full bg-[#FF5F56]/80 inline-block"></span>
-              <span class="h-3 w-3 rounded-full bg-[#FFBD2E]/80 inline-block"></span>
-              <span class="h-3 w-3 rounded-full bg-[#27C93F]/80 inline-block"></span>
-            </div>
-            <span class="ml-2 font-mono text-[11px] text-[#8C95A0]">https://portal.internal/admin</span>
+    <!-- Quick setup -->
+    <section id="setup" class="scroll-mt-20 mx-auto max-w-[1280px] px-4 py-24 sm:px-6 lg:px-8">
+      <div class="max-w-2xl">
+        <p class="eyebrow">Quick setup</p>
+        <h2 class="section-title">From download to first sign-in in three steps.</h2>
+        <p class="mt-3 text-[16px] text-[#555E68]">No containers, no external database, no default passwords to change.</p>
+      </div>
+
+      <ol class="mt-12 grid grid-cols-1 gap-5 md:grid-cols-3">
+        <li class="step-card">
+          <span class="step-num">1</span>
+          <h3 class="mt-5 text-[18px] font-bold">Run it</h3>
+          <p class="mt-2 text-[14.5px] leading-relaxed text-[#555E68]">Java 25 is the only requirement. The first run creates the database and prints a one-time admin password.</p>
+          <pre class="code-inline">java -jar portal-sso.jar</pre>
+        </li>
+        <li class="step-card">
+          <span class="step-num">2</span>
+          <h3 class="mt-5 text-[18px] font-bold">Add your app</h3>
+          <p class="mt-2 text-[14.5px] leading-relaxed text-[#555E68]">Applications → New application. Enter a name and URL; the OAuth client, redirect URIs and keys are created for you.</p>
+          <pre class="code-inline">Keys &amp; setup → Copy .env</pre>
+        </li>
+        <li class="step-card">
+          <span class="step-num">3</span>
+          <h3 class="mt-5 text-[18px] font-bold">Sign users in</h3>
+          <p class="mt-2 text-[14.5px] leading-relaxed text-[#555E68]">Install the SDK and call loginWithPopup(), use any OIDC library, or hand the generated guide to your coding agent.</p>
+          <pre class="code-inline">npm i &#64;tanmaysinghx/portal-sso</pre>
+        </li>
+      </ol>
+    </section>
+
+    <!-- Connect with Eggless Observability -->
+    <section id="connect" class="scroll-mt-20 mx-auto max-w-[1280px] px-4 pb-24 sm:px-6 lg:px-8">
+      <div class="overflow-hidden rounded-[28px] bg-[#101114] text-white">
+        <div class="grid grid-cols-1 gap-10 p-6 sm:p-12 lg:grid-cols-12 lg:gap-12">
+          <div class="lg:col-span-5">
+            <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#FF8A3D]">
+              New · Connect with Portal SSO
+            </span>
+            <h2 class="mt-5 text-3xl font-extrabold tracking-[-0.03em] sm:text-[40px] sm:leading-[1.1]">
+              Quick setup with Eggless Observability.
+            </h2>
+            <p class="mt-4 text-[15.5px] leading-relaxed text-white/70">
+              Eggless Observability (logs, live tail and alerts) is the first app built on Connect. It registers
+              itself with your Portal and receives its credentials directly, so nobody pastes a client secret
+              into a config file. Any app can use the same flow.
+            </p>
+            <ul class="mt-8 space-y-3 text-[14px] text-white/85">
+              <li class="check-dark">An admin reviews and approves every connection</li>
+              <li class="check-dark">Credentials are bound to the app’s address with a one-time code and verifier</li>
+              <li class="check-dark">Reconnecting rotates credentials instead of creating duplicates</li>
+            </ul>
+            <a routerLink="/docs" class="mt-9 inline-flex items-center gap-2 text-[14px] font-semibold text-[#FF8A3D] hover:text-white">
+              Read the documentation &rarr;
+            </a>
           </div>
 
-          <!-- Interactive Tab Switcher -->
-          <div class="flex flex-wrap items-center gap-1 rounded-full bg-[#F4F4F3] p-1 ring-1 ring-black/[0.04]">
-            @for (tab of tabs; track tab.id) {
-              <button
-                type="button"
-                (click)="activeTab.set(tab.id)"
-                [class.bg-white]="activeTab() === tab.id"
-                [class.text-[#101114]]="activeTab() === tab.id"
-                [class.shadow-xs]="activeTab() === tab.id"
-                [class.text-[#555E68]]="activeTab() !== tab.id"
-                class="rounded-full px-3.5 py-1.5 text-[12.5px] font-semibold transition-all hover:text-[#101114]"
-              >
-                {{ tab.name }}
-              </button>
-            }
-          </div>
-        </div>
-
-        <!-- Active View Screen -->
-        <div class="relative overflow-hidden rounded-[20px] border border-black/[0.06] bg-[#FAFAF9]">
-          @for (tab of tabs; track tab.id) {
-            <div [class.hidden]="activeTab() !== tab.id">
-              <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-black/[0.06] bg-white px-6 py-4">
-                <div>
-                  <div class="flex items-center gap-2.5">
-                    <span class="rounded-full bg-[#FF5F00]/10 px-2.5 py-0.5 text-[11px] font-bold text-[#FF5F00] uppercase tracking-wider">{{ tab.badge }}</span>
-                    <h3 class="text-[16px] font-bold text-[#101114]">{{ tab.name }}</h3>
+          <ol class="relative space-y-4 lg:col-span-7">
+            <li class="connect-step">
+              <span class="connect-num">1</span>
+              <div>
+                <p class="text-[15px] font-semibold">Start from Eggless Observability</p>
+                <p class="mt-1 text-[13.5px] text-white/60">Choose <em>Connect with Portal SSO</em> and enter your Portal’s address. Eggless submits a request describing itself.</p>
+              </div>
+            </li>
+            <li class="connect-step">
+              <span class="connect-num">2</span>
+              <div class="min-w-0 flex-1">
+                <p class="text-[15px] font-semibold">Approve it in Portal</p>
+                <p class="mt-1 text-[13.5px] text-white/60">You land on a review page showing the app, its address and what it asks for. Choose what to allow, then approve.</p>
+                <div class="mt-3 rounded-xl border border-white/10 bg-white/[0.04] p-3.5" aria-hidden="true">
+                  <div class="flex items-center justify-between gap-3">
+                    <div class="flex min-w-0 items-center gap-2.5">
+                      <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#FF5F00] text-[12px] font-bold">EO</span>
+                      <div class="min-w-0">
+                        <p class="truncate text-[13px] font-semibold">Eggless Observability</p>
+                        <p class="truncate font-mono text-[11px] text-white/50">https://eggless.example.com</p>
+                      </div>
+                    </div>
+                    <span class="rounded-md bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-300">Approve</span>
                   </div>
-                  <p class="mt-1 text-[13px] text-[#555E68]">{{ tab.description }}</p>
                 </div>
-                <a routerLink="/sign-in" class="rounded-full bg-[#101114] px-4 py-2 text-[12px] font-semibold text-white hover:bg-[#262626] transition-colors shrink-0">
-                  Try Live Console &rarr;
-                </a>
               </div>
-              <div class="p-2 sm:p-4">
-                <img 
-                  [src]="tab.imageSrc" 
-                  [alt]="tab.imageAlt" 
-                  class="w-full rounded-xl border border-black/[0.06] shadow-sm"
-                />
+            </li>
+            <li class="connect-step">
+              <span class="connect-num">3</span>
+              <div>
+                <p class="text-[15px] font-semibold">Sign in with Portal</p>
+                <p class="mt-1 text-[13.5px] text-white/60">Eggless redeems its credentials once, straight to its backend. Your users sign in with their Portal account, MFA included.</p>
               </div>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="scroll-mt-20 mx-auto max-w-[1280px] px-4 pb-24 sm:px-6 lg:px-8">
+      <div class="max-w-2xl">
+        <p class="eyebrow">Platform</p>
+        <h2 class="section-title">Everything an identity provider needs, nothing you have to bolt on.</h2>
+      </div>
+
+      <div class="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        @for (f of features; track f.title) {
+          <article class="feature-card">
+            <div class="flex items-start justify-between">
+              <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FF5F00]/10 text-[#FF5F00]">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" [attr.d]="f.icon" />
+                </svg>
+              </span>
+              @if (f.isNew) {
+                <span class="rounded-full bg-[#101114] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">New</span>
+              }
+            </div>
+            <h3 class="mt-5 text-[17px] font-bold tracking-tight">{{ f.title }}</h3>
+            <p class="mt-2 text-[14px] leading-relaxed text-[#555E68]">{{ f.description }}</p>
+            <p class="mt-5 text-[12px] font-semibold text-[#8C95A0]">{{ f.tag }}</p>
+          </article>
+        }
+      </div>
+    </section>
+
+    <!-- Security facts -->
+    <section class="border-y border-black/[0.06] bg-white">
+      <div class="mx-auto max-w-[1280px] px-4 py-14 sm:px-6 lg:px-8">
+        <p class="eyebrow text-center">Secure by default</p>
+        <dl class="mt-8 grid grid-cols-2 gap-x-6 gap-y-8 md:grid-cols-3 lg:grid-cols-6">
+          @for (fact of securityFacts; track fact.value) {
+            <div class="text-center">
+              <dt class="text-[20px] font-extrabold tracking-tight">{{ fact.value }}</dt>
+              <dd class="mt-1 text-[13px] text-[#555E68]">{{ fact.label }}</dd>
             </div>
           }
-        </div>
+        </dl>
       </div>
     </section>
 
-    <!-- Key Metrics / Numbers Row -->
-    <section class="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8 mb-28">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="rounded-[24px] border border-black/[0.07] bg-white p-7 shadow-xs">
-          <div class="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#FF5F00]">Specification</div>
-          <div class="mt-3 text-3xl font-extrabold tracking-tight text-[#101114]">OAuth 2.1</div>
-          <p class="mt-2 text-[14px] leading-relaxed text-[#555E68]">Strict authorization code grant with PKCE enforced across both public and confidential clients.</p>
-        </div>
-        <div class="rounded-[24px] border border-black/[0.07] bg-white p-7 shadow-xs">
-          <div class="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#FF5F00]">Deployability</div>
-          <div class="mt-3 text-3xl font-extrabold tracking-tight text-[#101114]">1 Runnable JAR</div>
-          <p class="mt-2 text-[14px] leading-relaxed text-[#555E68]">Backend and compiled Angular SPA packaged together. No Node runtime or Docker daemon needed.</p>
-        </div>
-        <div class="rounded-[24px] border border-black/[0.07] bg-white p-7 shadow-xs">
-          <div class="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#FF5F00]">Data Portability</div>
-          <div class="mt-3 text-3xl font-extrabold tracking-tight text-[#101114]">6 Seconds</div>
-          <p class="mt-2 text-[14px] leading-relaxed text-[#555E68]">Hot-switch from embedded evaluation H2 storage to managed PostgreSQL or MySQL with zero data loss.</p>
-        </div>
-        <div class="rounded-[24px] border border-black/[0.07] bg-white p-7 shadow-xs">
-          <div class="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#FF5F00]">Cryptography</div>
-          <div class="mt-3 text-3xl font-extrabold tracking-tight text-[#101114]">2048-bit RSA</div>
-          <p class="mt-2 text-[14px] leading-relaxed text-[#555E68]">Database-backed asymmetric key rotation with JWKS endpoint publishing for seamless relying-party validation.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Platform Modules (Spine-Style Numbered Grid) -->
-    <section id="features" class="scroll-mt-24 mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8 mb-28">
-      <div class="mb-12">
-        <div class="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#FF5F00]">Platform Capabilities</div>
-        <h2 class="mt-2 text-3xl font-extrabold tracking-[-0.03em] text-[#101114] sm:text-4xl">
-          Engineered for compliance, self-hosting, and operator sanity.
-        </h2>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <!-- 01 Protocol -->
-        <div class="rounded-[28px] border border-black/[0.07] bg-white p-8 shadow-xs flex flex-col justify-between">
-          <div>
-            <div class="text-[12px] font-bold uppercase tracking-[0.12em] text-[#FF5F00]">01 &bull; Standards & Security</div>
-            <h3 class="mt-4 text-xl font-bold tracking-tight text-[#101114]">OAuth 2.1 & OIDC Engine</h3>
-            <p class="mt-3 text-[14.5px] leading-relaxed text-[#555E68]">
-              Portal SSO removes deprecated implicit and password grants. It strictly requires PKCE code verification on all relying applications, issues signed JWTs with database-persisted RSA keypairs, and exposes OpenID Connect discovery.
-            </p>
-          </div>
-          <div class="mt-8 pt-6 border-t border-black/[0.06] flex items-center justify-between text-[13px] font-semibold text-[#101114]">
-            <span>RFC 7636 &bull; RFC 6749</span>
-            <a routerLink="/docs" class="text-[#FF5F00] hover:underline">Read Spec &rarr;</a>
-          </div>
-        </div>
-
-        <!-- 02 Admin Console -->
-        <div class="rounded-[28px] border border-black/[0.07] bg-white p-8 shadow-xs flex flex-col justify-between">
-          <div>
-            <div class="text-[12px] font-bold uppercase tracking-[0.12em] text-[#FF5F00]">02 &bull; Identity Governance</div>
-            <h3 class="mt-4 text-xl font-bold tracking-tight text-[#101114]">Unified Admin & Launchpad</h3>
-            <p class="mt-3 text-[14.5px] leading-relaxed text-[#555E68]">
-              Manage OAuth clients, directory users, roles, and applications. Standard users get a clean single-sign-on launchpad to jump into authorized apps, and can request access directly from administrators with automated role grants.
-            </p>
-          </div>
-          <div class="mt-8 pt-6 border-t border-black/[0.06] flex items-center justify-between text-[13px] font-semibold text-[#101114]">
-            <span>Role-Based Access Control</span>
-            <span class="text-[#FF5F00]">In-App Approval</span>
-          </div>
-        </div>
-
-        <!-- 03 Multi-Database -->
-        <div class="rounded-[28px] border border-black/[0.07] bg-white p-8 shadow-xs flex flex-col justify-between">
-          <div>
-            <div class="text-[12px] font-bold uppercase tracking-[0.12em] text-[#FF5F00]">03 &bull; Infrastructure Portability</div>
-            <h3 class="mt-4 text-xl font-bold tracking-tight text-[#101114]">Zero-Downtime DB Migration</h3>
-            <p class="mt-3 text-[14.5px] leading-relaxed text-[#555E68]">
-              Evaluate in seconds on embedded H2 storage at <code>~/.portal-sso/</code>. When moving to staging or production, run the migration wizard to stream all tables and schemas to PostgreSQL 15+ or MySQL 8.0+ with zero data loss.
-            </p>
-          </div>
-          <div class="mt-8 pt-6 border-t border-black/[0.06] flex items-center justify-between text-[13px] font-semibold text-[#101114]">
-            <span>H2 &bull; Postgres &bull; MySQL</span>
-            <span class="text-[#FF5F00]">Liquibase Driven</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Architecture / Code Integration Section (Spine-Style Graphite Box) -->
-    <section id="architecture" class="scroll-mt-24 mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8 mb-28">
-      <div class="rounded-[32px] bg-[#101114] p-8 sm:p-12 text-white">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-          
-          <div class="lg:col-span-5">
-            <span class="rounded-full bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#FF5F00]">Integration Ready</span>
-            <h2 class="mt-4 text-3xl font-extrabold tracking-[-0.03em] sm:text-4xl text-white">
-              Connect your applications in 3 lines of code.
-            </h2>
-            <p class="mt-4 text-[15px] leading-relaxed text-white/70">
-              Compatible with any standard OpenID Connect client library in React, Angular, Next.js, Go, Python, or Spring Boot.
-            </p>
-
-            <div class="mt-8 space-y-4 text-[14px]">
-              <div class="flex items-center gap-3">
-                <div class="flex h-6 w-6 items-center justify-center rounded-full bg-[#FF5F00]/20 text-[#FF5F00] text-xs font-bold">&check;</div>
-                <span class="text-white/90">Automated discovery at <code>/.well-known/openid-configuration</code></span>
-              </div>
-              <div class="flex items-center gap-3">
-                <div class="flex h-6 w-6 items-center justify-center rounded-full bg-[#FF5F00]/20 text-[#FF5F00] text-xs font-bold">&check;</div>
-                <span class="text-white/90">Rotatable public keys at <code>/oauth2/jwks</code></span>
-              </div>
-              <div class="flex items-center gap-3">
-                <div class="flex h-6 w-6 items-center justify-center rounded-full bg-[#FF5F00]/20 text-[#FF5F00] text-xs font-bold">&check;</div>
-                <span class="text-white/90">Standard claims at <code>/userinfo</code></span>
-              </div>
-            </div>
-          </div>
-
-          <div class="lg:col-span-7">
-            <!-- Code Window -->
-            <div class="overflow-hidden rounded-2xl border border-white/10 bg-[#18191E] shadow-2xl">
-              <!-- Window Top -->
-              <div class="flex items-center justify-between border-b border-white/10 bg-white/[0.02] px-4 py-3">
-                <div class="flex items-center gap-2">
-                  <div class="flex gap-1.5">
-                    <span class="h-2.5 w-2.5 rounded-full bg-white/20"></span>
-                    <span class="h-2.5 w-2.5 rounded-full bg-white/20"></span>
-                    <span class="h-2.5 w-2.5 rounded-full bg-white/20"></span>
-                  </div>
-                  <span class="ml-2 font-mono text-[12px] text-white/50">Discovery Check</span>
-                </div>
-                <button
-                  type="button"
-                  (click)="copySnippetText('curl -s http://localhost:8080/.well-known/openid-configuration | jq .', 'codeSample')"
-                  class="rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold text-white/80 transition hover:bg-white/20"
-                >
-                  {{ copiedSnippet() === 'codeSample' ? 'Copied!' : 'Copy snippet' }}
-                </button>
-              </div>
-
-              <!-- Terminal Body -->
-              <div class="p-6 font-mono text-[13px] leading-relaxed overflow-x-auto text-white/80">
-                <div class="text-white/40 mb-2"># 1. Fetch OpenID Connect Discovery configuration</div>
-                <div class="text-[#FF5F00]">$ curl -s http://localhost:8080/.well-known/openid-configuration | jq .</div>
-                <div class="mt-4 text-white/40 mb-2"># 2. Inspect active RSA 2048-bit JWKS keys</div>
-                <div class="text-[#FF5F00]">$ curl -s http://localhost:8080/oauth2/jwks | jq .</div>
-                <div class="mt-4 text-white/40 mb-2"># 3. Exchange authorization code with PKCE</div>
-                <div class="text-emerald-400">$ curl -X POST http://localhost:8080/oauth2/token \</div>
-                <div class="text-white/70 pl-4">-d "grant_type=authorization_code" \</div>
-                <div class="text-white/70 pl-4">-d "client_id=portal-web-app" \</div>
-                <div class="text-white/70 pl-4">-d "code_verifier=dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"</div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- Standard Endpoints Table -->
-    <section id="endpoints" class="scroll-mt-24 mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8 mb-28">
-      <div class="mb-10">
-        <div class="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#FF5F00]">Specification Compliance</div>
-        <h2 class="mt-2 text-3xl font-extrabold tracking-[-0.03em] text-[#101114]">
-          Standardized OIDC Protocol Endpoints
-        </h2>
-        <p class="mt-2 text-[15px] text-[#555E68]">
-          Portal SSO implements standard endpoints adhering strictly to OpenID Connect Core 1.0 and OAuth 2.1 RFCs.
-        </p>
-      </div>
-
-      <div class="overflow-hidden rounded-[24px] border border-black/[0.08] bg-white shadow-xs">
-        <table class="w-full text-left text-[14px]">
-          <thead class="border-b border-black/[0.06] bg-[#FBFBF9]">
-            <tr>
-              <th scope="col" class="px-6 py-4 font-bold text-[12px] uppercase tracking-wider text-[#555E68]">Endpoint</th>
-              <th scope="col" class="px-6 py-4 font-bold text-[12px] uppercase tracking-wider text-[#555E68]">Method</th>
-              <th scope="col" class="px-6 py-4 font-bold text-[12px] uppercase tracking-wider text-[#555E68]">Path</th>
-              <th scope="col" class="px-6 py-4 font-bold text-[12px] uppercase tracking-wider text-[#555E68]">Description</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-black/[0.05]">
-            @for (ep of endpoints; track ep.path) {
-              <tr class="transition-colors hover:bg-[#F9F9F8]">
-                <td class="px-6 py-4 font-bold text-[#101114]">{{ ep.name }}</td>
-                <td class="px-6 py-4">
-                  <span class="inline-flex rounded-md bg-[#101114]/[0.06] px-2.5 py-1 font-mono text-[11px] font-bold text-[#101114]">
-                    {{ ep.method }}
-                  </span>
-                </td>
-                <td class="px-6 py-4 font-mono text-[13px] text-[#555E68]">{{ ep.path }}</td>
-                <td class="px-6 py-4 text-[#555E68] text-[13.5px]">{{ ep.desc }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- Bottom CTA Banner (Spine Style Callout) -->
-    <section class="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8 mb-24">
-      <div class="rounded-[32px] border border-black/[0.08] bg-white p-10 sm:p-16 shadow-xs text-center">
-        <div class="mx-auto max-w-2xl">
-          <span class="rounded-full bg-[#FF5F00]/10 px-3.5 py-1 text-[12px] font-bold text-[#FF5F00] uppercase tracking-wider">Ready in seconds</span>
-          <h2 class="mt-4 text-3xl font-extrabold tracking-[-0.03em] text-[#101114] sm:text-5xl">
-            Take back control of your identity infrastructure.
-          </h2>
-          <p class="mt-4 text-[16px] text-[#555E68] leading-relaxed">
-            Download the single executable JAR, run it with Java 25, and experience frictionless self-hosted authentication.
+    <!-- Developers -->
+    <section id="developers" class="scroll-mt-20 mx-auto max-w-[1280px] px-4 py-24 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 items-start gap-12 lg:grid-cols-12">
+        <div class="lg:col-span-5">
+          <p class="eyebrow">Developers</p>
+          <h2 class="section-title">Integrate in minutes, in any stack.</h2>
+          <p class="mt-4 text-[15.5px] leading-relaxed text-[#555E68]">
+            Use the official SDK for browser apps, any standards-compliant OIDC library on the server, or let
+            a coding agent do it from the generated guide.
           </p>
-          <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
-            <a
-              routerLink="/download"
-              class="rounded-full bg-[#101114] px-8 py-4 text-[15px] font-semibold text-white shadow-md transition-all hover:bg-[#262626] hover:scale-[1.02]"
-            >
-              Download Portal SSO
-            </a>
-            <a
-              routerLink="/docs"
-              class="rounded-full bg-white px-7 py-4 text-[15px] font-semibold text-[#101114] ring-1 ring-black/10 hover:bg-[#F7F7F6] transition-all"
-            >
-              Explore Documentation
-            </a>
+
+          <div class="mt-8 overflow-hidden rounded-2xl border border-black/[0.07] bg-white">
+            <table class="w-full text-left text-[13px]">
+              <caption class="sr-only">Standard OpenID Connect endpoints</caption>
+              <thead class="sr-only">
+                <tr><th scope="col">Method</th><th scope="col">Path and purpose</th></tr>
+              </thead>
+              <tbody class="divide-y divide-black/[0.05]">
+                @for (ep of endpoints; track ep.path) {
+                  <tr>
+                    <td class="py-2.5 pl-4 pr-2 align-top">
+                      <span class="inline-block w-11 rounded bg-[#101114]/[0.06] py-0.5 text-center font-mono text-[10.5px] font-bold">{{ ep.method }}</span>
+                    </td>
+                    <td class="py-2.5 pr-4">
+                      <code class="block break-all font-mono text-[12.5px] text-[#101114]">{{ ep.path }}</code>
+                      <span class="text-[12px] text-[#6E7681]">{{ ep.desc }}</span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="lg:col-span-7">
+          <div class="overflow-hidden rounded-2xl border border-black/10 bg-[#101114] shadow-[0_24px_60px_-20px_rgba(16,17,20,0.45)]">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2.5">
+              <div class="flex flex-wrap gap-1" role="tablist" aria-label="Integration examples">
+                @for (s of snippets; track s.id) {
+                  <button
+                    type="button"
+                    role="tab"
+                    [attr.aria-selected]="activeSnippet() === s.id"
+                    (click)="activeSnippet.set(s.id)"
+                    class="rounded-md px-3 py-1.5 text-[12.5px] font-semibold transition-colors"
+                    [class]="activeSnippet() === s.id ? 'bg-white/10 text-white' : 'text-white/55 hover:text-white'"
+                  >{{ s.label }}</button>
+                }
+              </div>
+              <button
+                type="button"
+                (click)="copy('snippet', currentSnippet().code)"
+                class="rounded-md bg-white/10 px-3 py-1.5 text-[12px] font-semibold text-white/85 hover:bg-white/20"
+              >{{ copied() === 'snippet' ? 'Copied' : 'Copy' }}</button>
+            </div>
+            <div class="px-5 pt-3 font-mono text-[11.5px] text-white/40">{{ currentSnippet().file }}</div>
+            <pre class="overflow-x-auto px-5 pb-6 pt-2 font-mono text-[13px] leading-relaxed text-[#E7E9EC]" role="tabpanel"><code>{{ currentSnippet().code }}</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="mx-auto max-w-[1280px] px-4 pb-24 sm:px-6 lg:px-8">
+      <div class="relative overflow-hidden rounded-[28px] border border-black/[0.08] bg-white px-6 py-14 text-center sm:px-16 sm:py-20">
+        <div class="hero-glow pointer-events-none absolute left-1/2 top-[-260px] h-[420px] w-[720px] -translate-x-1/2 rounded-full" aria-hidden="true"></div>
+        <div class="relative mx-auto max-w-2xl">
+          <h2 class="text-3xl font-extrabold tracking-[-0.03em] sm:text-5xl">Own your sign-in.</h2>
+          <p class="mt-4 text-[16px] leading-relaxed text-[#555E68]">
+            Download the jar, run it, and connect your first app before your coffee cools.
+          </p>
+          <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <a routerLink="/download" class="btn-primary w-full sm:w-auto">Download Portal SSO</a>
+            <a routerLink="/docs" class="btn-secondary w-full sm:w-auto">Read the docs</a>
           </div>
         </div>
       </div>
     </section>
   </main>
 
-  <!-- Clean Spine-Style Footer -->
-  <footer class="border-t border-black/[0.08] bg-white py-14">
-    <div class="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
-      <div class="flex flex-col md:flex-row items-center justify-between gap-8">
-        <div class="flex items-center gap-3">
-          <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-[#101114] shadow-xs">
-            <img src="logo.svg" alt="Portal SSO" class="h-4 w-4 brightness-0 invert" />
-          </div>
-          <span class="text-[16px] font-bold text-[#101114]">Portal SSO</span>
-          <span class="text-[12px] text-[#8C95A0] ml-2">v{{ version }} (LTS)</span>
-        </div>
-
-        <nav class="flex flex-wrap items-center gap-6 text-[14px] font-semibold text-[#555E68]">
-          <a routerLink="/product" class="hover:text-[#101114] transition-colors">Overview</a>
-          <a routerLink="/download" class="hover:text-[#101114] transition-colors">Download</a>
-          <a routerLink="/docs" class="hover:text-[#101114] transition-colors">Documentation</a>
-          <a href="https://github.com/tanmaysinghx/portal-sso" target="_blank" rel="noopener noreferrer" class="hover:text-[#101114] transition-colors">GitHub</a>
-        </nav>
-
-        <div class="text-[13px] text-[#8C95A0]">
-          &copy; 2026 Portal SSO. Developed by <a href="https://tanmaysinghx.com" target="_blank" rel="noopener noreferrer" class="font-semibold text-[#101114] hover:text-[#FF5F00] transition-colors">Tanmay Singh</a>.
-        </div>
+  <footer class="border-t border-black/[0.08] bg-white">
+    <div class="mx-auto flex max-w-[1280px] flex-col items-center justify-between gap-6 px-4 py-10 sm:px-6 md:flex-row lg:px-8">
+      <div class="flex items-center gap-2.5">
+        <img src="logo.svg" alt="" class="h-7 w-7 rounded-lg" />
+        <span class="text-[14px] font-bold">Portal SSO</span>
+        <span class="text-[12px] text-[#8C95A0]">v{{ version }}</span>
       </div>
+      <nav class="flex flex-wrap items-center justify-center gap-6 text-[13.5px] font-semibold text-[#555E68]" aria-label="Footer">
+        <a routerLink="/download" class="hover:text-[#101114]">Download</a>
+        <a routerLink="/docs" class="hover:text-[#101114]">Docs</a>
+        <a routerLink="/sign-in" class="hover:text-[#101114]">Sign in</a>
+        <a href="https://github.com/tanmaysinghx/portal-sso" target="_blank" rel="noopener noreferrer" class="hover:text-[#101114]">GitHub</a>
+      </nav>
+      <p class="text-[12.5px] text-[#8C95A0]">
+        &copy; 2026 Portal SSO · Built by
+        <a href="https://tanmaysinghx.com" target="_blank" rel="noopener noreferrer" class="font-semibold text-[#101114] hover:text-[#FF5F00]">Tanmay Singh</a>
+      </p>
     </div>
   </footer>
 </div>
