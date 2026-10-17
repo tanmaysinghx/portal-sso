@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title th:text="${status} != null ? ${status} + ' · Authorization Error' : 'Error · Portal SSO'">Authorization Error</title>
+  <link rel="icon" type="image/svg+xml" href="/logo.svg">
+  <th:block th:replace="~{_styles :: styles}"></th:block>
+  <style>
+    .error-code {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      margin-bottom: 0.75rem;
+    }
+    .detail-box {
+      background: rgba(9, 9, 11, 0.7);
+      border: 1px solid var(--line-soft);
+      border-radius: 0.5rem;
+      padding: 0.85rem;
+      margin: 1rem 0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.8125rem;
+      color: #fca5a5;
+      word-break: break-all;
+    }
+    .help-list {
+      margin: 1rem 0;
+      padding-left: 1.25rem;
+      color: var(--text-2);
+      font-size: 0.8125rem;
+      line-height: 1.6;
+    }
+    .help-list li { margin-bottom: 0.5rem; }
+    .help-list strong { color: var(--text); }
+  </style>
+</head>
+<body>
+  <div class="glow"></div>
+
+  <main class="shell" style="max-width: 30rem;">
+    <div class="brandmark">
+      <img class="logo" src="/logo.svg" alt="Portal SSO">
+      <div style="margin-top: 1rem;">
+        <span class="error-code" th:text="${status != null ? 'Error ' + status + ' (' + error + ')' : 'Error'}">Error 400 (Bad Request)</span>
+      </div>
+      <h1>Authorization Request Rejected</h1>
+      <p class="sub">Portal SSO could not process the authentication request.</p>
+    </div>
+
+    <div class="card">
+      <div th:if="${message != null and !#strings.isEmpty(message)}" class="detail-box" th:text="${message}">
+        OAuth 2.0 Parameter: redirect_uri
+      </div>
+
+      <div style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text);">
+        Likely Causes & Fixes:
+      </div>
+
+      <ul class="help-list">
+        <li>
+          <strong>Redirect URI Mismatch:</strong> In OAuth 2.1, the <code>redirect_uri</code> sent by your app must exactly match one of the URIs registered in the Portal SSO Admin Console under <em>Applications &rarr; OAuth Clients</em> (including scheme <code>https://</code>, port, and exact path).
+        </li>
+        <li>
+          <strong>Unknown or Disabled Client ID:</strong> Ensure the <code>client_id</code> parameter matches an enabled client in Portal SSO.
+        </li>
+        <li>
+          <strong>Unregistered Scopes:</strong> Verify that all requested scopes (e.g. <code>openid profile email</code>) are granted to this client.
+        </li>
+      </ul>
+
+      <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+        <a href="/" class="primary" style="text-align: center; text-decoration: none; display: block;">
+          Go to Portal SSO Console
+        </a>
+      </div>
+    </div>
+
+    <p class="foot">Secured by Portal SSO</p>
+  </main>
+</body>
+</html>

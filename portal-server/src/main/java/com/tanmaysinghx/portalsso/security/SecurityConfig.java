@@ -23,6 +23,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.context.NullSecurityContextRepository;
 import org.springframework.security.web.header.writers.StaticHeadersWriter;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationConsentService;
@@ -113,7 +115,18 @@ public class SecurityConfig {
                 .oidc(Customizer.withDefaults())
                 // Only reached for clients registered with requireAuthorizationConsent(true);
                 // clients without it still skip straight through, as before.
-                .authorizationEndpoint(endpoint -> endpoint.consentPage("/oauth2/consent"));
+                .authorizationEndpoint(endpoint -> endpoint
+                        .consentPage("/oauth2/consent")
+                        .errorResponseHandler((request, response, exception) -> {
+                            String message = exception.getMessage();
+                            if (exception instanceof OAuth2AuthenticationException oauth2Ex) {
+                                OAuth2Error error = oauth2Ex.getError();
+                                message = error.getDescription() != null
+                                        ? error.getDescription()
+                                        : error.getErrorCode();
+                            }
+                            response.sendError(HttpServletResponse.SC_BAD_REQUEST, message);
+                        }));
 
         http.authorizeHttpRequests(authorize -> authorize.anyRequest().authenticated())
                 .exceptionHandling(exceptions -> exceptions.defaultAuthenticationEntryPointFor(
