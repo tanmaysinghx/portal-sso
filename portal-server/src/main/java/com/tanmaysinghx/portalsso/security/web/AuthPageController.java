@@ -249,9 +249,13 @@ public class AuthPageController {
     }
 
     /**
-     * Standard auto-closing popup callback relay for OAuth 2.1 authorization code grant.
-     * Posts the authorization code and state back to window.opener, enabling single-click
-     * popup login without requiring the client application to host its own callback page.
+     * Popup callback relay for the SDK's {@code loginWithPopup()}.
+     *
+     * <p>The code is posted to the opener immediately, so the app's token exchange starts at once
+     * and sign-in is not slowed down. The window then stays open for at least {@code MIN_VISIBLE_MS},
+     * walking through the handshake steps, so the user sees what happened instead of a flash. The
+     * SDK stops watching the popup once it has the code, so closing it later is safe. Errors stay on
+     * screen with a Close button rather than vanishing.
      */
     @GetMapping(value = "/oauth2/popup-callback", produces = MediaType.TEXT_HTML_VALUE)
     @ResponseBody
@@ -262,64 +266,137 @@ public class AuthPageController {
             <head>
               <meta charset="utf-8">
               <meta name="viewport" content="width=device-width, initial-scale=1">
-              <title>Authenticating...</title>
+              <meta name="referrer" content="no-referrer">
+              <title>Signing you in…</title>
+              <link rel="icon" type="image/svg+xml" href="/logo.svg">
               <style>
+                * { box-sizing: border-box; margin: 0; padding: 0; }
                 body {
                   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  height: 100vh;
-                  margin: 0;
-                  background: #0f172a;
-                  color: #f8fafc;
+                  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+                  background: radial-gradient(circle at 50% 0%, #1e293b 0%, #0b1120 70%);
+                  color: #e2e8f0; padding: 24px;
                 }
-                .loader { text-align: center; }
-                .spinner {
-                  width: 36px;
-                  height: 36px;
-                  border: 3px solid rgba(255,255,255,0.15);
-                  border-top-color: #6366f1;
-                  border-radius: 50%;
-                  animation: spin 0.8s linear infinite;
-                  margin: 0 auto 16px;
-                }
+                .card { width: 100%; max-width: 340px; text-align: center; }
+                .handshake { position: relative; height: 64px; display: flex; align-items: center; justify-content: center; gap: 56px; margin-bottom: 22px; }
+                .node { width: 52px; height: 52px; border-radius: 14px; background: #111827; border: 1px solid #334155;
+                  display: flex; align-items: center; justify-content: center; z-index: 1; }
+                .node img { width: 30px; height: 30px; }
+                .node svg { width: 26px; height: 26px; color: #a5b4fc; }
+                .wire { position: absolute; left: 50%; top: 50%; width: 56px; height: 2px; transform: translate(-50%, -50%);
+                  background: #334155; overflow: hidden; border-radius: 2px; }
+                .wire::after { content: ""; position: absolute; top: 0; left: -40%; width: 40%; height: 100%;
+                  background: linear-gradient(90deg, transparent, #818cf8, transparent); animation: pulse 1.1s ease-in-out infinite; }
+                .done .wire { background: #22c55e; }
+                .done .wire::after { display: none; }
+                @keyframes pulse { to { left: 100%; } }
+                h1 { font-size: 17px; font-weight: 600; color: #f8fafc; margin-bottom: 4px; }
+                .sub { font-size: 13px; color: #94a3b8; margin-bottom: 20px; min-height: 18px; }
+                ol { list-style: none; text-align: left; background: rgba(15, 23, 42, 0.7); border: 1px solid #1e293b;
+                  border-radius: 12px; padding: 6px 14px; }
+                li { display: flex; align-items: center; gap: 10px; padding: 9px 0; font-size: 13px; color: #64748b; transition: color .25s; }
+                li + li { border-top: 1px solid #1e293b; }
+                .dot { flex-shrink: 0; width: 18px; height: 18px; border-radius: 999px; border: 2px solid #334155;
+                  display: flex; align-items: center; justify-content: center; }
+                li.active { color: #e2e8f0; }
+                li.active .dot { border-color: #818cf8; border-top-color: transparent; animation: spin .7s linear infinite; }
+                li.ok { color: #cbd5e1; }
+                li.ok .dot { border-color: #22c55e; background: #22c55e; }
+                li.ok .dot::after { content: ""; width: 5px; height: 9px; border: solid #0b1120; border-width: 0 2px 2px 0;
+                  transform: rotate(45deg) translate(-1px, -1px); }
                 @keyframes spin { to { transform: rotate(360deg); } }
+                .error { display: none; margin-top: 4px; padding: 12px 14px; border-radius: 10px; background: #450a0a;
+                  border: 1px solid #7f1d1d; color: #fecaca; font-size: 13px; text-align: left; }
+                .failed .error { display: block; }
+                .failed ol, .failed .wire { display: none; }
+                button { margin-top: 16px; width: 100%; height: 38px; border-radius: 8px; border: 1px solid #334155;
+                  background: #111827; color: #e2e8f0; font-size: 13px; font-weight: 600; cursor: pointer; }
+                .hint { margin-top: 14px; font-size: 11.5px; color: #475569; }
+                @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
               </style>
             </head>
             <body>
-              <div class="loader">
-                <div class="spinner"></div>
-                <p>Completing authentication...</p>
-              </div>
+              <main class="card" id="card">
+                <div class="handshake" aria-hidden="true">
+                  <div class="node"><img src="/logo.svg" alt=""></div>
+                  <div class="wire"></div>
+                  <div class="node"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25"/></svg></div>
+                </div>
+                <h1 id="title">Signing you in</h1>
+                <p class="sub" id="sub" role="status" aria-live="polite">Contacting Portal SSO…</p>
+                <ol id="steps">
+                  <li><span class="dot"></span>Identity verified by Portal SSO</li>
+                  <li><span class="dot"></span>Authorization code issued (PKCE&nbsp;S256)</li>
+                  <li><span class="dot"></span>Handing the code to the app securely</li>
+                  <li><span class="dot"></span>Establishing your session</li>
+                </ol>
+                <div class="error" id="error"></div>
+                <button type="button" id="close" hidden>Close window</button>
+                <p class="hint" id="hint">This window closes automatically.</p>
+              </main>
               <script>
-                (function() {
+                (function () {
+                  var MIN_VISIBLE_MS = 4000;
+                  var params = new URLSearchParams(window.location.search);
+                  var error = params.get('error');
+                  var steps = document.querySelectorAll('#steps li');
+                  var sub = document.getElementById('sub');
+                  var title = document.getElementById('title');
+                  var card = document.getElementById('card');
+                  var closeBtn = document.getElementById('close');
+                  closeBtn.addEventListener('click', function () { window.close(); });
+
+                  // Post first, animate second: the app starts exchanging the code now, not after the animation.
+                  var delivered = false;
                   try {
-                    var params = new URLSearchParams(window.location.search);
-                    var code = params.get('code');
-                    var state = params.get('state');
-                    var error = params.get('error');
-                    var errorDescription = params.get('error_description');
-
-                    var message = {
-                      type: 'PORTAL_SSO_POPUP_CALLBACK',
-                      code: code,
-                      state: state,
-                      error: error,
-                      errorDescription: errorDescription
-                    };
-
                     if (window.opener) {
-                      window.opener.postMessage(message, '*');
-                      setTimeout(function() {
-                        window.close();
-                      }, 100);
-                    } else {
-                      document.body.innerHTML = '<p style="text-align:center;padding:2rem;">Authentication completed. You can safely close this window.</p>';
+                      window.opener.postMessage({
+                        type: 'PORTAL_SSO_POPUP_CALLBACK',
+                        code: params.get('code'),
+                        state: params.get('state'),
+                        error: error,
+                        errorDescription: params.get('error_description')
+                      }, '*');
+                      delivered = true;
                     }
                   } catch (e) {
                     console.error('Popup callback error:', e);
                   }
+
+                  if (error) {
+                    card.classList.add('failed');
+                    title.textContent = 'Sign-in did not complete';
+                    sub.textContent = '';
+                    document.getElementById('error').textContent = params.get('error_description') || error;
+                    document.getElementById('hint').hidden = true;
+                    closeBtn.hidden = false;
+                    return;
+                  }
+                  if (!delivered) {
+                    title.textContent = 'Signed in';
+                    sub.textContent = 'The app window is no longer open. You can close this one.';
+                    document.getElementById('steps').hidden = true;
+                    document.getElementById('hint').hidden = true;
+                    closeBtn.hidden = false;
+                    return;
+                  }
+
+                  var labels = ['Contacting Portal SSO…', 'Verifying the handshake…', 'Securing the connection…', 'Starting your session…'];
+                  var stepMs = MIN_VISIBLE_MS / (steps.length + 0.5);
+                  Array.prototype.forEach.call(steps, function (li, i) {
+                    setTimeout(function () {
+                      if (i > 0) { steps[i - 1].className = 'ok'; }
+                      li.className = 'active';
+                      sub.textContent = labels[i];
+                    }, i * stepMs);
+                  });
+                  setTimeout(function () {
+                    steps[steps.length - 1].className = 'ok';
+                    card.classList.add('done');
+                    title.textContent = 'Signed in';
+                    sub.textContent = 'Returning to the app…';
+                  }, steps.length * stepMs);
+                  setTimeout(function () { window.close(); }, MIN_VISIBLE_MS + 400);
                 })();
               </script>
             </body>

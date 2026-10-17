@@ -8,77 +8,138 @@
   <link rel="icon" type="image/svg+xml" href="/logo.svg">
   <th:block th:replace="~{_styles :: styles}"></th:block>
   <style>
-    .origin-box { padding: 12px; border: 1px solid #cbd5e1; border-radius: 4px; background: #f8fafc; margin-bottom: 14px; }
-    .origin-box .label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #64748b; }
-    .origin-box .value { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; font-weight: 600; color: #0f172a; word-break: break-all; }
-    .muted { font-size: 12px; color: #64748b; }
-    .known { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #eef2ff; color: #3730a3; margin-bottom: 6px; }
-    .grant { font-size: 13px; color: #1e293b; font-weight: 600; }
-    .grant-sub { display: block; font-size: 11.5px; color: #64748b; font-weight: 400; }
-    .warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
-    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+    body { align-items: flex-start; padding-top: 48px; }
+    .widget-container { max-width: 460px; }
+    .widget-body { padding: 24px 28px 0; }
+
+    /* Header: app → Portal */
+    .connect-lockup { display: flex; align-items: center; justify-content: center; gap: 14px; }
+    .connect-lockup img { width: 40px; height: 40px; object-fit: contain; border-radius: 10px; }
+    .connect-lockup .app-fallback { width: 40px; height: 40px; border-radius: 10px; background: #e2e8f0; color: #334155;
+      display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; }
+    .connect-lockup .arrow { color: #94a3b8; display: flex; }
+    .heading { text-align: center; margin-bottom: 18px; }
+    .heading h1 { font-size: 18px; font-weight: 600; color: #111827; letter-spacing: -0.01em; }
+    .heading p { margin-top: 4px; font-size: 13px; color: var(--text-muted); }
+    .heading strong { color: var(--text-main); font-weight: 600; }
+
+    /* The address is what is being approved, so it is the most prominent thing on the page. */
+    .origin { border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px 14px; background: #f8fafc; margin-bottom: 16px; }
+    .origin-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .origin-label { font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: #64748b; }
+    .origin-value { margin-top: 2px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 15px;
+      font-weight: 600; color: #0f172a; word-break: break-all; }
+    .tag { flex-shrink: 0; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #eef2ff; color: #3730a3; }
+    .origin-note { margin-top: 8px; font-size: 12px; line-height: 1.45; color: #64748b; }
+
+    .notice { display: flex; gap: 8px; padding: 10px 12px; border-radius: 6px; font-size: 12.5px; line-height: 1.45; margin-bottom: 14px; }
+    .notice svg { flex-shrink: 0; width: 16px; height: 16px; margin-top: 1px; }
+    .notice-warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+    .notice-ok { background: var(--alert-ok-bg); border: 1px solid var(--alert-ok-border); color: var(--alert-ok-text); }
+    .notice-error { background: var(--alert-error-bg); border: 1px solid var(--alert-error-border); color: var(--alert-error-text); }
+
+    .section-label { font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 6px; }
+    .summary { font-size: 12.5px; color: #475569; margin-bottom: 14px; }
+    .summary code, .meta code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px;
+      background: #f1f5f9; padding: 1px 5px; border-radius: 4px; color: #0f172a; }
+
+    /* Grants: fixed ones show a check, optional ones a switch. No disabled checkboxes. */
+    .grants { border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
+    .grant { display: flex; align-items: center; gap: 12px; padding: 11px 14px; }
+    .grant + .grant { border-top: 1px solid #f1f5f9; }
+    .grant-icon { flex-shrink: 0; width: 22px; height: 22px; border-radius: 999px; background: #dcfce7; color: #15803d;
+      display: flex; align-items: center; justify-content: center; }
+    .grant-icon svg { width: 13px; height: 13px; }
+    .grant-text { flex: 1; min-width: 0; }
+    .grant-title { font-size: 13.5px; font-weight: 600; color: #111827; }
+    .grant-desc { font-size: 12px; color: #64748b; line-height: 1.4; }
+    label.grant { cursor: pointer; }
+    label.grant:hover { background: #f8fafc; }
+
+    .switch { position: relative; flex-shrink: 0; width: 36px; height: 20px; }
+    .switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+    .switch span { position: absolute; inset: 0; border-radius: 999px; background: #cbd5e1; transition: background .15s; pointer-events: none; }
+    .switch span::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 999px;
+      background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: transform .15s; }
+    .switch input:checked + span { background: var(--btn-primary); }
+    .switch input:checked + span::after { transform: translateX(16px); }
+    .switch input:focus-visible + span { outline: 2px solid var(--btn-primary); outline-offset: 2px; }
+
+    .meta { font-size: 12px; color: #64748b; margin-bottom: 4px; }
+
+    /* Decision bar: always visible, even when the page is taller than the window. */
+    .actions { position: sticky; bottom: 0; display: flex; gap: 10px; padding: 16px 28px 20px; margin-top: 14px;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.85), #fff 30%); border-top: 1px solid #f1f5f9; }
+    .actions .btn-secondary { width: auto; flex: 0 0 120px; height: 42px; }
+    .actions .btn-sign-in { flex: 1; }
+    .body-end { padding-bottom: 24px; }
+
+    @media (max-width: 480px) {
+      body { padding: 0; }
+      .widget-card { border-radius: 0; border-left: 0; border-right: 0; }
+      .widget-body { padding: 20px 16px 0; }
+      .actions { padding: 14px 16px 16px; }
+      .actions .btn-secondary { flex-basis: 96px; }
+      .origin-row { flex-direction: column; align-items: flex-start; }
+    }
   </style>
 </head>
 <body>
   <div class="widget-container">
     <div class="widget-card">
-      <div class="widget-header">
-        <div th:if="${review != null and review.request.iconUrl != null}" class="lockup">
+      <div class="widget-header" style="padding:22px 28px 18px">
+        <div class="connect-lockup">
+          <img th:if="${review != null and review.request.iconUrl != null}" th:src="${review.request.iconUrl}" th:alt="${review.request.appName}">
+          <div th:if="${review != null and review.request.iconUrl == null}" class="app-fallback"
+               th:text="${#strings.substring(review.request.appName, 0, 1)}">A</div>
+          <span class="arrow" th:if="${review != null}" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"/></svg>
+          </span>
           <img src="/logo.svg" alt="Portal SSO">
-          <span class="divider"></span>
-          <img th:src="${review.request.iconUrl}" th:alt="${review.request.appName}">
-        </div>
-        <div th:unless="${review != null and review.request.iconUrl != null}" class="logo-fallback">
-          <img src="/logo.svg" alt="Portal SSO">
-          <span>Portal SSO</span>
         </div>
       </div>
 
-      <div class="widget-body">
+      <!-- Unknown / unreadable request -->
+      <div th:if="${review == null}" class="widget-body body-end">
+        <div class="heading"><h1>Connection request unavailable</h1></div>
+        <div class="notice notice-error" role="alert"><span th:text="${error}">Not found.</span></div>
+        <p class="meta">Start the connection again from the app.</p>
+      </div>
 
-        <!-- Unknown / unreadable request -->
-        <div th:if="${review == null}">
-          <h1 class="widget-title">Connection request unavailable</h1>
-          <div class="alert-banner alert-error" role="alert"><span th:text="${error}">Not found.</span></div>
-          <p class="muted">Start the connection again from the app.</p>
-        </div>
-
-        <th:block th:if="${review != null}" th:with="r=${review.request}">
-          <h1 class="widget-title" th:text="'Connect ' + ${r.appName} + '?'">Connect app?</h1>
-          <p style="text-align:center;font-size:13px;color:#64748b;margin-bottom:18px">
-            Signed in as <strong style="color:#1e293b" th:text="${principalName}">you</strong>
-          </p>
-
-          <div th:if="${actionError}" class="alert-banner alert-error" role="alert"><span th:text="${actionError}">Error</span></div>
-
-          <div class="origin-box">
-            <span th:if="${review.knownProduct != null}" class="known" th:text="${review.knownProduct.displayName}">Known app</span>
-            <div class="label">App address</div>
-            <div class="value" th:text="${review.origin}">https://app.example.com</div>
-            <div class="muted" style="margin-top:6px">
-              Credentials can only be delivered to this address. Approve only if you, or someone you trust,
-              started this connection from it.
-              <th:block th:if="${review.knownProduct != null}">
-                The product label is what the app says it is; the address is what you are approving.
-              </th:block>
-            </div>
+      <th:block th:if="${review != null}" th:with="r=${review.request}, decide=${review.reviewable and isAdmin}">
+        <div class="widget-body" th:classappend="${decide} ? '' : 'body-end'">
+          <div class="heading">
+            <h1 th:text="'Connect ' + ${r.appName} + ' to Portal SSO'">Connect app to Portal SSO</h1>
+            <p>Signed in as <strong th:text="${principalName}">you</strong></p>
           </div>
 
-          <div th:if="${review.insecureTransport}" class="alert-banner warn" role="alert">
-            <span>This app uses plain <code>http://</code>. Credentials and sign-in codes will travel unencrypted.</span>
-          </div>
+          <div th:if="${actionError}" class="notice notice-error" role="alert"><span th:text="${actionError}">Error</span></div>
 
-          <!-- Decided already -->
-          <th:block th:unless="${review.reviewable}">
-            <div th:if="${review.resumable}">
-              <div class="alert-banner alert-ok" role="status">
-                <span th:text="'Approved by ' + ${r.reviewedBy} + '. If the app did not finish connecting, continue below.'">Approved.</span>
+          <div class="origin">
+            <div class="origin-row">
+              <div>
+                <div class="origin-label">App address</div>
+                <div class="origin-value" th:text="${review.origin}">https://app.example.com</div>
               </div>
-              <form method="post" th:action="@{/connect/{id}/resume(id=${r.id})}">
-                <button type="submit" class="btn-sign-in" th:text="'Continue to ' + ${r.appName}">Continue</button>
-              </form>
+              <span th:if="${review.knownProduct != null}" class="tag" th:text="${review.knownProduct.displayName}">Known app</span>
             </div>
-            <div th:unless="${review.resumable}" class="alert-banner alert-error" role="status">
+            <div class="origin-note">
+              Credentials are delivered only to this address. Approve only if you, or someone you trust, started this
+              connection from it<th:block th:if="${review.knownProduct != null}">; the label is what the app says it is</th:block>.
+            </div>
+          </div>
+
+          <div th:if="${review.insecureTransport}" class="notice notice-warn" role="alert">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3.75h.008M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+            <span>This app uses plain <code>http://</code>. Credentials and sign-in codes travel unencrypted.</span>
+          </div>
+
+          <!-- Already decided -->
+          <th:block th:unless="${review.reviewable}">
+            <div th:if="${review.resumable}" class="notice notice-ok" role="status">
+              <span th:text="'Approved by ' + ${r.reviewedBy} + '. If the app did not finish connecting, continue below.'">Approved.</span>
+            </div>
+            <div th:unless="${review.resumable}" th:class="${review.status == 'redeemed'} ? 'notice notice-ok' : 'notice notice-error'" role="status">
               <span th:switch="${review.status}">
                 <th:block th:case="'denied'">This connection was denied.</th:block>
                 <th:block th:case="'redeemed'">This app is already connected. Nothing more to do.</th:block>
@@ -86,78 +147,94 @@
                 <th:block th:case="*">This request has expired. Start the connection again from the app.</th:block>
               </span>
             </div>
+            <form th:if="${review.resumable}" method="post" th:action="@{/connect/{id}/resume(id=${r.id})}">
+              <button type="submit" class="btn-sign-in" th:text="'Continue to ' + ${r.appName}">Continue</button>
+            </form>
           </th:block>
 
-          <!-- Waiting for an administrator, viewer is not one -->
-          <th:block th:if="${review.reviewable and !isAdmin}">
-            <div class="alert-banner warn" role="status">
-              <span>A Portal administrator must approve this connection. Send them this page's link; it stays valid until
-                <strong th:text="${expiresText}">tomorrow</strong>.</span>
-            </div>
-          </th:block>
+          <!-- Waiting for an administrator; the viewer is not one -->
+          <div th:if="${review.reviewable and !isAdmin}" class="notice notice-warn" role="status">
+            <span>A Portal administrator must approve this connection. Send them this page's link; it is valid until
+              <strong th:text="${expiresText}">tomorrow</strong>.</span>
+          </div>
 
           <!-- Review form for administrators -->
-          <form th:if="${review.reviewable and isAdmin}" method="post" th:action="@{/connect/{id}/approve(id=${r.id})}">
-            <div th:if="${review.reconnectApplicationName != null}" class="alert-banner warn" role="alert">
-              <span>
-                This looks like <strong th:text="${review.reconnectApplicationName}">the app</strong> being reinstalled.
-                Approving keeps its settings but <strong>replaces its credentials</strong>; any other running copy stops
-                working.
-              </span>
+          <form th:if="${decide}" id="approve-form" method="post" th:action="@{/connect/{id}/approve(id=${r.id})}">
+            <div th:if="${review.reconnectApplicationName != null}" class="notice notice-warn" role="alert">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992V4.356M2.985 19.644v-4.992h4.992m0 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182"/></svg>
+              <span>Reinstall of <strong th:text="${review.reconnectApplicationName}">the app</strong>: its settings are kept but
+                approving <strong>replaces its credentials</strong>, so any other running copy stops working.</span>
             </div>
-            <p th:if="${review.reconnectApplicationName == null}" class="muted" style="margin:0 0 12px">
-              Creates the application <strong th:text="${r.appName}">app</strong> (visible to all users; change this later
-              under Applications) with client ID <code th:text="${review.clientIdToCreate}">client</code>.
+            <p th:if="${review.reconnectApplicationName == null}" class="summary">
+              Creates the application <strong th:text="${r.appName}">app</strong> with client ID
+              <code th:text="${review.clientIdToCreate}">client</code>, visible to all users (change it later under Applications).
             </p>
 
-            <p style="margin:0 0 8px;font-size:12.5px;color:#64748b">The app will be able to:</p>
-            <ul class="scopes-list">
-              <li class="scope-item">
-                <input type="checkbox" checked disabled>
-                <label>
-                  <span class="grant">Sign users in with Portal SSO</span>
-                  <span class="grant-sub" th:text="'Scopes: ' + ${r.scopes}">openid profile email</span>
-                </label>
-              </li>
-              <li th:if="${r.confidential}" class="scope-item">
-                <input type="checkbox" checked disabled>
-                <label>
-                  <span class="grant">Receive a client secret on its server</span>
-                  <span class="grant-sub">Delivered directly to the app, never shown here.</span>
-                </label>
-              </li>
-              <li th:if="${r.externalAuth and review.reconnectApplicationName == null}" class="scope-item">
-                <input type="checkbox" name="allowExternalAuth" value="true" id="allowExternalAuth" checked>
-                <label for="allowExternalAuth" style="cursor:pointer">
-                  <span class="grant">Check user passwords from its own sign-in screen</span>
-                  <span class="grant-sub">External auth API. The app sees passwords users type into it. Untick to allow SSO only.</span>
-                </label>
-              </li>
-              <li th:if="${r.externalRegistration and review.reconnectApplicationName == null}" class="scope-item">
-                <input type="checkbox" name="allowExternalRegistration" value="true" id="allowExternalRegistration">
-                <label for="allowExternalRegistration" style="cursor:pointer">
-                  <span class="grant">Create new Portal accounts</span>
-                  <span class="grant-sub">Lets anyone who can reach the app register a Portal account through it.</span>
-                </label>
-              </li>
-            </ul>
+            <div class="section-label" th:text="${r.appName} + ' will be able to'">The app will be able to</div>
+            <div class="grants">
+              <div class="grant">
+                <span class="grant-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg></span>
+                <div class="grant-text">
+                  <div class="grant-title">Sign users in with Portal SSO</div>
+                  <div class="grant-desc" th:text="'Scopes: ' + ${r.scopes}">openid profile email</div>
+                </div>
+              </div>
+              <div th:if="${r.confidential}" class="grant">
+                <span class="grant-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg></span>
+                <div class="grant-text">
+                  <div class="grant-title">Get a client secret on its server</div>
+                  <div class="grant-desc">Delivered straight to the app; never shown here.</div>
+                </div>
+              </div>
+              <label th:if="${r.externalAuth and review.reconnectApplicationName == null}" class="grant" for="allowExternalAuth">
+                <div class="grant-text">
+                  <div class="grant-title">Check passwords on its own sign-in screen</div>
+                  <div class="grant-desc">The app sees the passwords users type into it. Turn off for SSO only.</div>
+                </div>
+                <span class="switch"><input type="checkbox" name="allowExternalAuth" value="true" id="allowExternalAuth" checked><span></span></span>
+              </label>
+              <label th:if="${r.externalRegistration and review.reconnectApplicationName == null}" class="grant" for="allowExternalRegistration">
+                <div class="grant-text">
+                  <div class="grant-title">Create new Portal accounts</div>
+                  <div class="grant-desc">Anyone who can reach the app could register a Portal account.</div>
+                </div>
+                <span class="switch"><input type="checkbox" name="allowExternalRegistration" value="true" id="allowExternalRegistration"><span></span></span>
+              </label>
+            </div>
 
-            <p class="muted" style="margin:10px 0 14px">
-              Requested from <code th:text="${r.requesterIp != null ? r.requesterIp : 'unknown'}">ip</code>
+            <p class="meta">
+              Sent by the app's server at <code th:text="${r.requesterIp != null ? r.requesterIp : 'unknown'}">ip</code>
               · expires <span th:text="${expiresText}">soon</span>
             </p>
-
-            <button type="submit" class="btn-sign-in">Approve and connect</button>
           </form>
+          <form th:if="${decide}" id="deny-form" method="post" th:action="@{/connect/{id}/deny(id=${r.id})}"></form>
+        </div>
 
-          <form th:if="${review.reviewable and isAdmin}" method="post" th:action="@{/connect/{id}/deny(id=${r.id})}" style="margin-top:10px">
-            <button type="submit" class="btn-secondary">Deny</button>
-          </form>
-        </th:block>
-      </div>
+        <div th:if="${decide}" class="actions">
+          <button type="submit" form="deny-form" class="btn-secondary">Deny</button>
+          <button type="submit" form="approve-form" class="btn-sign-in">Approve and connect</button>
+        </div>
+      </th:block>
     </div>
 
     <p class="badge-powered">Powered by <strong>Portal SSO</strong></p>
   </div>
+  <script th:inline="none">
+    // Registration only makes sense alongside password login.
+    (function () {
+      var auth = document.getElementById('allowExternalAuth');
+      var reg = document.getElementById('allowExternalRegistration');
+      if (!auth || !reg) return;
+      function sync() {
+        reg.disabled = !auth.checked;
+        if (!auth.checked) {
+          reg.checked = false;
+        }
+        reg.closest('.grant').style.opacity = auth.checked ? '' : '.5';
+      }
+      auth.addEventListener('change', sync);
+      sync();
+    })();
+  </script>
 </body>
 </html>

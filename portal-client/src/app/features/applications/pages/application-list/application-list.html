@@ -182,17 +182,17 @@
         <table class="w-full text-left">
           <thead class="border-b border-ink-200 bg-ink-50/60">
             <tr class="text-[11px] font-semibold uppercase tracking-wider text-ink-500">
-              <th class="px-5 py-3">Application</th>
-              <th class="px-5 py-3">Category</th>
-              <th class="px-5 py-3">Access Control</th>
-              <th class="px-5 py-3">Status</th>
-              <th class="px-5 py-3 text-right">Actions</th>
+              <th class="px-4 py-3">Application</th>
+              <th class="px-4 py-3">Category</th>
+              <th class="px-4 py-3">Access</th>
+              <th class="px-4 py-3">Status</th>
+              <th class="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-ink-100">
             @for (app of filteredApplications(); track app.id) {
               <tr class="transition-colors hover:bg-ink-50/50">
-                <td class="px-5 py-3.5 min-w-[280px]">
+                <td class="px-4 py-3.5 min-w-[220px]">
                   <div class="flex items-start gap-3.5">
                     @if (app.iconUrl) {
                       <img
@@ -239,12 +239,12 @@
                     </div>
                   </div>
                 </td>
-                <td class="px-5 py-3.5 whitespace-nowrap">
+                <td class="px-4 py-3.5 whitespace-nowrap">
                   <app-badge tone="neutral">{{ app.category }}</app-badge>
                 </td>
-                <td class="px-5 py-3.5">
+                <td class="px-4 py-3.5 whitespace-nowrap">
                   @if (app.accessType === 'ALL_USERS') {
-                    <app-badge tone="success">Public (All Users)</app-badge>
+                    <app-badge tone="success" title="Every signed-in user can see and launch it">All users</app-badge>
                   } @else {
                     <div class="flex flex-wrap items-center gap-1">
                       <app-badge tone="brand">Restricted</app-badge>
@@ -256,15 +256,15 @@
                     </div>
                   }
                 </td>
-                <td class="px-5 py-3.5 whitespace-nowrap">
+                <td class="px-4 py-3.5 whitespace-nowrap">
                   @if (app.enabled) {
                     <app-badge tone="success">Enabled</app-badge>
                   } @else {
                     <app-badge tone="danger">Disabled</app-badge>
                   }
                 </td>
-                <td class="px-5 py-3.5 text-right whitespace-nowrap">
-                  <div class="flex items-center justify-end gap-1.5">
+                <td class="px-4 py-3.5 text-right whitespace-nowrap">
+                  <div class="flex items-center justify-end gap-1">
                     <!-- Keys & Setup: issuer, client, redirect URIs, API key, .env -->
                     <button
                       type="button"
@@ -283,26 +283,26 @@
                     <button
                       type="button"
                       (click)="openQuickstart(app)"
-                      title="Open interactive code generator and integration snippets"
-                      class="inline-flex items-center gap-1 rounded-lg border border-ink-200 bg-white px-2 py-1 text-[11px] font-semibold text-ink-700 transition hover:bg-ink-50 hover:text-ink-900 shadow-2xs"
+                      title="Quickstart: code snippets for this app"
+                      aria-label="Quickstart code"
+                      class="rounded-lg border border-ink-200 p-1.5 text-ink-500 transition hover:border-ink-300 hover:bg-ink-100 hover:text-ink-900"
                     >
-                      <svg class="h-3.5 w-3.5 text-ink-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
                       </svg>
-                      Quickstart
                     </button>
 
                     <!-- Download Agent Guide -->
                     <button
                       type="button"
                       (click)="downloadAgentGuide(app)"
-                      title="Download PORTAL_SSO.md for Claude Code, Cursor or Copilot (contains no secrets)"
-                      class="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50/60 px-2 py-1 text-[11px] font-semibold text-indigo-700 transition hover:bg-indigo-100 shadow-2xs"
+                      title="Agent guide: download PORTAL_SSO.md for Claude Code, Cursor or Copilot (no secrets)"
+                      aria-label="Download agent guide"
+                      class="rounded-lg border border-indigo-200 bg-indigo-50/60 p-1.5 text-indigo-600 transition hover:border-indigo-300 hover:bg-indigo-100"
                     >
-                      <svg class="h-3.5 w-3.5 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                       </svg>
-                      Agent Prompt
                     </button>
 
                     <!-- Separator -->
