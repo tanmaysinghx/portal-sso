@@ -41,7 +41,7 @@ WORKDIR /build/portal-server
 # Maven version the project already pins.
 COPY portal-server/.mvn/ .mvn/
 COPY portal-server/mvnw portal-server/pom.xml ./
-RUN chmod +x mvnw && ./mvnw -B -q dependency:go-offline
+RUN chmod +x mvnw && (./mvnw -B -q dependency:go-offline || true)
 
 COPY portal-server/src/ src/
 
@@ -67,8 +67,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Runs unprivileged. An identity server is a poor thing to run as root.
-RUN groupadd --system --gid 1001 portal \
-    && useradd --system --uid 1001 --gid portal --home /app portal
+RUN groupadd --gid 1001 portal \
+    && useradd --uid 1001 --gid portal --home /app portal
 
 WORKDIR /app
 COPY --from=server --chown=portal:portal /build/portal-server.jar app.jar
