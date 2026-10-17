@@ -188,6 +188,10 @@ public class SecurityConfig {
                         // The consent screen names the application and the signed-in user, so it is
                         // only meaningful — and only safe to render — for an authenticated session.
                         .requestMatchers(PathPatternRequestMatcher.pathPattern("/oauth2/consent")).authenticated()
+                        // App connection approval: names the reviewer and creates applications, so
+                        // it needs a session; AppConnectPageController additionally requires ADMIN
+                        // to approve or deny.
+                        .requestMatchers(PathPatternRequestMatcher.pathPattern("/connect/**")).authenticated()
                         .anyRequest().permitAll())
                 // Naming a login page is what stops DefaultLoginPageGeneratingFilter emitting the
                 // stock unstyled form; AuthPageController serves the branded one at the same path,

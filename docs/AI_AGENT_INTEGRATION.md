@@ -60,6 +60,7 @@ Secrets are **never** in this file. They come from the app's secret store or `.e
 | A server-rendered web app (Spring, Express, Django, FastAPI, Rails, Go) | Standard OIDC auth-code + PKCE, usually a confidential client | §4 |
 | An API that receives Portal access tokens from a frontend | JWT bearer validation | §5 |
 | An app with its **own** login/register UI that needs Portal accounts | External API from the backend | §6 |
+| A self-hosted product that should set itself up with no copied secrets | "Connect with Portal SSO" (manifest → admin approval → code + verifier redeem) | [APP_CONNECT.md](APP_CONNECT.md) |
 
 Endpoints (all under `PORTAL_URL`): discovery `/.well-known/openid-configuration`, authorize
 `/oauth2/authorize`, token `/oauth2/token`, JWKS `/oauth2/jwks`, userinfo `/userinfo`, popup relay

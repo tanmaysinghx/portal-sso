@@ -41,7 +41,12 @@ public enum AuditAction {
     APPLICATION_DELETED(TargetType.APPLICATION, "Application deleted"),
     ACCESS_REQUEST_SUBMITTED(TargetType.APPLICATION, "Access request submitted"),
     ACCESS_REQUEST_APPROVED(TargetType.APPLICATION, "Access request approved"),
-    ACCESS_REQUEST_DENIED(TargetType.APPLICATION, "Access request denied");
+    ACCESS_REQUEST_DENIED(TargetType.APPLICATION, "Access request denied"),
+    /** An administrator approved an app's "Connect with Portal SSO" request. */
+    APP_CONNECT_APPROVED(TargetType.APPLICATION, "App connection approved"),
+    APP_CONNECT_DENIED(TargetType.APPLICATION, "App connection denied"),
+    /** The app backend collected its credentials; the actor names the approving administrator. */
+    APP_CONNECT_REDEEMED(TargetType.APPLICATION, "App connection credentials delivered");
 
     /** What the action operates on. Stored so the log can be filtered by object as well as verb. */
     public enum TargetType {

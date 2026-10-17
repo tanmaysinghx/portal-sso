@@ -48,6 +48,15 @@ public enum ErrorCode {
     ACCESS_REQUEST_NOT_FOUND("PRTL-3007", "Access request not found", HttpStatus.NOT_FOUND),
     ACCESS_ALREADY_GRANTED("PRTL-3008", "User already has access to this application", HttpStatus.BAD_REQUEST),
     EXTERNAL_REGISTRATION_DISABLED("PRTL-3009", "External registration is not enabled for this application", HttpStatus.FORBIDDEN),
+    CONNECT_DISABLED("PRTL-3010", "App connection requests are disabled on this server.", HttpStatus.FORBIDDEN),
+    CONNECT_REQUEST_NOT_FOUND("PRTL-3011", "The connection request was not found.", HttpStatus.NOT_FOUND),
+    CONNECT_REQUEST_INVALID("PRTL-3012", "The connection request is invalid.", HttpStatus.BAD_REQUEST),
+    CONNECT_REQUEST_EXPIRED("PRTL-3013", "The connection request has expired. Start the connection again from the app.", HttpStatus.GONE),
+    CONNECT_REQUEST_NOT_REVIEWABLE("PRTL-3014", "The connection request has already been decided.", HttpStatus.CONFLICT),
+    CONNECT_REQUEST_PENDING("PRTL-3015", "The connection request is still waiting for an administrator.", HttpStatus.CONFLICT),
+    CONNECT_REQUEST_DENIED("PRTL-3016", "An administrator denied the connection request.", HttpStatus.FORBIDDEN),
+    CONNECT_REDEEM_REJECTED("PRTL-3017", "The connection code or verifier is invalid, or it has already been used.", HttpStatus.BAD_REQUEST),
+    CONNECT_TOO_MANY_PENDING("PRTL-3018", "Too many connection requests are waiting for review. Try again later.", HttpStatus.TOO_MANY_REQUESTS),
 
     // =========================================================================
     // 4000 Series: Validation, Formatting & Generic Client Errors

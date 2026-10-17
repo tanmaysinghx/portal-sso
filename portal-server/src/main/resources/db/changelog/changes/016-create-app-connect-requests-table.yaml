@@ -1,0 +1,141 @@
+databaseChangeLog:
+  - changeSet:
+      id: 016-create-app-connect-requests-table
+      author: ai-agent
+      changes:
+        - createTable:
+            tableName: app_connect_requests
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: product
+                  type: VARCHAR(100)
+              - column:
+                  name: app_name
+                  type: VARCHAR(200)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: VARCHAR(1000)
+              - column:
+                  name: app_url
+                  type: VARCHAR(1000)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: icon_url
+                  type: VARCHAR(1000)
+              - column:
+                  name: callback_uri
+                  type: VARCHAR(1000)
+                  constraints:
+                    nullable: false
+              # Space-separated; every entry shares the origin of app_url (validated on submit).
+              - column:
+                  name: redirect_uris
+                  type: VARCHAR(4000)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: scopes
+                  type: VARCHAR(500)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: requested_client_id
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: confidential
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: external_auth
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: external_registration
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              # S256 PKCE-style challenge; only the app backend that submitted the request holds the verifier.
+              - column:
+                  name: code_challenge
+                  type: VARCHAR(128)
+                  constraints:
+                    nullable: false
+              # SHA-256 of the one-time code delivered by redirect to callback_uri on approval. Proves the
+              # redeeming backend really serves that origin; the verifier proves it submitted the request.
+              - column:
+                  name: delivery_code_hash
+                  type: VARCHAR(64)
+              - column:
+                  name: delivery_code_expires_at
+                  type: TIMESTAMP
+              - column:
+                  name: requester_ip
+                  type: VARCHAR(45)
+              - column:
+                  name: application_id
+                  type: VARCHAR(36)
+              - column:
+                  name: reconnect
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: reviewed_by
+                  type: VARCHAR(255)
+              - column:
+                  name: reviewed_at
+                  type: TIMESTAMP
+              - column:
+                  name: redeemed_at
+                  type: TIMESTAMP
+              - column:
+                  name: failed_redeem_attempts
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: expires_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: ix_app_connect_requests_status_expires
+            tableName: app_connect_requests
+            columns:
+              - column:
+                  name: status
+              - column:
+                  name: expires_at

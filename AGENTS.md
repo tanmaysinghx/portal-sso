@@ -97,6 +97,7 @@ When modifying or adding code, you **MUST** uphold these rules:
 - `docs/AI_AGENT_INTEGRATION.md` is the brief given to agents working in *other* repos that integrate with Portal SSO. Keep it in sync with `buildAgentGuide()`.
 - Keep the distinction clear: an **Application** is a launchpad/catalog entry; an **OAuth Client** is the OIDC relying-party registration. An Application may link to an OAuth Client by `clientId`, but deleting one must not silently delete the other.
 - Prefer simplifying admin workflows in the Applications UI while preserving the lower-level OAuth Clients page for advanced registry management.
+- Apps can onboard themselves through "Connect with Portal SSO" (`connect/`, `docs/APP_CONNECT.md`): manifest → admin approval at `/connect/{id}` → code + verifier redeem. Never weaken the two-proof redeem or the same-origin rules.
 - External app login/register APIs are protected by per-Application API keys. Keys are generated server-side, shown once, stored hashed, and must be used only from the app backend, never browser JavaScript.
 
 ### 1. Database & Portability

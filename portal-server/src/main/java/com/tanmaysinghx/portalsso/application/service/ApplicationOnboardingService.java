@@ -108,6 +108,30 @@ public class ApplicationOnboardingService {
         return credentialsFor(applicationId, secret, null);
     }
 
+    /**
+     * Replaces every secret the application has (confidential client secret, external API key) and
+     * returns the new values once. Used when credentials are delivered straight to the app's
+     * backend by the connect flow; the previous values stop working immediately.
+     */
+    @Transactional
+    public ApplicationCredentialsResponse reissueCredentials(UUID applicationId) {
+        Application app = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.APPLICATION_NOT_FOUND, "Application not found: " + applicationId));
+
+        String clientSecret = null;
+        if (app.getClientId() != null) {
+            boolean confidential = oAuthClientRepository.findByClientId(app.getClientId())
+                    .map(OAuthClientResponse::from)
+                    .map(OAuthClientResponse::confidential)
+                    .orElse(false);
+            if (confidential) {
+                clientSecret = clientRegistrationService.regenerateSecret(app.getClientId()).clientSecret();
+            }
+        }
+        String apiKey = app.isExternalAuthEnabled() ? applicationService.rotateExternalAuthApiKey(applicationId) : null;
+        return credentialsFor(applicationId, clientSecret, apiKey);
+    }
+
     private ApplicationCredentialsResponse credentialsFor(UUID applicationId, String clientSecret, String apiKey) {
         Application app = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.APPLICATION_NOT_FOUND, "Application not found: " + applicationId));
@@ -189,7 +213,7 @@ public class ApplicationOnboardingService {
         return values.stream().filter(v -> v != null && !v.isBlank()).map(String::trim).toList();
     }
 
-    static String toClientId(String name) {
+    public static String toClientId(String name) {
         String slug = name == null ? "" : name.trim().toLowerCase(Locale.ROOT)
                 .replaceAll("[^a-z0-9._-]+", "-")
                 .replaceAll("(^-+)|(-+$)", "");

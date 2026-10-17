@@ -1,4 +1,24 @@
 <div class="animate-fade-in-up">
+  <!-- Apps asking to connect themselves ("Connect with Portal SSO") -->
+  @if (pendingConnects().length > 0) {
+    <div class="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4">
+      <p class="text-[13px] font-semibold text-amber-900">
+        {{ pendingConnects().length }} app{{ pendingConnects().length === 1 ? '' : 's' }} waiting to connect
+      </p>
+      <ul class="mt-2 space-y-1.5">
+        @for (req of pendingConnects(); track req.id) {
+          <li class="flex items-center justify-between gap-3 text-[13px]">
+            <span class="min-w-0 truncate text-amber-900">
+              <span class="font-medium">{{ req.appName }}</span>
+              <span class="ml-1 font-mono text-[12px] text-amber-700">{{ req.appUrl }}</span>
+            </span>
+            <a [href]="req.reviewUrl" class="shrink-0 rounded-lg bg-ink-900 px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-ink-800">Review</a>
+          </li>
+        }
+      </ul>
+    </div>
+  }
+
   <!-- Header with title & actions -->
   <div class="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
     <div>

@@ -152,6 +152,20 @@ app:
       "[/api/public/register]": { capacity: 5, per-minute: 5 }
       "[/api/public/]": { capacity: 30, per-minute: 60 }
       "[/oauth2/token]": { capacity: 30, per-minute: 120 }
+      # Unauthenticated app-connect submissions and redeems; a real app needs a handful.
+      "[/api/external/connect/]": { capacity: 10, per-minute: 10 }
+
+  connect:
+    # "Connect with Portal SSO": apps register themselves, an administrator approves at
+    # /connect/{id}, and the app backend collects its credentials directly. Nobody copies a secret.
+    enabled: ${APP_CONNECT_ENABLED:true}
+    pending-ttl: 24h
+    redeem-ttl: 1h
+    code-ttl: 10m
+    max-pending: 50
+    max-redeem-attempts: 5
+    # Accept http:// app URLs beyond localhost. Leave off: the delivery code travels in the URL.
+    allow-insecure-http: ${APP_CONNECT_ALLOW_INSECURE_HTTP:false}
 
   registration:
     # Public self-registration, off by default. A Portal SSO account is global — it grants access

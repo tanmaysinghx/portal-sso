@@ -20,6 +20,7 @@ import {
   Application,
   ApplicationAccessType,
   ApplicationCredentials,
+  ConnectRequestSummary,
   CreateApplicationRequest,
   OnboardApplicationRequest,
   UpdateApplicationRequest,
@@ -54,6 +55,8 @@ export class ApplicationList {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly applications = signal<Application[]>([]);
+  /** Apps waiting for approval via "Connect with Portal SSO". */
+  readonly pendingConnects = signal<ConnectRequestSummary[]>([]);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
 
@@ -158,6 +161,10 @@ export class ApplicationList {
   constructor() {
     this.loadApplications();
     this.loadPrerequisites();
+    this.applicationService.getPendingConnectRequests().subscribe({
+      next: (requests) => this.pendingConnects.set(requests),
+      error: () => this.pendingConnects.set([]),
+    });
 
     // Prefill the new client's ID and redirect URI from the app until the admin edits them.
     this.form.controls.name.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((name) => {

@@ -6,6 +6,7 @@ import {
   ApplicationApiKeyResponse,
   ApplicationCredentials,
   ApplicationOnboardingResponse,
+  ConnectRequestSummary,
   CreateApplicationRequest,
   OnboardApplicationRequest,
   UpdateApplicationRequest,
@@ -70,6 +71,10 @@ export class ApplicationService {
       `/api/admin/applications/${id}/external-auth/api-key`,
       {},
     );
+  }
+
+  getPendingConnectRequests(): Observable<ConnectRequestSummary[]> {
+    return this.http.get<ConnectRequestSummary[]>('/api/admin/connect-requests');
   }
 
   getUserApplications(): Observable<UserApplication[]> {

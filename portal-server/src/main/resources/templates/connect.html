@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title th:text="${review != null} ? 'Connect ' + ${review.request.appName} : 'Connect an app'">Connect an app</title>
+  <link rel="icon" type="image/svg+xml" href="/logo.svg">
+  <th:block th:replace="~{_styles :: styles}"></th:block>
+  <style>
+    .origin-box { padding: 12px; border: 1px solid #cbd5e1; border-radius: 4px; background: #f8fafc; margin-bottom: 14px; }
+    .origin-box .label { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #64748b; }
+    .origin-box .value { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; font-weight: 600; color: #0f172a; word-break: break-all; }
+    .muted { font-size: 12px; color: #64748b; }
+    .known { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #eef2ff; color: #3730a3; margin-bottom: 6px; }
+    .grant { font-size: 13px; color: #1e293b; font-weight: 600; }
+    .grant-sub { display: block; font-size: 11.5px; color: #64748b; font-weight: 400; }
+    .warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="widget-container">
+    <div class="widget-card">
+      <div class="widget-header">
+        <div th:if="${review != null and review.request.iconUrl != null}" class="lockup">
+          <img src="/logo.svg" alt="Portal SSO">
+          <span class="divider"></span>
+          <img th:src="${review.request.iconUrl}" th:alt="${review.request.appName}">
+        </div>
+        <div th:unless="${review != null and review.request.iconUrl != null}" class="logo-fallback">
+          <img src="/logo.svg" alt="Portal SSO">
+          <span>Portal SSO</span>
+        </div>
+      </div>
+
+      <div class="widget-body">
+
+        <!-- Unknown / unreadable request -->
+        <div th:if="${review == null}">
+          <h1 class="widget-title">Connection request unavailable</h1>
+          <div class="alert-banner alert-error" role="alert"><span th:text="${error}">Not found.</span></div>
+          <p class="muted">Start the connection again from the app.</p>
+        </div>
+
+        <th:block th:if="${review != null}" th:with="r=${review.request}">
+          <h1 class="widget-title" th:text="'Connect ' + ${r.appName} + '?'">Connect app?</h1>
+          <p style="text-align:center;font-size:13px;color:#64748b;margin-bottom:18px">
+            Signed in as <strong style="color:#1e293b" th:text="${principalName}">you</strong>
+          </p>
+
+          <div th:if="${actionError}" class="alert-banner alert-error" role="alert"><span th:text="${actionError}">Error</span></div>
+
+          <div class="origin-box">
+            <span th:if="${review.knownProduct != null}" class="known" th:text="${review.knownProduct.displayName}">Known app</span>
+            <div class="label">App address</div>
+            <div class="value" th:text="${review.origin}">https://app.example.com</div>
+            <div class="muted" style="margin-top:6px">
+              Credentials can only be delivered to this address. Approve only if you, or someone you trust,
+              started this connection from it.
+              <th:block th:if="${review.knownProduct != null}">
+                The product label is what the app says it is; the address is what you are approving.
+              </th:block>
+            </div>
+          </div>
+
+          <div th:if="${review.insecureTransport}" class="alert-banner warn" role="alert">
+            <span>This app uses plain <code>http://</code>. Credentials and sign-in codes will travel unencrypted.</span>
+          </div>
+
+          <!-- Decided already -->
+          <th:block th:unless="${review.reviewable}">
+            <div th:if="${review.resumable}">
+              <div class="alert-banner alert-ok" role="status">
+                <span th:text="'Approved by ' + ${r.reviewedBy} + '. If the app did not finish connecting, continue below.'">Approved.</span>
+              </div>
+              <form method="post" th:action="@{/connect/{id}/resume(id=${r.id})}">
+                <button type="submit" class="btn-sign-in" th:text="'Continue to ' + ${r.appName}">Continue</button>
+              </form>
+            </div>
+            <div th:unless="${review.resumable}" class="alert-banner alert-error" role="status">
+              <span th:switch="${review.status}">
+                <th:block th:case="'denied'">This connection was denied.</th:block>
+                <th:block th:case="'redeemed'">This app is already connected. Nothing more to do.</th:block>
+                <th:block th:case="'locked'">This request was locked after repeated invalid attempts. Start again from the app.</th:block>
+                <th:block th:case="*">This request has expired. Start the connection again from the app.</th:block>
+              </span>
+            </div>
+          </th:block>
+
+          <!-- Waiting for an administrator, viewer is not one -->
+          <th:block th:if="${review.reviewable and !isAdmin}">
+            <div class="alert-banner warn" role="status">
+              <span>A Portal administrator must approve this connection. Send them this page's link; it stays valid until
+                <strong th:text="${expiresText}">tomorrow</strong>.</span>
+            </div>
+          </th:block>
+
+          <!-- Review form for administrators -->
+          <form th:if="${review.reviewable and isAdmin}" method="post" th:action="@{/connect/{id}/approve(id=${r.id})}">
+            <div th:if="${review.reconnectApplicationName != null}" class="alert-banner warn" role="alert">
+              <span>
+                This looks like <strong th:text="${review.reconnectApplicationName}">the app</strong> being reinstalled.
+                Approving keeps its settings but <strong>replaces its credentials</strong>; any other running copy stops
+                working.
+              </span>
+            </div>
+            <p th:if="${review.reconnectApplicationName == null}" class="muted" style="margin:0 0 12px">
+              Creates the application <strong th:text="${r.appName}">app</strong> (visible to all users; change this later
+              under Applications) with client ID <code th:text="${review.clientIdToCreate}">client</code>.
+            </p>
+
+            <p style="margin:0 0 8px;font-size:12.5px;color:#64748b">The app will be able to:</p>
+            <ul class="scopes-list">
+              <li class="scope-item">
+                <input type="checkbox" checked disabled>
+                <label>
+                  <span class="grant">Sign users in with Portal SSO</span>
+                  <span class="grant-sub" th:text="'Scopes: ' + ${r.scopes}">openid profile email</span>
+                </label>
+              </li>
+              <li th:if="${r.confidential}" class="scope-item">
+                <input type="checkbox" checked disabled>
+                <label>
+                  <span class="grant">Receive a client secret on its server</span>
+                  <span class="grant-sub">Delivered directly to the app, never shown here.</span>
+                </label>
+              </li>
+              <li th:if="${r.externalAuth and review.reconnectApplicationName == null}" class="scope-item">
+                <input type="checkbox" name="allowExternalAuth" value="true" id="allowExternalAuth" checked>
+                <label for="allowExternalAuth" style="cursor:pointer">
+                  <span class="grant">Check user passwords from its own sign-in screen</span>
+                  <span class="grant-sub">External auth API. The app sees passwords users type into it. Untick to allow SSO only.</span>
+                </label>
+              </li>
+              <li th:if="${r.externalRegistration and review.reconnectApplicationName == null}" class="scope-item">
+                <input type="checkbox" name="allowExternalRegistration" value="true" id="allowExternalRegistration">
+                <label for="allowExternalRegistration" style="cursor:pointer">
+                  <span class="grant">Create new Portal accounts</span>
+                  <span class="grant-sub">Lets anyone who can reach the app register a Portal account through it.</span>
+                </label>
+              </li>
+            </ul>
+
+            <p class="muted" style="margin:10px 0 14px">
+              Requested from <code th:text="${r.requesterIp != null ? r.requesterIp : 'unknown'}">ip</code>
+              · expires <span th:text="${expiresText}">soon</span>
+            </p>
+
+            <button type="submit" class="btn-sign-in">Approve and connect</button>
+          </form>
+
+          <form th:if="${review.reviewable and isAdmin}" method="post" th:action="@{/connect/{id}/deny(id=${r.id})}" style="margin-top:10px">
+            <button type="submit" class="btn-secondary">Deny</button>
+          </form>
+        </th:block>
+      </div>
+    </div>
+
+    <p class="badge-powered">Powered by <strong>Portal SSO</strong></p>
+  </div>
+</body>
+</html>

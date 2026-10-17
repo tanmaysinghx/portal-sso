@@ -19,6 +19,8 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
     @Query("SELECT a FROM Application a LEFT JOIN FETCH a.roles WHERE a.id = :id")
     Optional<Application> findByIdWithRoles(@Param("id") UUID id);
 
+    Optional<Application> findFirstByClientId(String clientId);
+
     @Query("SELECT DISTINCT a FROM Application a WHERE a.enabled = true ORDER BY a.displayOrder ASC, a.name ASC")
     List<Application> findAllEnabled();
 

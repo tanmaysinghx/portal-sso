@@ -199,6 +199,12 @@ Frontend (`portal-client/src/app/`):
 | Per-stack code snippets | `shared/components/quickstart-modal/` |
 | Advanced client registry | `features/clients/` |
 
+## 6a. Self-service: Connect with Portal SSO
+
+Apps can also onboard themselves: the app backend submits a manifest, an admin approves it at
+`/connect/{id}`, and the credentials go straight to the app's server. It reuses `onboard()` above, so
+every invariant below still holds. Details and the security model: [APP_CONNECT.md](APP_CONNECT.md).
+
 ## 7. Invariants (do not break)
 
 - PKCE stays required for every authorization-code client, including confidential ones.
@@ -208,6 +214,7 @@ Frontend (`portal-client/src/app/`):
 - Deleting an OAuth client revokes its grants and consents. Deleting an Application leaves its client alone.
 - API keys never grant admin access and only work for their own Application.
 - Generated agent guides never embed secret values.
+- Connect requests never store a plaintext secret, and redeeming needs both the delivery code and the verifier.
 
 ## 8. Tests
 

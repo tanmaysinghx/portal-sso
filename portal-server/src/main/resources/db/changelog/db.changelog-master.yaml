@@ -29,3 +29,5 @@ databaseChangeLog:
       file: db/changelog/changes/014-create-access-requests-table.yaml
   - include:
       file: db/changelog/changes/015-add-external-registration-to-applications.yaml
+  - include:
+      file: db/changelog/changes/016-create-app-connect-requests-table.yaml

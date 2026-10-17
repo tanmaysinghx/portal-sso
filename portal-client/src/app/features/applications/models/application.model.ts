@@ -121,3 +121,16 @@ export interface ApplicationApiKeyResponse {
   registerEndpoint: string;
   loginEndpoint: string;
 }
+
+/** An app waiting for an administrator to approve "Connect with Portal SSO". */
+export interface ConnectRequestSummary {
+  id: string;
+  appName: string;
+  product: string | null;
+  appUrl: string;
+  requesterIp: string | null;
+  createdAt: string;
+  expiresAt: string;
+  /** Server-rendered approval page; a full navigation, not an SPA route. */
+  reviewUrl: string;
+}
