@@ -9,6 +9,16 @@ const INPUT_BASE_CLASSES =
 const INPUT_VALID_CLASSES = 'border-ink-300 focus:border-brand-500 focus:ring-brand-500/25';
 const INPUT_INVALID_CLASSES = 'border-red-400 focus:border-red-400 focus:ring-red-400/25';
 
+export interface CreatedClientSummary {
+  clientId: string;
+  clientName: string;
+  clientSecret?: string;
+  issuerUrl: string;
+  redirectUris: string[];
+  scopes: string[];
+  envSnippet: string;
+}
+
 @Component({
   selector: 'app-client-create',
   imports: [ReactiveFormsModule, RouterLink],
@@ -22,14 +32,10 @@ export class ClientCreate {
   readonly submitting = signal(false);
   readonly error = signal<string | null>(null);
 
-  /**
-   * Set only after a confidential client is created. The server hashes the secret and has no
-   * endpoint that can show it again, so navigating away here would lose it permanently — which is
-   * exactly what this screen did before confidential clients existed.
-   */
-  readonly issuedSecret = signal<string | null>(null);
-  readonly issuedClientId = signal<string | null>(null);
+  readonly createdSummary = signal<CreatedClientSummary | null>(null);
   readonly secretCopied = signal(false);
+  readonly clientIdCopied = signal(false);
+  readonly envCopied = signal(false);
 
   readonly form = this.fb.nonNullable.group({
     clientId: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9._-]+$/)]],
@@ -41,18 +47,30 @@ export class ClientCreate {
   });
 
   copySecret(): void {
-    const secret = this.issuedSecret();
-    if (!secret) {
-      return;
-    }
-    navigator.clipboard.writeText(secret).then(
-      () => {
-        this.secretCopied.set(true);
-        setTimeout(() => this.secretCopied.set(false), 2000);
-      },
-      // Clipboard access can be denied; the secret is selectable on screen either way.
-      () => this.secretCopied.set(false),
-    );
+    const secret = this.createdSummary()?.clientSecret;
+    if (!secret) return;
+    navigator.clipboard.writeText(secret).then(() => {
+      this.secretCopied.set(true);
+      setTimeout(() => this.secretCopied.set(false), 2000);
+    });
+  }
+
+  copyClientId(): void {
+    const cid = this.createdSummary()?.clientId;
+    if (!cid) return;
+    navigator.clipboard.writeText(cid).then(() => {
+      this.clientIdCopied.set(true);
+      setTimeout(() => this.clientIdCopied.set(false), 2000);
+    });
+  }
+
+  copyEnv(): void {
+    const env = this.createdSummary()?.envSnippet;
+    if (!env) return;
+    navigator.clipboard.writeText(env).then(() => {
+      this.envCopied.set(true);
+      setTimeout(() => this.envCopied.set(false), 2000);
+    });
   }
 
   done(): void {
@@ -97,14 +115,30 @@ export class ClientCreate {
       })
       .subscribe({
         next: (created) => {
+          this.submitting.set(false);
+          const issuerUrl = typeof window !== 'undefined' ? window.location.origin : 'https://portal.tanmaysinghx.com';
+          const envLines = [
+            `# Portal SSO Client Configuration`,
+            `PORTAL_URL=${issuerUrl}`,
+            `PORTAL_CLIENT_ID=${created.client.clientId}`,
+          ];
           if (created.clientSecret) {
-            // Stay put and show it once.
-            this.submitting.set(false);
-            this.issuedClientId.set(created.client.clientId);
-            this.issuedSecret.set(created.clientSecret);
-            return;
+            envLines.push(`PORTAL_CLIENT_SECRET=${created.clientSecret}`);
           }
-          this.router.navigateByUrl('/clients');
+          envLines.push(`PORTAL_SCOPES=${scopes.join(' ')}`);
+          if (redirectUris.length > 0) {
+            envLines.push(`PORTAL_REDIRECT_URI=${redirectUris[0]}`);
+          }
+
+          this.createdSummary.set({
+            clientId: created.client.clientId,
+            clientName: created.client.clientName,
+            clientSecret: created.clientSecret || undefined,
+            issuerUrl,
+            redirectUris,
+            scopes,
+            envSnippet: envLines.join('\n'),
+          });
         },
         error: (err: HttpErrorResponse) => {
           this.submitting.set(false);

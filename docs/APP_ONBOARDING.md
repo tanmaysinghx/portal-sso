@@ -24,10 +24,33 @@ The preferred admin path is:
    - enable **Create client** to create and link a new OAuth client during the same save.
 5. Optionally enable **Allow external app login and registration API** when an app owner needs their
    own backend to call Portal SSO from a custom login/register UI.
-6. Use **API key** on the Applications table to generate or rotate that app's external API key.
+6. **Unified Credentials Modal**: Upon saving, Portal SSO immediately displays all keys and configuration in one place:
+   - Client ID
+   - Client Secret (if confidential)
+   - External API Key (`X-Portal-App-Key`)
+   - Portal Issuer URL
+   - Allowed Redirect URIs & Scopes
+   - One-click `.env` copy snippet
 7. Use **OAuth Clients** for advanced client registry work, edits, deletion, and token revocation.
 
 The combined Applications flow is intentionally a convenience layer over the existing APIs. It must not remove or weaken the lower-level OAuth Client registry.
+
+## Client App SDK Installation
+
+Client apps can install and integrate Portal SSO with zero boilerplate:
+
+- **Option 1 (Official NPM Package)**:
+  ```bash
+  npm install @tanmaysinghx/portal-sso
+  ```
+- **Option 2 (Direct from GitHub repository)**:
+  ```bash
+  npm install github:tanmaysinghx/portal-sso#path:packages/portal-sso
+  ```
+- **Option 3 (Direct CDN Script)**:
+  ```html
+  <script src="https://portal.tanmaysinghx.com/portal-sso.js"></script>
+  ```
 
 ## External Login And Registration API
 

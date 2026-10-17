@@ -37,10 +37,33 @@ When connecting an application to Portal SSO, ensure the following configuration
      - Application callback URL if full-page redirect is desired (e.g. `http://localhost:3000/callback`).
    - **Scopes**: `openid profile email`.
 5. Click **Create Application**.
+6. **Save all issued keys in one place (`.env`)**:
+   ```env
+   PORTAL_URL=https://portal.tanmaysinghx.com
+   PORTAL_CLIENT_ID=invoice-app-client
+   PORTAL_CLIENT_SECRET=... # (only if registered as a confidential client)
+   PORTAL_API_KEY=...       # (only if external login/register API was enabled)
+   PORTAL_REDIRECT_URI=https://portal.tanmaysinghx.com/oauth2/popup-callback
+   PORTAL_SCOPES=openid profile email
+   ```
 
 ---
 
-## 2. Frontend Integration (Pick the Matching Tech Stack)
+## 2. Package Installation
+
+Install the client SDK in your application repository:
+
+```bash
+# Recommended: Official npm registry
+npm install @tanmaysinghx/portal-sso
+
+# Alternative: Direct from GitHub repository
+npm install github:tanmaysinghx/portal-sso#path:packages/portal-sso
+```
+
+---
+
+## 3. Frontend Integration (Pick the Matching Tech Stack)
 
 ### Stack 1: React / Next.js / Vite
 

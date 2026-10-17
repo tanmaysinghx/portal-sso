@@ -1,6 +1,6 @@
 import { Component, computed, input, output, signal } from '@angular/core';
 
-export type TechStack = 'popup' | 'react' | 'angular' | 'spring' | 'jsp' | 'nodejs' | 'python' | 'go';
+export type TechStack = 'npm' | 'popup' | 'react' | 'angular' | 'spring' | 'jsp' | 'nodejs' | 'python' | 'go';
 
 @Component({
   selector: 'app-quickstart-modal',
@@ -14,7 +14,7 @@ export class QuickstartModal {
   readonly appUrl = input('http://localhost:3000');
   readonly dismiss = output<void>();
 
-  readonly activeStack = signal<TechStack>('popup');
+  readonly activeStack = signal<TechStack>('npm');
   readonly copied = signal(false);
 
   readonly issuerUri = computed(() => {
@@ -45,6 +45,34 @@ export class QuickstartModal {
     const redirect = this.redirectUri();
 
     switch (stack) {
+      case 'npm':
+        return `// 1. Install official NPM package:
+// npm install @tanmaysinghx/portal-sso
+
+import { PortalSSO } from '@tanmaysinghx/portal-sso';
+
+// 2. Initialize in your React / Angular / Vue / Vite app:
+export const sso = new PortalSSO({
+  portalUrl: '${issuer}',
+  clientId: '${client}',
+  // Built-in popup callback is handled automatically without extra routes!
+});
+
+// 3. Trigger Okta-style popup login on click:
+export async function login() {
+  try {
+    const { user, accessToken, idToken } = await sso.loginWithPopup();
+    console.log('Signed in as:', user.name, user.email);
+    return user;
+  } catch (err) {
+    console.error('Login error:', err);
+  }
+}
+
+// 4. Or use the drop-in Web Component button (zero JS required):
+// import '@tanmaysinghx/portal-sso';
+// <portal-login-button portal-url="${issuer}" client-id="${client}"></portal-login-button>`;
+
       case 'popup':
         return `<!-- 1. Include Portal SSO lightweight SDK in your HTML (or bundle into React / Angular / Vue / JSP): -->
 <script src="${issuer}/portal-sso.js"></script>

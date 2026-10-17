@@ -1,0 +1,35 @@
+{
+  "name": "@tanmaysinghx/portal-sso",
+  "version": "1.0.0",
+  "description": "Zero-boilerplate OAuth 2.1 & OIDC Single Sign-On SDK with Okta-style popup login and drop-in UI button.",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "node ../../portal-client/node_modules/typescript/bin/tsc",
+    "prepack": "npm run build"
+  },
+  "keywords": [
+    "sso",
+    "oauth2",
+    "oidc",
+    "pkce",
+    "auth",
+    "single-sign-on",
+    "popup-login",
+    "portal-sso"
+  ],
+  "author": "Tanmay Singh",
+  "license": "Apache-2.0"
+}

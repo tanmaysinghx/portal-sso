@@ -1,7 +1,7 @@
 import { Component, HostListener, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { switchMap } from 'rxjs';
+import { catchError, map, of, switchMap } from 'rxjs';
 import { SnackbarService } from '../../../../core/services/snackbar.service';
 import { Badge } from '../../../../shared/components/badge/badge';
 import { OAuthClient } from '../../../clients/models/oauth-client.model';
@@ -17,6 +17,21 @@ import {
 import { ApplicationService } from '../../services/application.service';
 
 import { QuickstartModal } from '../../../../shared/components/quickstart-modal/quickstart-modal';
+
+export interface CreatedAppSummary {
+  appName: string;
+  appUrl: string;
+  clientId?: string;
+  clientSecret?: string;
+  externalApiKey?: string;
+  headerName?: string;
+  registerEndpoint?: string;
+  loginEndpoint?: string;
+  issuerUrl: string;
+  redirectUris?: string[];
+  scopes?: string[];
+  envSnippet: string;
+}
 
 const CATEGORY_PRESETS = ['General', 'Productivity', 'Engineering', 'Operations', 'Finance', 'Communication'];
 
@@ -62,6 +77,71 @@ export class ApplicationList {
     loginEndpoint: string;
   } | null>(null);
   readonly appApiKeyCopied = signal(false);
+
+  // Unified App Created Summary Modal
+  readonly createdAppSummary = signal<CreatedAppSummary | null>(null);
+  readonly appSummaryEnvCopied = signal(false);
+  readonly appSummarySecretCopied = signal(false);
+  readonly appSummaryApiKeyCopied = signal(false);
+  readonly appSummaryClientIdCopied = signal(false);
+
+  copyAppSummaryEnv(): void {
+    const env = this.createdAppSummary()?.envSnippet;
+    if (!env) return;
+    navigator.clipboard.writeText(env).then(() => {
+      this.appSummaryEnvCopied.set(true);
+      setTimeout(() => this.appSummaryEnvCopied.set(false), 2000);
+    });
+  }
+
+  copyAppSummarySecret(): void {
+    const sec = this.createdAppSummary()?.clientSecret;
+    if (!sec) return;
+    navigator.clipboard.writeText(sec).then(() => {
+      this.appSummarySecretCopied.set(true);
+      setTimeout(() => this.appSummarySecretCopied.set(false), 2000);
+    });
+  }
+
+  copyAppSummaryApiKey(): void {
+    const key = this.createdAppSummary()?.externalApiKey;
+    if (!key) return;
+    navigator.clipboard.writeText(key).then(() => {
+      this.appSummaryApiKeyCopied.set(true);
+      setTimeout(() => this.appSummaryApiKeyCopied.set(false), 2000);
+    });
+  }
+
+  copyAppSummaryClientId(): void {
+    const cid = this.createdAppSummary()?.clientId;
+    if (!cid) return;
+    navigator.clipboard.writeText(cid).then(() => {
+      this.appSummaryClientIdCopied.set(true);
+      setTimeout(() => this.appSummaryClientIdCopied.set(false), 2000);
+    });
+  }
+
+  dismissAppSummary(): void {
+    this.createdAppSummary.set(null);
+  }
+
+  openQuickstartFromSummary(): void {
+    const summary = this.createdAppSummary();
+    if (!summary) return;
+    const matchedApp = this.applications().find((a) => a.name === summary.appName) || {
+      id: '',
+      name: summary.appName,
+      appUrl: summary.appUrl,
+      clientId: summary.clientId,
+      category: 'General',
+      enabled: true,
+      displayOrder: 0,
+      createdAt: '',
+      updatedAt: '',
+    };
+    this.dismissAppSummary();
+    this.openQuickstart(matchedApp as Application);
+  }
 
   // Quickstart modal
   readonly showQuickstart = signal(false);
@@ -405,19 +485,78 @@ export class ApplicationList {
         return;
       }
 
-      createApplication$.subscribe({
-        next: (created) => {
-          this.applications.set([created, ...this.applications()]);
-          this.submitting.set(false);
-          this.closeModal();
-          const suffix = createLinkedClient ? ' and linked OAuth client' : '';
-          this.snackbarService.success(`Application "${created.name}" created${suffix} successfully.`);
-        },
-        error: (err) => {
-          this.submitting.set(false);
-          this.modalError.set(err?.error?.message ?? 'Failed to create application.');
-        },
-      });
+      createApplication$
+        .pipe(
+          switchMap((created) => {
+            if (val.externalAuthEnabled) {
+              return this.applicationService.rotateExternalAuthApiKey(created.id).pipe(
+                map((keyResp) => ({
+                  created: {
+                    ...created,
+                    externalAuthEnabled: true,
+                    externalAuthApiKeyIssued: true,
+                    externalAuthApiKeyPrefix: keyResp.apiKeyPrefix,
+                  },
+                  keyResp,
+                })),
+                catchError(() => of({ created, keyResp: null })),
+              );
+            }
+            return of({ created, keyResp: null });
+          }),
+        )
+        .subscribe({
+          next: ({ created, keyResp }) => {
+            this.applications.set([created, ...this.applications()]);
+            this.submitting.set(false);
+            this.closeModal();
+
+            const issuerUrl = typeof window !== 'undefined' ? window.location.origin : 'https://portal.tanmaysinghx.com';
+            const envLines = [
+              `# Portal SSO Configuration for ${created.name}`,
+              `PORTAL_URL=${issuerUrl}`,
+            ];
+            if (created.clientId) {
+              envLines.push(`PORTAL_CLIENT_ID=${created.clientId}`);
+            }
+            const secret = this.issuedClientSecret();
+            if (secret) {
+              envLines.push(`PORTAL_CLIENT_SECRET=${secret}`);
+            }
+            if (keyResp) {
+              envLines.push(`PORTAL_API_KEY=${keyResp.apiKey}`);
+            }
+            if (createLinkedClient) {
+              envLines.push(`PORTAL_SCOPES=openid${val.profileScope ? ' profile' : ''}${val.emailScope ? ' email' : ''}`);
+              const uris = this.parseRedirectUris(val.redirectUris);
+              if (uris.length > 0) {
+                envLines.push(`PORTAL_REDIRECT_URI=${uris[0]}`);
+              }
+            }
+
+            this.createdAppSummary.set({
+              appName: created.name,
+              appUrl: created.appUrl,
+              clientId: created.clientId || undefined,
+              clientSecret: secret || undefined,
+              externalApiKey: keyResp?.apiKey,
+              headerName: keyResp?.headerName,
+              registerEndpoint: keyResp?.registerEndpoint,
+              loginEndpoint: keyResp?.loginEndpoint,
+              issuerUrl,
+              redirectUris: createLinkedClient ? this.parseRedirectUris(val.redirectUris) : undefined,
+              scopes: createLinkedClient ? ['openid', ...(val.profileScope ? ['profile'] : []), ...(val.emailScope ? ['email'] : [])] : undefined,
+              envSnippet: envLines.join('\n'),
+            });
+
+            const suffix = createLinkedClient ? ' and linked OAuth client' : '';
+            this.snackbarService.success(`Application "${created.name}" created${suffix} successfully.`);
+          },
+          error: (err) => {
+            this.submitting.set(false);
+            this.modalError.set(err?.error?.message ?? 'Failed to create application.');
+          },
+        });
     } else {
       const current = this.editingApp();
       if (!current) return;

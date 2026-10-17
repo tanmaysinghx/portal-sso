@@ -28,11 +28,32 @@ Portal SSO provides a seamless, Okta-style popup login window for user authentic
    - **Redirect URIs**: Include:
      - `https://portal.tanmaysinghx.com/oauth2/popup-callback` *(pre-configured popup relay)*
      - `http://localhost:3000` *(or your app origin)*
-4. Click **Create Application**. Done!
+4. Click **Create Application**. Done! Portal SSO displays all your credentials (`Client ID`, `Secret`, and `.env` config) in one place.
 
 ---
 
-## 2. Framework Integration Guides
+## 2. Install the Client Package
+
+Choose the installation method that fits your workflow:
+
+### Option 1: Official NPM Registry (Recommended)
+```bash
+npm install @tanmaysinghx/portal-sso
+```
+
+### Option 2: Direct from GitHub (Zero Registry)
+```bash
+npm install github:tanmaysinghx/portal-sso#path:packages/portal-sso
+```
+
+### Option 3: Direct CDN `<script>` (Zero Build Tools)
+```html
+<script src="https://portal.tanmaysinghx.com/portal-sso.js"></script>
+```
+
+---
+
+## 3. Framework Integration Guides
 
 ### Option A: Plain HTML / Vanilla JavaScript
 
