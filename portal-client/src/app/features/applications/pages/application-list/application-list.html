@@ -245,12 +245,13 @@
                 </td>
                 <td class="px-5 py-3.5 text-right whitespace-nowrap">
                   <div class="flex items-center justify-end gap-1.5">
-                    <!-- Keys & Setup (View later: all keys, secrets, env) -->
+                    <!-- Keys & Setup: issuer, client, redirect URIs, API key, .env -->
                     <button
                       type="button"
-                      (click)="openAppCredentials(app)"
-                      title="View all keys, secrets, endpoints, and .env configuration"
-                      class="inline-flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50/70 px-2.5 py-1 text-[11px] font-semibold text-brand-700 transition hover:bg-brand-100 hover:border-brand-300 shadow-2xs"
+                      (click)="openCredentials(app)"
+                      [disabled]="credentialsLoadingId() === app.id"
+                      title="View client ID, redirect URIs, API key, endpoints and .env"
+                      class="inline-flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50/70 px-2.5 py-1 text-[11px] font-semibold text-brand-700 transition hover:bg-brand-100 hover:border-brand-300 shadow-2xs disabled:opacity-60"
                     >
                       <svg class="h-3.5 w-3.5 text-brand-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
@@ -271,11 +272,11 @@
                       Quickstart
                     </button>
 
-                    <!-- Download Agent Prompt -->
+                    <!-- Download Agent Guide -->
                     <button
                       type="button"
-                      (click)="downloadAgentInstructions(app)"
-                      title="Download AI agent prompt file (.md) for Cursor, Claude Code, Copilot"
+                      (click)="downloadAgentGuide(app)"
+                      title="Download PORTAL_SSO.md for Claude Code, Cursor or Copilot (contains no secrets)"
                       class="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50/60 px-2 py-1 text-[11px] font-semibold text-indigo-700 transition hover:bg-indigo-100 shadow-2xs"
                     >
                       <svg class="h-3.5 w-3.5 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -455,108 +456,132 @@
           </div>
         </div>
 
-        <!-- SSO / OAuth 2.1 Integration (Okta-style) -->
+        <!-- Sign-in: new OAuth client, existing client, or bookmark only -->
         <div class="rounded-xl border border-brand-200/90 bg-brand-50/40 p-4">
-          <div class="flex items-center justify-between gap-3">
-            <div class="flex items-center gap-2.5">
-              <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-white shadow-xs">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
-                </svg>
-              </span>
-              <div>
-                <span class="block text-[13px] font-semibold text-ink-900">OAuth 2.1 &amp; OpenID Connect SSO</span>
-                <span class="block text-[11px] text-ink-500">
-                  Auto-configures Client ID, PKCE, scopes, and redirect URIs.
-                </span>
-              </div>
+          <div class="flex items-center gap-2.5">
+            <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-white shadow-xs">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+              </svg>
+            </span>
+            <div>
+              <span class="block text-[13px] font-semibold text-ink-900">Single sign-on (OAuth 2.1 / OIDC)</span>
+              <span class="block text-[11px] text-ink-500">How this app signs users in through Portal SSO. PKCE is always enforced.</span>
             </div>
-            @if (modalMode() === 'create') {
-              <label class="flex shrink-0 cursor-pointer items-center gap-2 text-[12px] font-semibold text-brand-700">
-                <input
-                  type="checkbox"
-                  formControlName="createOAuthClient"
-                  class="h-4 w-4 rounded border-ink-300 text-brand-600 focus:ring-brand-500"
-                />
-                Enable SSO Client
-              </label>
-            }
           </div>
 
-          @if (form.controls.createOAuthClient.value && modalMode() === 'create') {
-            <div class="mt-3.5 space-y-3 border-t border-brand-200/60 pt-3">
-              <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div>
-                  <label for="newClientId" class="mb-1 block text-[12px] font-medium text-ink-700">Client ID</label>
-                  <input
-                    id="newClientId"
-                    type="text"
-                    formControlName="newClientId"
-                    placeholder="Auto-generated from app name"
-                    class="block w-full rounded-lg border border-ink-300 bg-white px-3 py-2 font-mono text-[13px] text-ink-900 shadow-sm placeholder:text-ink-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
-                  />
-                </div>
-                <label class="flex cursor-pointer items-start gap-2.5 rounded-lg border border-ink-200 bg-white p-2.5 transition hover:bg-ink-50">
-                  <input
-                    type="checkbox"
-                    formControlName="confidential"
-                    class="mt-0.5 h-4 w-4 rounded border-ink-300 text-brand-600 focus:ring-brand-500"
-                  />
-                  <div>
-                    <span class="block text-[12px] font-semibold text-ink-800">Confidential Client</span>
-                    <span class="block text-[11px] text-ink-500">Generate a client_secret for backend web apps.</span>
-                  </div>
-                </label>
-              </div>
+          <div class="mt-3 grid gap-2" [class]="modalMode() === 'create' ? 'grid-cols-3' : 'grid-cols-2'" role="radiogroup" aria-label="Sign-in option">
+            @if (modalMode() === 'create') {
+              <label class="flex cursor-pointer flex-col rounded-lg border bg-white p-2.5 transition"
+                [class]="form.controls.ssoMode.value === 'new' ? 'border-brand-500 ring-1 ring-brand-500' : 'border-ink-200 hover:bg-ink-50'">
+                <span class="flex items-center gap-2 text-[12px] font-semibold text-ink-900">
+                  <input type="radio" value="new" formControlName="ssoMode" class="h-3.5 w-3.5 text-brand-600 focus:ring-brand-500" />
+                  New client
+                </span>
+                <span class="mt-0.5 text-[10px] text-ink-500">Recommended</span>
+              </label>
+            }
+            <label class="flex cursor-pointer flex-col rounded-lg border bg-white p-2.5 transition"
+              [class]="form.controls.ssoMode.value === 'existing' ? 'border-brand-500 ring-1 ring-brand-500' : 'border-ink-200 hover:bg-ink-50'">
+              <span class="flex items-center gap-2 text-[12px] font-semibold text-ink-900">
+                <input type="radio" value="existing" formControlName="ssoMode" class="h-3.5 w-3.5 text-brand-600 focus:ring-brand-500" />
+                Existing client
+              </span>
+              <span class="mt-0.5 text-[10px] text-ink-500">Link a registered client</span>
+            </label>
+            <label class="flex cursor-pointer flex-col rounded-lg border bg-white p-2.5 transition"
+              [class]="form.controls.ssoMode.value === 'none' ? 'border-brand-500 ring-1 ring-brand-500' : 'border-ink-200 hover:bg-ink-50'">
+              <span class="flex items-center gap-2 text-[12px] font-semibold text-ink-900">
+                <input type="radio" value="none" formControlName="ssoMode" class="h-3.5 w-3.5 text-brand-600 focus:ring-brand-500" />
+                None
+              </span>
+              <span class="mt-0.5 text-[10px] text-ink-500">Launchpad bookmark only</span>
+            </label>
+          </div>
 
-              <div>
-                <div class="mb-1 flex items-center justify-between gap-2">
-                  <label for="redirectUris" class="block text-[12px] font-medium text-ink-700">Allowed Redirect URIs</label>
-                  <span class="text-[10px] text-brand-700 font-medium">Auto-filled &bull; Popup callback included</span>
+          @switch (form.controls.ssoMode.value) {
+            @case ('new') {
+              <div class="mt-3.5 space-y-3 border-t border-brand-200/60 pt-3">
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <label for="newClientId" class="mb-1 block text-[12px] font-medium text-ink-700">Client ID</label>
+                    <input
+                      id="newClientId"
+                      type="text"
+                      formControlName="newClientId"
+                      placeholder="Generated from the app name"
+                      class="block w-full rounded-lg border border-ink-300 bg-white px-3 py-2 font-mono text-[13px] text-ink-900 shadow-sm placeholder:text-ink-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+                    />
+                    @if (form.controls.newClientId.invalid) {
+                      <p class="mt-1 text-[10px] text-red-600">Letters, numbers, dots, underscores and hyphens only.</p>
+                    }
+                  </div>
+                  <label class="flex cursor-pointer items-start gap-2.5 rounded-lg border border-ink-200 bg-white p-2.5 transition hover:bg-ink-50">
+                    <input
+                      type="checkbox"
+                      formControlName="confidential"
+                      class="mt-0.5 h-4 w-4 rounded border-ink-300 text-brand-600 focus:ring-brand-500"
+                    />
+                    <div>
+                      <span class="block text-[12px] font-semibold text-ink-800">Confidential client</span>
+                      <span class="block text-[11px] text-ink-500">Issues a client secret. Only for apps with a server-side backend.</span>
+                    </div>
+                  </label>
                 </div>
-                <textarea
-                  id="redirectUris"
-                  formControlName="redirectUris"
-                  rows="2"
-                  placeholder="One URI per line"
-                  class="block w-full resize-y rounded-lg border border-ink-300 bg-white px-3 py-2 font-mono text-[12px] text-ink-900 shadow-sm placeholder:text-ink-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
-                ></textarea>
+
+                <div>
+                  <label for="redirectUris" class="mb-1 block text-[12px] font-medium text-ink-700">Redirect URIs</label>
+                  <textarea
+                    id="redirectUris"
+                    formControlName="redirectUris"
+                    rows="2"
+                    placeholder="One URI per line — defaults to the launch URL"
+                    class="block w-full resize-y rounded-lg border border-ink-300 bg-white px-3 py-2 font-mono text-[12px] text-ink-900 shadow-sm placeholder:text-ink-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+                  ></textarea>
+                  <p class="mt-1 text-[10px] text-ink-500">
+                    Must match exactly what the app sends. Portal's popup callback for
+                    <code>&#64;tanmaysinghx/portal-sso</code> is added automatically.
+                  </p>
+                </div>
+
+                <div class="flex items-center gap-4 text-[12px] text-ink-700">
+                  <span class="font-medium text-ink-500">Scopes:</span>
+                  <span class="inline-flex items-center gap-1 rounded border border-ink-200 bg-white px-2 py-0.5 font-mono text-[11px] font-semibold text-ink-700">✓ openid</span>
+                  <label class="inline-flex cursor-pointer items-center gap-1.5 font-mono text-[11px] text-ink-700">
+                    <input type="checkbox" formControlName="profileScope" class="rounded border-ink-300 text-brand-600" />
+                    profile
+                  </label>
+                  <label class="inline-flex cursor-pointer items-center gap-1.5 font-mono text-[11px] text-ink-700">
+                    <input type="checkbox" formControlName="emailScope" class="rounded border-ink-300 text-brand-600" />
+                    email
+                  </label>
+                </div>
+              </div>
+            }
+            @case ('existing') {
+              <div class="mt-3.5 border-t border-brand-200/60 pt-3">
+                <label for="clientId" class="mb-1.5 block text-[12px] font-medium text-ink-700">OAuth client</label>
+                <select
+                  id="clientId"
+                  formControlName="clientId"
+                  class="block w-full rounded-lg border border-ink-300 bg-white px-3 py-2 text-[13px] text-ink-900 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+                >
+                  <option value="">Select a client…</option>
+                  @for (c of availableOAuthClients(); track c.id) {
+                    <option [value]="c.clientId">{{ c.clientName }} ({{ c.clientId }})</option>
+                  }
+                </select>
                 <p class="mt-1 text-[10px] text-ink-500">
-                  Popup callback is automatically permitted for <code>@tanmaysinghx/portal-sso</code> popup sign-in.
+                  Redirect URIs and scopes are managed on the
+                  <a routerLink="/clients" class="font-medium text-brand-700 hover:underline">OAuth Clients</a> page.
                 </p>
               </div>
-
-              <div class="flex items-center gap-4 text-[12px] text-ink-700">
-                <span class="font-medium text-ink-500">Scopes:</span>
-                <span class="inline-flex items-center gap-1 font-mono text-[11px] font-semibold text-ink-700 bg-white px-2 py-0.5 rounded border border-ink-200">
-                  ✓ openid
-                </span>
-                <label class="inline-flex items-center gap-1.5 cursor-pointer font-mono text-[11px] text-ink-700">
-                  <input type="checkbox" formControlName="profileScope" class="rounded border-ink-300 text-brand-600">
-                  profile
-                </label>
-                <label class="inline-flex items-center gap-1.5 cursor-pointer font-mono text-[11px] text-ink-700">
-                  <input type="checkbox" formControlName="emailScope" class="rounded border-ink-300 text-brand-600">
-                  email
-                </label>
-              </div>
-            </div>
-          } @else if (modalMode() === 'edit') {
-            <div class="mt-3">
-              <label for="clientId" class="mb-1.5 block text-[12px] font-medium text-ink-700">
-                Linked OAuth client
-              </label>
-              <select
-                id="clientId"
-                formControlName="clientId"
-                class="block w-full rounded-lg border border-ink-300 bg-white px-3 py-2 text-[13px] text-ink-900 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
-              >
-                <option value="">None (standalone bookmark)</option>
-                @for (c of availableOAuthClients(); track c.id) {
-                  <option [value]="c.clientId">{{ c.clientName }} ({{ c.clientId }})</option>
-                }
-              </select>
-            </div>
+            }
+            @default {
+              <p class="mt-3 text-[11px] text-ink-500">
+                Users launch this app from the portal but sign in to it separately.
+              </p>
+            }
           }
         </div>
 
@@ -688,295 +713,222 @@
   </div>
 }
 
-<!-- Modal: Application Created - Unified Credentials & Keys Summary -->
-@if (createdAppSummary(); as summary) {
+<!-- Modal: Credentials — the single place every key, secret, endpoint and .env is shown -->
+@if (credentialsView(); as view) {
   <div class="fixed inset-0 z-[120] flex items-center justify-center overflow-y-auto p-4 sm:p-6">
-    <div class="fixed inset-0 bg-ink-950/75 backdrop-blur-sm" (click)="dismissAppSummary()"></div>
+    <div
+      class="fixed inset-0 bg-ink-950/75 backdrop-blur-sm"
+      (click)="showsOneTimeSecret() ? null : closeCredentials()"
+      aria-hidden="true"
+    ></div>
 
     <div
       class="animate-fade-in-up relative z-10 w-full max-w-2xl rounded-2xl border border-ink-200 bg-white shadow-2xl"
       role="dialog"
       aria-modal="true"
+      aria-labelledby="credentialsTitle"
     >
-      <!-- Header -->
-      <div class="border-b border-ink-100 px-6 py-5 flex items-start justify-between">
+      <div class="flex items-start justify-between border-b border-ink-100 px-6 py-5">
         <div>
-          <div class="flex items-center gap-2">
-            <span
-              class="rounded px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider ring-1 ring-inset"
-              [class]="summary.isNew ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' : 'bg-brand-50 text-brand-700 ring-brand-600/20'"
-            >
-              {{ summary.isNew ? 'Application Created Successfully' : 'Application Credentials & Configuration' }}
-            </span>
-            <h2 class="text-base font-bold text-ink-900">{{ summary.appName }}</h2>
-          </div>
-          <p class="mt-1 text-xs text-ink-500">
-            {{ summary.isNew ? 'All configuration keys, secrets, and environment variables are summarized below.' : 'View or copy your application keys, endpoints, and environment variables anytime.' }}
-          </p>
+          <h2 id="credentialsTitle" class="text-base font-bold text-ink-900">{{ view.app.name }} — keys &amp; setup</h2>
+          <p class="mt-1 text-xs text-ink-500">Everything this app needs to integrate with Portal SSO.</p>
         </div>
-        <button
-          type="button"
-          (click)="dismissAppSummary()"
-          class="rounded-lg p-1 text-ink-400 hover:bg-ink-100 hover:text-ink-600 transition"
-        >
-          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+        @if (!showsOneTimeSecret()) {
+          <button
+            type="button"
+            (click)="closeCredentials()"
+            class="rounded-lg p-1 text-ink-400 transition hover:bg-ink-100 hover:text-ink-600"
+            aria-label="Close"
+          >
+            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        }
       </div>
 
-      <!-- Content -->
-      <div class="space-y-4 px-6 py-5 max-h-[75vh] overflow-y-auto">
-        @if (summary.isNew && (summary.clientSecret || summary.externalApiKey)) {
-          <div class="rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 text-xs text-amber-900 flex items-start gap-2">
-            <span class="text-base leading-none">⚠️</span>
+      <div class="max-h-[72vh] space-y-4 overflow-y-auto px-6 py-5">
+        @if (showsOneTimeSecret()) {
+          <div class="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 text-xs text-amber-900" role="alert">
+            <span class="text-base leading-none" aria-hidden="true">⚠️</span>
             <div>
-              <strong class="font-semibold">Save your secret keys now:</strong> Secrets and API keys are displayed <strong>only once</strong> and stored hashed on the server.
+              <strong class="font-semibold">Copy the secrets below now.</strong>
+              They are shown only once and stored hashed. Keep them server-side only — never in browser or mobile code.
             </div>
           </div>
         }
 
+        <!-- Portal -->
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <!-- Client ID (if linked) -->
-          @if (summary.clientId; as cid) {
-            <div class="rounded-lg border border-ink-200 bg-ink-50/60 p-3.5 relative group">
-              <p class="text-[10px] font-bold uppercase tracking-wider text-ink-500">OAuth Client ID</p>
-              <code class="mt-1 block font-mono text-xs font-bold text-ink-900 select-all">{{ cid }}</code>
-              <button
-                type="button"
-                (click)="copyAppSummaryClientId()"
-                class="absolute right-2 top-2 rounded px-2 py-0.5 text-[11px] font-semibold text-ink-600 bg-white border border-ink-200 shadow-xs hover:bg-ink-100"
-              >
-                {{ appSummaryClientIdCopied() ? 'Copied' : 'Copy' }}
-              </button>
-            </div>
-          }
-
-          <!-- Issuer URL -->
-          <div class="rounded-lg border border-ink-200 bg-ink-50/60 p-3.5">
-            <p class="text-[10px] font-bold uppercase tracking-wider text-ink-500">Portal Issuer URL</p>
-            <code class="mt-1 block font-mono text-xs font-semibold text-ink-900 select-all">{{ summary.issuerUrl }}</code>
+          <div class="relative rounded-lg border border-ink-200 bg-ink-50/60 p-3.5">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-ink-500">Issuer / Portal URL</p>
+            <code class="mt-1 block break-all pr-14 font-mono text-xs font-semibold text-ink-900 select-all">{{ view.creds.issuerUrl }}</code>
+            <button type="button" (click)="copy('issuer', view.creds.issuerUrl)" class="absolute right-2 top-2 rounded border border-ink-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-ink-600 shadow-xs hover:bg-ink-100">
+              {{ copiedKey() === 'issuer' ? 'Copied' : 'Copy' }}
+            </button>
           </div>
+          <div class="rounded-lg border border-ink-200 bg-ink-50/60 p-3.5">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-ink-500">OIDC discovery</p>
+            <code class="mt-1 block break-all font-mono text-[11px] text-ink-800 select-all">{{ view.creds.discoveryUrl }}</code>
+          </div>
+        </div>
 
-          <!-- Client Secret (if confidential) -->
-          @if (summary.clientSecret; as secret) {
-            <div class="sm:col-span-2 rounded-lg border border-brand-200 bg-brand-50/50 p-3.5 relative group">
-              <p class="text-[10px] font-bold uppercase tracking-wider text-brand-700">Client Secret</p>
-              <code class="mt-1 block font-mono text-xs font-bold text-ink-900 select-all break-all">{{ secret }}</code>
-              <button
-                type="button"
-                (click)="copyAppSummarySecret()"
-                class="absolute right-2 top-2 rounded px-2.5 py-1 text-[11px] font-bold text-white bg-brand-600 shadow-xs hover:bg-brand-700"
-              >
-                {{ appSummarySecretCopied() ? 'Copied!' : 'Copy Secret' }}
+        <!-- OIDC client -->
+        @if (view.creds.oidc; as oidc) {
+          <section class="space-y-3 rounded-xl border border-ink-200 p-4" aria-label="OAuth client">
+            <div class="flex items-center justify-between">
+              <h3 class="text-[13px] font-semibold text-ink-900">OAuth client</h3>
+              <app-badge [tone]="oidc.confidential ? 'brand' : 'neutral'">{{ oidc.confidential ? 'Confidential' : 'Public · PKCE' }}</app-badge>
+            </div>
+
+            @if (!oidc.clientExists) {
+              <p class="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                Linked client <code class="font-mono">{{ oidc.clientId }}</code> no longer exists. Edit the app to link another client.
+              </p>
+            }
+
+            <div class="relative rounded-lg border border-ink-200 bg-ink-50/60 p-3">
+              <p class="text-[10px] font-bold uppercase tracking-wider text-ink-500">Client ID</p>
+              <code class="mt-1 block font-mono text-xs font-bold text-ink-900 select-all">{{ oidc.clientId }}</code>
+              <button type="button" (click)="copy('clientId', oidc.clientId)" class="absolute right-2 top-2 rounded border border-ink-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-ink-600 shadow-xs hover:bg-ink-100">
+                {{ copiedKey() === 'clientId' ? 'Copied' : 'Copy' }}
               </button>
             </div>
-          }
 
-          <!-- External API Key (if external auth enabled) -->
-          @if (summary.externalApiKey; as apiKey) {
-            <div class="sm:col-span-2 rounded-lg border border-brand-200 bg-brand-50/50 p-3.5 relative group">
-              <div class="flex items-center justify-between">
-                <p class="text-[10px] font-bold uppercase tracking-wider text-brand-700">External API Key (Backend Only)</p>
-                <span class="text-[10px] font-mono text-ink-500">{{ summary.headerName }}</span>
+            @if (oidc.confidential) {
+              <div class="relative rounded-lg border p-3" [class]="oidc.clientSecret ? 'border-brand-200 bg-brand-50/50' : 'border-ink-200'">
+                <p class="text-[10px] font-bold uppercase tracking-wider" [class]="oidc.clientSecret ? 'text-brand-700' : 'text-ink-500'">Client secret</p>
+                @if (oidc.clientSecret; as secret) {
+                  <code class="mt-1 block break-all pr-24 font-mono text-xs font-bold text-ink-900 select-all">{{ secret }}</code>
+                  <button type="button" (click)="copy('secret', secret)" class="absolute right-2 top-2 rounded bg-brand-600 px-2.5 py-1 text-[11px] font-bold text-white shadow-xs hover:bg-brand-700">
+                    {{ copiedKey() === 'secret' ? 'Copied!' : 'Copy secret' }}
+                  </button>
+                } @else {
+                  <p class="mt-1 text-xs text-ink-500">Shown only at creation. If it was lost, create a new client on the OAuth Clients page and re-link it.</p>
+                }
               </div>
-              <code class="mt-1 block font-mono text-xs font-bold text-ink-900 select-all break-all">{{ apiKey }}</code>
-              <button
-                type="button"
-                (click)="copyAppSummaryApiKey()"
-                class="absolute right-2 top-2 rounded px-2.5 py-1 text-[11px] font-bold text-white bg-brand-600 shadow-xs hover:bg-brand-700"
-              >
-                {{ appSummaryApiKeyCopied() ? 'Copied!' : 'Copy API Key' }}
-              </button>
-            </div>
-          }
+            }
 
-          <!-- Redirect URIs (if client created) -->
-          @if (summary.redirectUris && summary.redirectUris.length > 0) {
-            <div class="rounded-lg border border-ink-200 p-3">
-              <p class="text-[10px] font-bold uppercase tracking-wider text-ink-500">Allowed Redirect URIs</p>
-              <div class="mt-1 space-y-0.5 max-h-20 overflow-y-auto">
-                @for (uri of summary.redirectUris; track uri) {
-                  <code class="block font-mono text-[11px] text-ink-700 select-all">{{ uri }}</code>
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div class="rounded-lg border border-ink-200 p-3">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-ink-500">Registered redirect URIs</p>
+                <div class="mt-1 max-h-24 space-y-0.5 overflow-y-auto">
+                  @for (uri of oidc.redirectUris; track uri) {
+                    <code class="block break-all font-mono text-[11px] text-ink-700 select-all">{{ uri }}</code>
+                  } @empty {
+                    <span class="text-[11px] text-ink-400">None</span>
+                  }
+                </div>
+              </div>
+              <div class="rounded-lg border border-ink-200 p-3">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-ink-500">Scopes</p>
+                <p class="mt-1 font-mono text-[11px] text-ink-700">{{ oidc.scopes.join(' ') || '—' }}</p>
+              </div>
+            </div>
+          </section>
+        }
+
+        <!-- External login/register API -->
+        @if (view.creds.externalAuth; as ext) {
+          <section class="space-y-3 rounded-xl border border-ink-200 p-4" aria-label="External API">
+            <div class="flex items-center justify-between">
+              <h3 class="text-[13px] font-semibold text-ink-900">External login/register API</h3>
+              <span class="font-mono text-[10px] text-ink-500">{{ ext.headerName }}</span>
+            </div>
+
+            <div class="relative rounded-lg border p-3" [class]="ext.apiKey ? 'border-brand-200 bg-brand-50/50' : 'border-ink-200'">
+              <p class="text-[10px] font-bold uppercase tracking-wider" [class]="ext.apiKey ? 'text-brand-700' : 'text-ink-500'">API key (backend only)</p>
+              @if (ext.apiKey; as apiKey) {
+                <code class="mt-1 block break-all pr-24 font-mono text-xs font-bold text-ink-900 select-all">{{ apiKey }}</code>
+                <button type="button" (click)="copy('apiKey', apiKey)" class="absolute right-2 top-2 rounded bg-brand-600 px-2.5 py-1 text-[11px] font-bold text-white shadow-xs hover:bg-brand-700">
+                  {{ copiedKey() === 'apiKey' ? 'Copied!' : 'Copy key' }}
+                </button>
+              } @else {
+                <div class="mt-1 flex flex-wrap items-center justify-between gap-2">
+                  <span class="text-xs text-ink-600">
+                    @if (ext.apiKeyIssued) {
+                      Active key <code class="font-mono">{{ ext.apiKeyPrefix }}…</code>
+                    } @else {
+                      No key issued yet.
+                    }
+                  </span>
+                  <button
+                    type="button"
+                    (click)="rotateApiKey()"
+                    [disabled]="rotating()"
+                    class="rounded-md px-2.5 py-1 text-[11px] font-semibold shadow-xs transition disabled:opacity-60"
+                    [class]="rotateArmed() ? 'bg-red-600 text-white hover:bg-red-700' : 'border border-ink-300 bg-white text-ink-700 hover:bg-ink-50'"
+                  >
+                    {{ rotating() ? 'Generating…' : rotateArmed() ? 'Confirm — old key stops working' : ext.apiKeyIssued ? 'Rotate key' : 'Generate key' }}
+                  </button>
+                </div>
+              }
+            </div>
+
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div class="rounded-lg border border-ink-200 p-3">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-ink-500">Login endpoint</p>
+                <code class="mt-1 block break-all font-mono text-[11px] text-ink-800">POST {{ ext.loginEndpoint }}</code>
+              </div>
+              <div class="rounded-lg border border-ink-200 p-3">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-ink-500">Register endpoint</p>
+                @if (ext.registerEndpoint) {
+                  <code class="mt-1 block break-all font-mono text-[11px] text-ink-800">POST {{ ext.registerEndpoint }}</code>
+                } @else {
+                  <span class="mt-1 block text-[11px] text-ink-400">Registration disabled</span>
                 }
               </div>
             </div>
-          }
+          </section>
+        }
 
-          <!-- Scopes -->
-          @if (summary.scopes && summary.scopes.length > 0) {
-            <div class="rounded-lg border border-ink-200 p-3">
-              <p class="text-[10px] font-bold uppercase tracking-wider text-ink-500">Scopes</p>
-              <p class="mt-1 font-mono text-[11px] text-ink-700">{{ summary.scopes.join(', ') }}</p>
-            </div>
-          }
-        </div>
+        @if (!view.creds.oidc && !view.creds.externalAuth) {
+          <p class="rounded-lg border border-ink-200 bg-ink-50/60 px-3.5 py-3 text-xs text-ink-600">
+            This app is a launchpad bookmark only. Edit it to link an OAuth client or enable the external API.
+          </p>
+        }
 
-        <!-- .env snippet -->
-        <div class="rounded-xl border border-ink-200 overflow-hidden">
+        <!-- .env -->
+        <div class="overflow-hidden rounded-xl border border-ink-200">
           <div class="flex items-center justify-between bg-ink-900 px-4 py-2 text-xs text-white">
-            <span class="font-mono text-[11px] text-ink-300">.env &bull; Environment Variables</span>
-            <button
-              type="button"
-              (click)="copyAppSummaryEnv()"
-              class="rounded bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold text-white hover:bg-white/20"
-            >
-              {{ appSummaryEnvCopied() ? 'Copied .env!' : 'Copy .env' }}
+            <span class="font-mono text-[11px] text-ink-300">.env</span>
+            <button type="button" (click)="copy('env', envSnippet())" class="rounded bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold text-white hover:bg-white/20">
+              {{ copiedKey() === 'env' ? 'Copied .env!' : 'Copy .env' }}
             </button>
           </div>
-          <pre class="bg-ink-950 p-3.5 font-mono text-[11px] text-emerald-400 overflow-x-auto leading-relaxed">{{ summary.envSnippet }}</pre>
-        </div>
-
-        <!-- Quickstart Hint -->
-        <div class="rounded-lg border border-ink-200 bg-ink-50/50 p-3 text-xs text-ink-600 flex items-center justify-between gap-3">
-          <div>
-            <span class="font-semibold text-ink-800">Ready to integrate?</span>
-            Install with <code class="bg-white px-1.5 py-0.5 rounded border border-ink-200 font-mono text-ink-900">npm install @tanmaysinghx/portal-sso</code>
-          </div>
-          <button
-            type="button"
-            (click)="openQuickstartFromSummary()"
-            class="shrink-0 rounded-md bg-brand-50 px-2.5 py-1 text-xs font-bold text-brand-700 ring-1 ring-inset ring-brand-600/20 hover:bg-brand-100"
-          >
-            Open Code Generator &rarr;
-          </button>
+          <pre class="overflow-x-auto bg-ink-950 p-3.5 font-mono text-[11px] leading-relaxed text-emerald-400">{{ envSnippet() }}</pre>
         </div>
       </div>
 
-      <!-- Footer -->
       <div class="flex flex-wrap items-center justify-between gap-2 border-t border-ink-100 bg-ink-50/60 px-6 py-4">
         <div class="flex flex-wrap items-center gap-2">
+          @if (view.creds.oidc) {
+            <button
+              type="button"
+              (click)="openQuickstartFromCredentials()"
+              class="rounded-lg border border-ink-300 bg-white px-3.5 py-2 text-xs font-semibold text-ink-700 shadow-sm transition hover:bg-ink-50"
+            >
+              Code snippets
+            </button>
+          }
           <button
             type="button"
-            (click)="copyAppSummaryEnv()"
-            class="rounded-lg border border-ink-300 bg-white px-3.5 py-2 text-xs font-semibold text-ink-700 shadow-sm transition hover:bg-ink-50"
-          >
-            {{ appSummaryEnvCopied() ? 'Copied to Clipboard!' : 'Copy All Keys (.env)' }}
-          </button>
-          <button
-            type="button"
-            (click)="downloadAgentInstructionsFromSummary()"
-            title="Download prompt file for Cursor, Claude Code, or Copilot"
+            (click)="downloadAgentGuideFromCredentials()"
+            title="PORTAL_SSO.md for Claude Code, Cursor or Copilot — contains no secrets"
             class="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3.5 py-2 text-xs font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100"
           >
-            <svg class="h-3.5 w-3.5 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="h-3.5 w-3.5 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
             </svg>
-            Download Agent Instructions (.md)
+            Agent guide (.md)
           </button>
         </div>
         <button
           type="button"
-          (click)="dismissAppSummary()"
+          (click)="closeCredentials()"
           class="rounded-lg bg-ink-900 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-ink-800"
         >
-          {{ summary.isNew ? 'I have saved my keys • Done' : 'Close' }}
-        </button>
-      </div>
-    </div>
-  </div>
-}
-
-<!-- Modal: One-time Client Secret -->
-@if (issuedClientSecret(); as secret) {
-  <div class="fixed inset-0 z-[110] flex items-center justify-center overflow-y-auto p-4 sm:p-6">
-    <div class="fixed inset-0 bg-ink-950/70 backdrop-blur-sm" aria-hidden="true"></div>
-
-    <div
-      class="animate-fade-in-up relative z-10 w-full max-w-lg rounded-2xl border border-ink-200 bg-white shadow-2xl"
-      role="dialog"
-      aria-modal="true"
-    >
-      <div class="border-b border-ink-100 px-6 py-5">
-        <h3 class="text-base font-semibold text-ink-900">Copy your client secret</h3>
-        <p class="mt-1 text-xs text-ink-500">
-          <code class="font-mono">{{ issuedClientId() }}</code> was created as a confidential client.
-        </p>
-      </div>
-
-      <div class="space-y-4 px-6 py-5">
-        <div class="rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-3 text-xs leading-relaxed text-amber-900">
-          This secret is shown once. Portal SSO stores only a hash, so it cannot be recovered later.
-        </div>
-        <div class="rounded-lg border border-ink-200 bg-ink-50 p-4">
-          <p class="mb-1 text-[10px] font-semibold uppercase tracking-wider text-ink-500">Client secret</p>
-          <code class="block select-all break-all font-mono text-xs font-bold text-ink-900">{{ secret }}</code>
-        </div>
-      </div>
-
-      <div class="flex items-center justify-between gap-3 border-t border-ink-100 bg-ink-50/60 px-6 py-4">
-        <button
-          type="button"
-          (click)="copyIssuedSecret()"
-          class="rounded-lg border border-ink-300 bg-white px-3.5 py-2 text-xs font-semibold text-ink-700 shadow-sm transition hover:bg-ink-50"
-        >
-          {{ secretCopied() ? 'Copied' : 'Copy secret' }}
-        </button>
-        <button
-          type="button"
-          (click)="clearIssuedSecret()"
-          class="rounded-lg bg-brand-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-brand-700"
-        >
-          I have saved it
-        </button>
-      </div>
-    </div>
-  </div>
-}
-
-<!-- Modal: One-time External App API Key -->
-@if (issuedAppApiKey(); as issued) {
-  <div class="fixed inset-0 z-[110] flex items-center justify-center overflow-y-auto p-4 sm:p-6">
-    <div class="fixed inset-0 bg-ink-950/70 backdrop-blur-sm" aria-hidden="true"></div>
-
-    <div
-      class="animate-fade-in-up relative z-10 w-full max-w-2xl rounded-2xl border border-ink-200 bg-white shadow-2xl"
-      role="dialog"
-      aria-modal="true"
-    >
-      <div class="border-b border-ink-100 px-6 py-5">
-        <h3 class="text-base font-semibold text-ink-900">Copy the external API key</h3>
-        <p class="mt-1 text-xs text-ink-500">
-          Use this key from the application backend only. It is shown once and stored only as a hash.
-        </p>
-      </div>
-
-      <div class="space-y-4 px-6 py-5">
-        <div class="rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-3 text-xs leading-relaxed text-amber-900">
-          Do not put this key in browser JavaScript or mobile bundles. If it leaks, generate a new one from this screen.
-        </div>
-
-        <div class="rounded-lg border border-ink-200 bg-ink-50 p-4">
-          <p class="mb-1 text-[10px] font-semibold uppercase tracking-wider text-ink-500">{{ issued.headerName }}</p>
-          <code class="block select-all break-all font-mono text-xs font-bold text-ink-900">{{ issued.apiKey }}</code>
-        </div>
-
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div class="rounded-lg border border-ink-200 p-3">
-            <p class="text-[10px] font-semibold uppercase tracking-wider text-ink-500">Register endpoint</p>
-            <code class="mt-1 block break-all font-mono text-[11px] text-ink-800">{{ issued.registerEndpoint }}</code>
-          </div>
-          <div class="rounded-lg border border-ink-200 p-3">
-            <p class="text-[10px] font-semibold uppercase tracking-wider text-ink-500">Login endpoint</p>
-            <code class="mt-1 block break-all font-mono text-[11px] text-ink-800">{{ issued.loginEndpoint }}</code>
-          </div>
-        </div>
-      </div>
-
-      <div class="flex items-center justify-between gap-3 border-t border-ink-100 bg-ink-50/60 px-6 py-4">
-        <button
-          type="button"
-          (click)="copyIssuedAppApiKey()"
-          class="rounded-lg border border-ink-300 bg-white px-3.5 py-2 text-xs font-semibold text-ink-700 shadow-sm transition hover:bg-ink-50"
-        >
-          {{ appApiKeyCopied() ? 'Copied' : 'Copy key' }}
-        </button>
-        <button
-          type="button"
-          (click)="clearIssuedAppApiKey()"
-          class="rounded-lg bg-brand-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-brand-700"
-        >
-          I have saved it
+          {{ showsOneTimeSecret() ? "I've saved the secrets — done" : 'Close' }}
         </button>
       </div>
     </div>
@@ -1029,10 +981,9 @@
 }
 
 <app-quickstart-modal
-  [open]="showQuickstart()"
-  [appName]="selectedQuickstartApp()?.name ?? 'My Application'"
-  [clientId]="selectedQuickstartApp()?.clientId ?? 'portal-client-id'"
-  [appUrl]="selectedQuickstartApp()?.appUrl ?? 'http://localhost:3000'"
-  (dismiss)="closeQuickstart()"
+  [open]="!!quickstart()"
+  [appName]="quickstart()?.app?.name ?? 'My Application'"
+  [appUrl]="quickstart()?.app?.appUrl ?? 'http://localhost:3000'"
+  [credentials]="quickstart()?.creds ?? null"
+  (dismiss)="quickstart.set(null)"
 />
-

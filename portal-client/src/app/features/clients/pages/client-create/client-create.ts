@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { buildEnvFile } from '../../../applications/integration-snippets';
 import { OAuthClientService } from '../../services/oauth-client.service';
 
 const INPUT_BASE_CLASSES =
@@ -116,28 +117,31 @@ export class ClientCreate {
       .subscribe({
         next: (created) => {
           this.submitting.set(false);
-          const issuerUrl = typeof window !== 'undefined' ? window.location.origin : 'https://portal.tanmaysinghx.com';
-          const envLines = [
-            `# Portal SSO Client Configuration`,
-            `PORTAL_URL=${issuerUrl}`,
-            `PORTAL_CLIENT_ID=${created.client.clientId}`,
-          ];
-          if (created.clientSecret) {
-            envLines.push(`PORTAL_CLIENT_SECRET=${created.clientSecret}`);
-          }
-          envLines.push(`PORTAL_SCOPES=${scopes.join(' ')}`);
-          if (redirectUris.length > 0) {
-            envLines.push(`PORTAL_REDIRECT_URI=${redirectUris[0]}`);
-          }
+          // The console is served by the authorization server itself, so its origin is the issuer.
+          const issuerUrl = window.location.origin;
+          const envSnippet = buildEnvFile(created.client.clientName, {
+            issuerUrl,
+            discoveryUrl: `${issuerUrl}/.well-known/openid-configuration`,
+            oidc: {
+              clientId: created.client.clientId,
+              clientSecret: created.clientSecret,
+              confidential: created.client.confidential,
+              redirectUris: created.client.redirectUris,
+              scopes: created.client.scopes,
+              popupCallbackUri: `${issuerUrl}/oauth2/popup-callback`,
+              clientExists: true,
+            },
+            externalAuth: null,
+          });
 
           this.createdSummary.set({
             clientId: created.client.clientId,
             clientName: created.client.clientName,
             clientSecret: created.clientSecret || undefined,
             issuerUrl,
-            redirectUris,
-            scopes,
-            envSnippet: envLines.join('\n'),
+            redirectUris: created.client.redirectUris,
+            scopes: created.client.scopes,
+            envSnippet,
           });
         },
         error: (err: HttpErrorResponse) => {

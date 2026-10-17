@@ -31,9 +31,12 @@ spring:
 
 server:
   port: ${SERVER_PORT:8080}
+  # Only affects Spring's fallback /error response. API errors are rendered by GlobalExceptionHandler
+  # with curated PRTL-xxxx messages; raw exception text must not reach clients in production.
   error:
-    include-message: always
-    include-binding-errors: always
+    include-message: ${SERVER_ERROR_INCLUDE_MESSAGE:never}
+    include-binding-errors: ${SERVER_ERROR_INCLUDE_BINDING_ERRORS:never}
+    include-stacktrace: never
 
   # Behind a reverse proxy or load balancer (nginx, AWS ALB, Traefik, Cloudflare), set this to
   # FRAMEWORK. Spring then resolves the real client IP and scheme from the X-Forwarded-* headers
@@ -45,8 +48,9 @@ server:
   #   - audit_events records who made each administrative change
   # All three would otherwise record the load balancer.
   #
-  # Left NONE by default on purpose: trusting X-Forwarded-* when nothing strips it lets any caller
-  # forge their own source address. Turn it on only when a proxy you control sets those headers.
+  # Defaults to NATIVE: Tomcat's RemoteIpValve, which only honours X-Forwarded-* from private-network
+  # addresses (10/8, 172.16/12, 192.168/16, loopback). Use FRAMEWORK when a proxy you control sets
+  # those headers, or NONE when the server is exposed directly and nothing strips them.
   forward-headers-strategy: ${FORWARD_HEADERS_STRATEGY:NATIVE}
 
   compression:
@@ -60,7 +64,9 @@ server:
     session:
       cookie:
         http-only: true
-        secure: ${SERVER_SERVLET_SESSION_COOKIE_SECURE:false}
+        # Secure automatically when ISSUER_URL is https:// (SecureCookieEnvironmentPostProcessor),
+        # off for plain-http local runs. Set SERVER_SERVLET_SESSION_COOKIE_SECURE to override.
+        secure: ${SERVER_SERVLET_SESSION_COOKIE_SECURE:${portal.session.secure-cookie-default:false}}
         same-site: lax
 
 app:

@@ -1,9 +1,14 @@
 package com.tanmaysinghx.portalsso.application.web;
 
+import com.tanmaysinghx.portalsso.application.service.ApplicationOnboardingService;
 import com.tanmaysinghx.portalsso.application.service.ApplicationService;
+import com.tanmaysinghx.portalsso.application.service.ExternalApplicationAuthService;
 import com.tanmaysinghx.portalsso.application.web.dto.ApplicationApiKeyResponse;
+import com.tanmaysinghx.portalsso.application.web.dto.ApplicationCredentialsResponse;
+import com.tanmaysinghx.portalsso.application.web.dto.ApplicationOnboardingResponse;
 import com.tanmaysinghx.portalsso.application.web.dto.ApplicationResponse;
 import com.tanmaysinghx.portalsso.application.web.dto.CreateApplicationRequest;
+import com.tanmaysinghx.portalsso.application.web.dto.OnboardApplicationRequest;
 import com.tanmaysinghx.portalsso.application.web.dto.UpdateApplicationRequest;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -27,9 +32,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminApplicationController {
 
     private final ApplicationService applicationService;
+    private final ApplicationOnboardingService onboardingService;
 
-    public AdminApplicationController(ApplicationService applicationService) {
+    public AdminApplicationController(ApplicationService applicationService, ApplicationOnboardingService onboardingService) {
         this.applicationService = applicationService;
+        this.onboardingService = onboardingService;
     }
 
     @GetMapping
@@ -51,6 +58,23 @@ public class AdminApplicationController {
         return applicationService.create(request);
     }
 
+    /**
+     * One-step onboarding: creates the application, optionally a new linked OAuth client, and the
+     * external API key in one transaction, returning every credential in a single response. This is
+     * the only time the client secret and API key are visible.
+     */
+    @PostMapping("/onboard")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApplicationOnboardingResponse onboard(@Valid @RequestBody OnboardApplicationRequest request) {
+        return onboardingService.onboard(request);
+    }
+
+    /** Issuer, client and external-API settings for an app. Secrets are never included. */
+    @GetMapping("/{id}/credentials")
+    public ApplicationCredentialsResponse credentials(@PathVariable UUID id) {
+        return onboardingService.credentials(id);
+    }
+
     @PutMapping("/{id}")
     public ApplicationResponse update(@PathVariable UUID id, @Valid @RequestBody UpdateApplicationRequest request) {
         return applicationService.update(id, request);
@@ -63,7 +87,7 @@ public class AdminApplicationController {
         return new ApplicationApiKeyResponse(
                 apiKey,
                 apiKey.substring(0, 12),
-                "X-Portal-App-Key",
+                ExternalApplicationAuthService.API_KEY_HEADER,
                 basePath + "/register",
                 basePath + "/login");
     }

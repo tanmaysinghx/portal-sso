@@ -1,1 +1,2 @@
-org.springframework.boot.env.EnvironmentPostProcessor=com.tanmaysinghx.portalsso.database.config.DatabaseDialectEnvironmentPostProcessor
+org.springframework.boot.env.EnvironmentPostProcessor=com.tanmaysinghx.portalsso.database.config.DatabaseDialectEnvironmentPostProcessor,\
+  com.tanmaysinghx.portalsso.security.config.SecureCookieEnvironmentPostProcessor

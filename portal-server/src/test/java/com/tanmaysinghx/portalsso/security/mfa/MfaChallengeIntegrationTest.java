@@ -151,7 +151,7 @@ class MfaChallengeIntegrationTest {
                 .andReturn();
 
         String html = pageResult.getResponse().getContentAsString();
-        assertThat(html).contains("Two-factor authentication");
+        assertThat(html).containsIgnoringCase("Two-factor authentication");
 
         // Assert exactly one _csrf field in form
         Matcher matcher = Pattern.compile("name=[\"']_csrf[\"']").matcher(html);

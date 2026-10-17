@@ -1,326 +1,204 @@
 <p align="center">
-  <img src="assets/images/portal-logo.svg" width="96" height="96" alt="Portal SSO Logo" />
+  <img src="assets/images/portal-logo.svg" width="96" height="96" alt="Portal SSO logo" />
 </p>
 
 <h1 align="center">Portal SSO</h1>
 
 <p align="center">
-  <strong>A self-hosted OAuth2 / OIDC Identity Provider and unified Admin Console.</strong><br />
-  Single deployable jar, persistent RSA signing keys, clustered JDBC sessions, and client-side SPA fallback.
+  <strong>Self-hosted OAuth 2.1 / OpenID Connect identity provider with a built-in admin console.</strong><br />
+  One jar. Embedded database to start, PostgreSQL or MySQL in production.
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Spring_Boot-4.1.1-6DB33F?logo=springboot&logoColor=white" alt="Spring Boot 4" />
+  <img src="https://img.shields.io/badge/Spring_Boot-4.1.1-6DB33F?logo=springboot&logoColor=white" alt="Spring Boot 4.1.1" />
   <img src="https://img.shields.io/badge/Angular-21-DD0031?logo=angular&logoColor=white" alt="Angular 21" />
   <img src="https://img.shields.io/badge/Java-25-007396?logo=openjdk&logoColor=white" alt="Java 25" />
-  <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License" />
 </p>
 
 ---
 
-## Overview
+## What you get
 
-Portal SSO is a self-hosted identity solution designed to be dropped into application architectures with minimal ceremony:
-
-- **OAuth 2.1 & OpenID Connect**: Full `authorization_code` + PKCE flow, ID/Access tokens carrying `email` and `roles` claims, OIDC Discovery (`/.well-known/openid-configuration`), JWKS (`/oauth2/jwks`), UserInfo (`/userinfo`), and revocation endpoints.
-- **Persistent Key Rotation**: 2048-bit RSA signing keys stored in the database with automatic rotation support; older valid keys continue verifying tokens without downtime.
-- **Clustered Admin Session**: Admin dashboard sessions persisted in the database via Spring Session JDBC.
-- **Embedded Admin Dashboard**: Modern Angular 21 SPA packaged directly inside the Spring Boot JAR with client-side deep linking and Remember Me support.
-
-```
-portal-sso/
-├── portal-server/   # Spring Boot 4 — OAuth2/OIDC Auth Server, JDBC Session & REST API
-├── portal-client/   # Angular 21 — Admin Console (OAuth clients, users, session)
-├── assets/          # Brand logos and design assets
-└── docs/            # Architecture notes and design decisions
-```
+- **OAuth 2.1 + OIDC:** authorization code + PKCE (enforced on every client, confidential ones included), refresh-token rotation, discovery, JWKS, UserInfo and revocation.
+- **Application catalog:** one screen registers an app, its OAuth client and its API key, and shows every credential in one place.
+- **User portal:** a launchpad of the apps each user can access, with role-restricted apps and access requests.
+- **Security defaults:** BCrypt passwords, TOTP MFA (AES-256-GCM encrypted secrets), account lockout, per-IP rate limiting, an append-only audit log, and persistent rotating RSA signing keys.
+- **Operations:** a single jar with the console embedded, Spring Session JDBC for clustering, and a one-click migration from the embedded H2 database to PostgreSQL or MySQL.
+- **Client SDK:** [`@tanmaysinghx/portal-sso`](packages/portal-sso) provides popup or redirect login and a drop-in `<portal-login-button>`.
 
 ---
 
-## Direct Download & Run (Jenkins LTS Style)
+## Quick start
 
-Just like running Jenkins LTS (`jenkins.war`), you can download and run Portal SSO directly as a self-contained executable with **zero external dependencies** — no Docker and no external PostgreSQL required.
+### Option 1 — Single jar (evaluation, small installs)
 
-### 1. Download & Run
+Requires Java 25+. No database or Docker needed.
+
 ```bash
-# Direct download (Requires Java 25+)
 curl -LO https://github.com/tanmaysinghx/portal-sso/releases/latest/download/portal-sso.jar
-
-# Run on default port 8080 or custom port
 java -jar portal-sso.jar --httpPort=8080
 ```
 
-Or using the automated installer:
-```bash
-curl -fsSL https://raw.githubusercontent.com/tanmaysinghx/portal-sso/main/install.sh | bash
-```
-
-### 2. Unlock Portal SSO (initialAdminPassword)
-On first launch without configured credentials, Portal SSO automatically creates an embedded database in `~/.portal-sso`, sets up platform roles, provisions an initial administrator, and prints a secure unlock password:
+On first start Portal SSO creates `~/.portal-sso/` (embedded H2 database, generated MFA key) and an
+initial administrator, then prints the credentials:
 
 ```
-*************************************************************
-Portal SSO initial setup is required. An admin user has been created:
-
-  Username: admin@localhost
-  Password: <generated_random_password>
-
-This password has also been written to:
-  ~/.portal-sso/secrets/initialAdminPassword
-
-Please sign in at http://localhost:8080 to complete setup.
-*************************************************************
+Username: admin@localhost
+Password: <generated>          (also in ~/.portal-sso/secrets/initialAdminPassword)
 ```
 
-Sign in at `http://localhost:8080` with `admin@localhost` and the generated password. See [docs/download.md](docs/download.md) for systemd daemon and production setup.
+Sign in at `http://localhost:8080`. Other flags: `--httpListenAddress`, `--portalHome`, `--prefix`.
+Linux installer and systemd unit: [docs/download.md](docs/download.md).
 
-### 3. Seamless In-App Database Migration (PostgreSQL / MySQL)
-Once logged in as an administrator:
-1. An alert banner will highlight that you are currently running on embedded H2 storage.
-2. Navigate to **Settings** &rarr; **Database & Migration** (`/settings?tab=database`).
-3. Select **PostgreSQL** (default port `5432`) or **MySQL** (default port `3306`), and enter your target connection credentials.
-4. Click **Test Target Connection** to verify reachability and credentials.
-5. Click **Migrate to Target Database** to automatically execute Liquibase schema migrations and transfer all user accounts, OAuth applications, signing keys, and audit logs.
-6. The target configuration is automatically saved to `~/.portal-sso/portal.properties` for seamless subsequent restarts.
+When you outgrow H2, go to **Settings → Database & Migration**, enter PostgreSQL or MySQL connection
+details, **Test**, then **Migrate**. Schema, users, clients, signing keys and audit history are
+copied, and the new connection is saved to `~/.portal-sso/portal.properties`.
 
----
-
-## Setting up with Docker Compose (Alternative)
-
-Every command below was run end to end against a clean checkout; the output shown is what it
-actually printed.
-
-### 1. Prerequisites
-
-Docker and Docker Compose. Nothing else — no Java, no Node, no database to install. The image
-builds both halves of the project itself.
+### Option 2 — Docker Compose (PostgreSQL included)
 
 ```bash
-docker --version && docker compose version
-```
-
-### 2. Get the code and create your configuration
-
-```bash
-git clone https://github.com/tanmaysinghx/portal-sso.git
-cd portal-sso
+git clone https://github.com/tanmaysinghx/portal-sso.git && cd portal-sso
 cp .env.example .env
-```
-
-### 3. Fill in `.env`
-
-Every value is required. Compose refuses to start rather than invent a default, and tells you
-which one is missing — a self-hosted identity server with guessable credentials is worse than one
-that will not boot.
-
-```bash
-openssl rand -base64 24   # paste as DB_PASSWORD
-openssl rand -base64 32   # paste as APP_SECURITY_MFA_ENCRYPTION_KEY
-```
-
-Then edit `.env`:
-
-| Variable | Set it to |
-|---|---|
-| `DB_PASSWORD` | the first generated value |
-| `APP_SECURITY_MFA_ENCRYPTION_KEY` | the second. **Back this up** — losing it means every user with 2FA must re-enrol |
-| `ISSUER_URL` | the address browsers will actually use, e.g. `https://sso.example.com`. It is published in the OIDC discovery document and every client validates against it |
-| `APP_BOOTSTRAP_ADMIN_EMAIL` | your admin address |
-| `APP_BOOTSTRAP_ADMIN_PASSWORD` | 12+ characters, with upper, lower and a digit |
-
-Trying it locally without TLS? Also uncomment `SERVER_SERVLET_SESSION_COOKIE_SECURE=false` —
-session cookies are `Secure` by default and a browser will not send them over plain `http`.
-Never do this on anything reachable from elsewhere.
-
-### 4. Start it
-
-```bash
+openssl rand -base64 24   # → DB_PASSWORD
+openssl rand -base64 32   # → APP_SECURITY_MFA_ENCRYPTION_KEY
+# edit .env: also set ISSUER_URL, APP_BOOTSTRAP_ADMIN_EMAIL, APP_BOOTSTRAP_ADMIN_PASSWORD
 docker compose up -d
+docker compose logs app | grep Bootstrapped    # confirms the admin was created
 ```
 
-First run builds the image (a few minutes). After that:
+Compose refuses to start if any required value is missing; there are no default credentials.
+To try it locally over plain `http`, also set `SERVER_SERVLET_SESSION_COOKIE_SECURE=false` in `.env`.
 
-```
- Container portal-sso-db-1   Healthy
- Container portal-sso-app-1  Started
-```
+After the first sign-in, **remove `APP_BOOTSTRAP_ADMIN_EMAIL` and `APP_BOOTSTRAP_ADMIN_PASSWORD` from
+`.env`**. The account already exists, and leaving the password in a file is a needless risk.
 
-### 5. Check it came up
-
-```bash
-docker compose ps          # app should read (healthy)
-docker compose logs app | grep Bootstrapped
-```
-
-```
-WARN  c.t.p.bootstrap.AdminBootstrapper : Bootstrapped administrator 'ops@example.com' ...
-```
-
-That line means Liquibase built the schema and your administrator exists. If instead you see
-*"no bootstrap credentials are configured"*, the two `APP_BOOTSTRAP_ADMIN_*` values did not reach
-the container — check `.env` and re-run.
-
-### 6. Sign in
-
-Open `ISSUER_URL` in a browser and sign in with the bootstrap administrator.
-
-**Then remove `APP_BOOTSTRAP_ADMIN_EMAIL` and `APP_BOOTSTRAP_ADMIN_PASSWORD` from `.env`.** While
-they are set, anyone who can read that file knows the password. Removing them changes nothing —
-the account already exists, and the bootstrap only acts when no enabled administrator is found.
-
-### 7. Register your first application
-
-In the console: **OAuth Clients → New client**.
-
-- **Client ID** — what your app will identify itself as, e.g. `my-web-app`
-- **Redirect URI** — where users return after signing in, e.g. `http://localhost:3000/callback`.
-  It must match byte for byte what your app sends
-- **Confidential client** — tick only for a server-side app that can keep a secret. Browser and
-  mobile apps leave it unticked and use PKCE. A confidential client's secret is shown **once**
-
-### 8. Point your application at it
-
-Any standard OIDC library works; there is no SDK to install. Give it the discovery URL and it
-reads everything else:
-
-```
-https://sso.example.com/.well-known/openid-configuration
-```
-
-A complete `authorization_code` + PKCE exchange against a fresh install returns:
-
-```
-token_type:   Bearer
-expires_in:   899
-scope:        openid profile email
-id_token sub: ops@example.com
-id_token iss: https://sso.example.com
-roles claim:  ['ROLE_ADMIN', 'ROLE_USER']
-```
-
-**PKCE is required for every client**, confidential ones included, so your library must send a
-`code_challenge`.
-
-### 9. Before you expose it publicly
-
-- **Put TLS in front of it** and set `ISSUER_URL` to the `https://` address.
-- **Set `FORWARD_HEADERS_STRATEGY=FRAMEWORK`** if anything proxies to it (nginx, an AWS ALB,
-  Cloudflare). Without it, rate limiting treats every visitor as one client and the audit log
-  records the proxy's IP instead of the user's.
-- **Keep the database close to the app.** The same endpoint measured 4&nbsp;ms against a local
-  database and 651&nbsp;ms against one 83&nbsp;ms away. It is the largest single performance factor.
-- **Back up `APP_SECURITY_MFA_ENCRYPTION_KEY`** with your database credentials.
+Full deployment guide (reverse proxies, TLS, managed databases): [docs/deployment.md](docs/deployment.md).
 
 ---
 
-## Other ways to run it
+## Production checklist
 
-### Option A: Standalone JAR (existing database)
+| | Item | Why |
+|---|---|---|
+| ☐ | Serve over **HTTPS** and set `ISSUER_URL` to the exact public `https://` origin | It is the `iss` in every token and in discovery; clients reject mismatches. Session cookies become `Secure` automatically when it is `https://`. |
+| ☐ | Use **PostgreSQL 15+ or MySQL 8+**, close to the app | H2 is for evaluation. Database latency is the largest performance factor. |
+| ☐ | Set and **back up** `APP_SECURITY_MFA_ENCRYPTION_KEY` | Losing it forces every MFA user to re-enrol. |
+| ☐ | Set `FORWARD_HEADERS_STRATEGY=FRAMEWORK` behind a proxy you control | Otherwise rate limits, login events and audit entries record the proxy's IP. |
+| ☐ | Remove the `APP_BOOTSTRAP_ADMIN_*` values after first sign-in | They only act when no enabled admin exists. |
+| ☐ | Enable MFA for administrators | **Settings → Security & Token Policies**. |
+| ☐ | Leave `app.seed.test-data` **off** | It creates well-known test accounts. |
+| ☐ | Back up the database | It holds users, clients, signing keys and the audit log. |
 
-For an operator who already has PostgreSQL or MySQL — RDS, Aiven, Cloud SQL — and wants the
-process under systemd.
+### Configuration reference
+
+All settings are environment variables (or the equivalent Spring property).
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `ISSUER_URL` | `http://localhost:8080` | Public base URL; OIDC issuer |
+| `SERVER_PORT` | `8080` | HTTP port |
+| `DB_URL` / `DB_USERNAME` / `DB_PASSWORD` | embedded H2 in `~/.portal-sso` | JDBC connection (`jdbc:postgresql://…` or `jdbc:mysql://…`, dialect auto-detected) |
+| `PORTAL_HOME` | `~/.portal-sso` | Data, secrets and saved config directory |
+| `APP_SECURITY_MFA_ENCRYPTION_KEY` | generated into `PORTAL_HOME` | Base64 32-byte key for TOTP secrets |
+| `APP_BOOTSTRAP_ADMIN_EMAIL` / `_PASSWORD` | unset (auto-generated admin on first run) | First administrator |
+| `FORWARD_HEADERS_STRATEGY` | `NATIVE` | `FRAMEWORK` behind a trusted proxy, `NONE` when exposed directly |
+| `SERVER_SERVLET_SESSION_COOKIE_SECURE` | `true` if `ISSUER_URL` is https | Override the session cookie `Secure` flag |
+| `APP_REGISTRATION_ENABLED` | `false` | Allow public self-registration |
+| `APP_REGISTRATION_REQUIRE_ADMIN_APPROVAL` | `false` | New self-registered accounts start disabled |
+
+Password policy, lockout threshold, rate limits and log retention are documented inline in
+[`application.yml`](portal-server/src/main/resources/application.yml).
+
+---
+
+## Connect an application
+
+1. **Applications → New application.** Enter a name and launch URL and keep **New client** selected.
+   The client ID, redirect URI and popup callback are filled in for you.
+2. Click **Create application**. The **Keys & setup** modal shows the client ID, any client secret
+   or API key (**shown once**), the registered redirect URIs, and a ready `.env`.
+3. In your app, either use the SDK…
+
+   ```bash
+   npm install @tanmaysinghx/portal-sso
+   ```
+
+   ```ts
+   import { PortalSSO } from '@tanmaysinghx/portal-sso';
+   const sso = new PortalSSO({ portalUrl: 'https://sso.example.com', clientId: 'my-app' });
+   const { user, accessToken } = await sso.loginWithPopup();
+   ```
+
+   …or any standard OIDC library pointed at `https://sso.example.com/.well-known/openid-configuration`
+   (PKCE S256 required).
+
+Letting a coding agent do the integration? Click **Agent guide** in Keys & setup to download a
+`PORTAL_SSO.md` with your app's real settings (no secrets), or hand it
+[docs/AI_AGENT_INTEGRATION.md](docs/AI_AGENT_INTEGRATION.md).
+
+Details: [docs/APP_ONBOARDING.md](docs/APP_ONBOARDING.md) · SDK reference: [docs/POPUP_LOGIN_QUICKSTART.md](docs/POPUP_LOGIN_QUICKSTART.md)
+
+---
+
+## Development
 
 ```bash
-cd portal-server && ./mvnw -DskipTests package
-
-ISSUER_URL=https://sso.example.com \
-DB_URL=jdbc:postgresql://db.internal:5432/portalsso \
-DB_USERNAME=portal DB_PASSWORD=... \
-APP_SECURITY_MFA_ENCRYPTION_KEY=... \
-APP_BOOTSTRAP_ADMIN_EMAIL=ops@example.com \
-APP_BOOTSTRAP_ADMIN_PASSWORD=... \
-FORWARD_HEADERS_STRATEGY=FRAMEWORK \
-java -jar target/portal-server-*.jar
-```
-
-For MySQL add `SPRING_PROFILES_ACTIVE=mysql`, and note that the database user needs
-`SESSION_VARIABLES_ADMIN` — see [portal-server/README.md](portal-server/README.md#mysql-privileges).
-
-### Option B: In-memory H2 (no database at all)
-
-Data does not survive a restart. For a five-minute look, not for anything you want to keep.
-
-```bash
+# Backend — http://localhost:8080
 cd portal-server
-./mvnw spring-boot:run -Dspring-boot.run.useTestClasspath=true \
-  -Dspring-boot.run.arguments="--spring.datasource.url=jdbc:h2:mem:portalsso;MODE=PostgreSQL;DB_CLOSE_DELAY=-1 \
-  --spring.datasource.driver-class-name=org.h2.Driver \
-  --spring.datasource.username=sa --spring.datasource.password= \
-  --app.seed.test-data=true"
-```
+./mvnw spring-boot:run
 
-### Option C: Local development (hot-reloading)
-
-Run the backend and frontend development servers concurrently:
-
-```bash
-# Terminal 1 — Backend (http://localhost:8080)
-cd portal-server
-SPRING_PROFILES_ACTIVE=mysql,local ./mvnw spring-boot:run
-
-# Terminal 2 — Frontend Dev Server (http://localhost:4200, proxies /api & /login to :8080)
+# Console with hot reload — http://localhost:4200 (proxies API and auth routes to :8080)
 cd portal-client
 npm install
 npm start
 ```
 
-Open **`http://localhost:4200/`** in your browser.
+For a database other than the embedded H2, copy `portal-server/config/application-local.yml.example`
+to `application-local.yml` (gitignored) and run with `SPRING_PROFILES_ACTIVE=local`.
 
----
-
-## Seeded Accounts (`app.seed.test-data=true`)
-
-| Role | Email | Password |
-|---|---|---|
-| **Admin** | `admin@portalsso.local` | `AdminPassword123!` |
-| **Standard User** | `testuser@portalsso.local` | `TestPassword123!` |
-
-*Also seeds a sample PKCE public client (`test-client`, redirect URI: `http://127.0.0.1:8080/authorized`).*
-
----
-
-## Continuous Integration
-
-`.github/workflows/ci.yml` runs on every push and pull request to `main`:
-
-| Job | What it does |
-|---|---|
-| **Backend tests** | JDK 25 + Node 24, `./mvnw verify`, uploads the jar and the surefire reports. Includes a Testcontainers run against real MySQL 8.0, and fails if that test was *skipped* — a skipped test proves nothing |
-| **Console build** | `npm ci` + `ng build`; `npm ci` also proves the lock file is complete on Linux |
-| **Docker image** | Builds the image, then **runs** it against a real Postgres and asserts it becomes healthy, serves OIDC discovery, and creates its bootstrap administrator |
-
-The backend job additionally asserts that the suite actually executed — the count must be at least
-150 and no class may report zero tests. This project has been bitten by `@Nested` with
-`@SpringBootTest` silently running nothing while reporting success, and a green build that ran no
-tests is worse than a red one.
-
-Node is pinned to 24 in both CI and the Dockerfile to match the npm major that wrote
-`package-lock.json`; on Node 22 (npm 10) `npm ci` fails on the platform-specific optional
-dependency tree.
-
-## Running Tests
+Disposable in-memory instance with seeded test data:
 
 ```bash
-# Run all backend integration & unit tests
-cd portal-server && ./mvnw test
-
-# Run frontend tests
-cd portal-client && npx ng test --watch=false
+cd portal-server
+./mvnw spring-boot:run -Dspring-boot.run.arguments="--spring.datasource.url=jdbc:h2:mem:portalsso;MODE=PostgreSQL;DB_CLOSE_DELAY=-1 --app.seed.test-data=true"
 ```
 
+Seeded accounts (**development only**): `admin@portalsso.local` / `AdminPassword123!`,
+`testuser@portalsso.local` / `TestPassword123!`, plus the public client `test-client`
+(redirect `http://127.0.0.1:8080/authorized`).
+
+On Windows PowerShell use `cmd /c .\mvnw …` and `npm.cmd …` if script execution is blocked.
+
+### Build & test
+
+```bash
+./build.sh                                   # console + server → portal-server/target/*.jar
+cd portal-server && ./mvnw test              # backend
+cd portal-client && npx ng test --watch=false  # frontend
+```
+
+CI (`.github/workflows/ci.yml`) runs the backend suite (including MySQL via Testcontainers),
+builds the console, and boots the Docker image against PostgreSQL. It fails if fewer than 150
+tests ran or any class ran zero, which guards against `@Nested` + `@SpringBootTest` silently
+skipping tests.
+
 ---
 
-## Configuration & Credentials
+## Repository layout
 
-1. Copy the example configuration template:
-   ```bash
-   cp portal-server/config/application-local.yml.example portal-server/config/application-local.yml
-   ```
-2. Enter your database credentials in `portal-server/config/application-local.yml`.
-3. `config/application-local.yml` is **gitignored** and never packaged into build artifacts, keeping production secrets safe.
+```
+portal-server/      Spring Boot 4 — authorization server, REST API, Liquibase migrations
+portal-client/      Angular 21 — admin console and user portal (embedded into the jar)
+packages/portal-sso Client SDK (@tanmaysinghx/portal-sso)
+docs/               Architecture, deployment, onboarding and integration guides
+distribution/       systemd unit
+```
 
----
-
-## Architecture & Design Notes
-
-See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for full design rationale, database schemas, and migration details.
+| Doc | For |
+|---|---|
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Design, schema, key decisions |
+| [deployment.md](docs/deployment.md) · [download.md](docs/download.md) | Running in production |
+| [APP_ONBOARDING.md](docs/APP_ONBOARDING.md) | Adding apps, where secrets live, admin API |
+| [AI_AGENT_INTEGRATION.md](docs/AI_AGENT_INTEGRATION.md) | Brief to give coding agents integrating an app |
+| [POPUP_LOGIN_QUICKSTART.md](docs/POPUP_LOGIN_QUICKSTART.md) | SDK usage by framework |
+| [AGENTS.md](AGENTS.md) | Conventions for AI agents working on this repo |

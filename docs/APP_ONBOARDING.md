@@ -1,127 +1,218 @@
-# Application Onboarding Guide
+# Adding Applications to Portal SSO
 
-This is the short context file for work on adding or configuring apps in Portal SSO. Read this before changing `application/`, `client/`, or the Angular Applications and OAuth Clients screens.
+How app onboarding works, where every credential lives, and what to check when sign-in fails.
+Read this before changing `application/`, `client/`, or the Angular **Applications** / **OAuth
+Clients** screens.
 
-## Mental Model
+> Integrating an *external* app with Portal SSO? Give the app's coding agent
+> [`AI_AGENT_INTEGRATION.md`](AI_AGENT_INTEGRATION.md), or the per-app `PORTAL_SSO.md` that the
+> admin console generates (**Applications → Agent guide**).
 
-Portal SSO has two related but separate concepts:
+---
 
-- **Application**: a launchpad/catalog entry shown in the user portal. It has a name, launch URL, icon, category, enabled flag, access policy, and optional linked `clientId`.
-- **OAuth Client**: the OIDC relying-party registration used by an app to sign users in. It has redirect URIs, scopes, client authentication method, PKCE settings, token settings, and optional confidential secret.
+## 1. Mental model
 
-An app can be only a bookmark, only a catalog entry, or a catalog entry linked to an OAuth client. The linked field is `applications.client_id`, storing the OAuth client's public `client_id` string.
+| Concept | What it is | Stored in |
+|---|---|---|
+| **Application** | Launchpad/catalog entry: name, launch URL, icon, category, access policy, enabled flag. | `applications` |
+| **OAuth client** | OIDC relying-party registration: `client_id`, redirect URIs, scopes, auth method, optional secret. | `oauth_clients` |
+| **External API key** | Per-application key for the backend-only login/register REST API. | `applications.external_auth_api_key_hash` |
 
-## Admin Flow
+An Application optionally links to one OAuth client through `applications.client_id` (the
+client's public `client_id` string). The two have independent lifecycles: **deleting an
+Application never deletes its OAuth client**, and deleting a client never deletes the app.
 
-The preferred admin path is:
+An application is one of:
 
-1. Go to **Applications**.
-2. Click **New application**.
-3. Fill the launchpad fields.
-4. In **SSO registration**, either:
-   - leave it as `None` for a standalone bookmark,
-   - choose an existing OAuth client, or
-   - enable **Create client** to create and link a new OAuth client during the same save.
-5. Optionally enable **Allow external app login and registration API** when an app owner needs their
-   own backend to call Portal SSO from a custom login/register UI.
-6. **Unified Credentials Modal**: Upon saving, Portal SSO immediately displays all keys and configuration in one place:
-   - Client ID
-   - Client Secret (if confidential)
-   - External API Key (`X-Portal-App-Key`)
-   - Portal Issuer URL
-   - Allowed Redirect URIs & Scopes
-   - One-click `.env` copy snippet
-7. Use **OAuth Clients** for advanced client registry work, edits, deletion, and token revocation.
+- **Bookmark only:** no client, no API key. Users launch it from the portal and sign in separately.
+- **SSO app:** linked OAuth client. Users sign in with Authorization Code + PKCE.
+- **External API app:** has an API key, so its backend can verify credentials and register users for a custom login UI. Can be combined with SSO.
 
-The combined Applications flow is intentionally a convenience layer over the existing APIs. It must not remove or weaken the lower-level OAuth Client registry.
+---
 
-## Client App SDK Installation
+## 2. Admin flow
 
-Client apps can install and integrate Portal SSO with zero boilerplate:
+**Applications → New application**
 
-- **Option 1 (Official NPM Package)**:
-  ```bash
-  npm install @tanmaysinghx/portal-sso
-  ```
-- **Option 2 (Direct from GitHub repository)**:
-  ```bash
-  npm install github:tanmaysinghx/portal-sso#path:packages/portal-sso
-  ```
-- **Option 3 (Direct CDN Script)**:
-  ```html
-  <script src="https://portal.tanmaysinghx.com/portal-sso.js"></script>
-  ```
+1. **Launch details:** name, launch URL, optional description, category and icon.
+2. **Single sign-on.** Pick one:
+   - **New client** (default). Creates and links an OAuth client in the same save. Every field has a default:
+     - Client ID: slug of the app name (`Grafana Dashboard` → `grafana-dashboard`).
+     - Redirect URIs: the launch URL. Portal's popup callback `{ISSUER}/oauth2/popup-callback` is **always added** so the SDK's `loginWithPopup()` works without configuration.
+     - Scopes: `openid profile email`. `openid` is always included.
+     - Type: public (PKCE only). Tick **Confidential client** only for apps with a server-side backend; that issues a client secret.
+   - **Existing client.** Links a client already on the OAuth Clients page.
+   - **None.** Bookmark only.
+3. **Access policy:** all users, or restricted to roles.
+4. **External login/register API** (off by default). Tick it only if the app has its own login screen and backend.
+5. **Create application.** The server creates the client, the app and the API key **in one transaction** (`POST /api/admin/applications/onboard`). If any step fails, nothing is created.
 
-## External Login And Registration API
+The **Keys & setup** modal then opens. It is the single place every credential is shown:
 
-Some apps have their own login/register screens but want Portal SSO to remain the account source of
-truth. For that case, enable external auth on the Application and generate an API key.
+| Item | Shown | Notes |
+|---|---|---|
+| Issuer URL, discovery URL | Always | From `ISSUER_URL`. This is the `iss` in every token. |
+| Client ID, type, redirect URIs, scopes | Always | The real registered values, read from the client. |
+| **Client secret** | **Once**, at creation | Stored as a hash. If it is lost, create a new client and re-link it. |
+| **External API key** | **Once**, at creation or rotation | Stored as a hash. The `apiKeyPrefix` identifies the active key later. |
+| Login/register endpoints | Always | Absolute URLs. |
+| `.env` block | Always | Contains real secret values only while they are on screen; placeholders otherwise. |
+| Agent guide (`PORTAL_SSO.md`) | Always | Download for a coding agent. **Never contains secrets.** |
 
-External API endpoints:
+While a one-time secret is on screen, the modal cannot be dismissed by Escape or a backdrop
+click. The admin must press **"I've saved the secrets — done"**.
 
-- `POST /api/external/apps/{applicationId}/register`
-- `POST /api/external/apps/{applicationId}/login`
+To view the modal later, click **Keys & setup** on the app's row. From there you can also
+**Generate key** or **Rotate key**. Rotation takes two clicks because the old key stops
+working immediately.
 
-Required header:
+Editing an app can switch the linked client between existing clients or none. To give an
+existing app a new client, create it on **OAuth Clients** and link it. If you enable the
+external API on an app with no key, the Keys & setup modal opens so you can generate one.
 
-- `X-Portal-App-Key: <one-time-generated-key>`
+---
 
-Important boundary: the API key is for the application backend only. Do not put it in browser
-JavaScript, mobile apps, or any client bundle. A browser UI should call its own app backend; that
-backend calls Portal SSO.
+## 3. Where secrets live
 
-Current login behavior validates credentials and returns user details plus whether MFA is required.
-It does not mint OAuth tokens, create a Portal SSO browser session, or bypass the normal OIDC flow.
-For full SSO, continue to use the Authorization Code + PKCE flow.
+| Secret | Generated by | Stored as | Delivered to admin | Lives in the app |
+|---|---|---|---|---|
+| Client secret | Server, 256-bit `SecureRandom` | Password-encoder hash | Onboard / client-create response, once | Backend env `PORTAL_CLIENT_SECRET` |
+| External API key (`psso_app_…`) | Server, 256-bit `SecureRandom` | Password-encoder hash + 12-char prefix | Onboard / rotate response, once | Backend env `PORTAL_API_KEY` |
+| Signing keys (RSA 2048) | Server | DB (`signing_keys`) | Never | Apps fetch public keys from `/oauth2/jwks` |
 
-## Backend Ownership
+Secrets never appear in `audit_events`, `login_events`, browser storage, application records or
+the generated agent guide. Only the client *type* and the key *prefix* are audited.
 
-Application catalog:
+---
 
-- Controller: `portal-server/src/main/java/com/tanmaysinghx/portalsso/application/web/AdminApplicationController.java`
-- Service: `portal-server/src/main/java/com/tanmaysinghx/portalsso/application/service/ApplicationService.java`
-- Entity: `portal-server/src/main/java/com/tanmaysinghx/portalsso/application/entity/Application.java`
-- Liquibase: `portal-server/src/main/resources/db/changelog/changes/012-create-applications-table.yaml`
+## 4. Admin API
 
-OAuth client registry:
+All endpoints require `ROLE_ADMIN` and a CSRF token.
 
-- Controller: `portal-server/src/main/java/com/tanmaysinghx/portalsso/client/web/AdminOAuthClientController.java`
-- Registered client adapter: `portal-server/src/main/java/com/tanmaysinghx/portalsso/client/security/JpaRegisteredClientRepository.java`
-- Entity: `portal-server/src/main/java/com/tanmaysinghx/portalsso/client/entity/OAuthClient.java`
-- Liquibase: `portal-server/src/main/resources/db/changelog/changes/004-create-oauth-clients-table.yaml`
+| Method & path | Purpose | Returns secrets? |
+|---|---|---|
+| `POST /api/admin/applications/onboard` | App + optional new client + optional API key, atomically | Yes, once |
+| `GET /api/admin/applications/{id}/credentials` | Issuer, client, redirect URIs, scopes, external endpoints | Never |
+| `POST /api/admin/applications/{id}/external-auth/api-key` | Issue or rotate the API key | Yes, once |
+| `POST /api/admin/applications` | Create app only (link an existing `clientId` or none) | No |
+| `PUT /api/admin/applications/{id}` | Update app | No |
+| `DELETE /api/admin/applications/{id}` | Delete app (client untouched) | No |
+| `POST /api/admin/oauth-clients` | Create a client only | Secret, once |
 
-## Frontend Ownership
+Onboarding request (every `oauthClient` field is optional; omit `oauthClient` to create no client):
 
-- Applications admin page: `portal-client/src/app/features/applications/pages/application-list/`
-- Application API service/model: `portal-client/src/app/features/applications/services/application.service.ts`, `portal-client/src/app/features/applications/models/application.model.ts`
-- OAuth client API service/model: `portal-client/src/app/features/clients/services/oauth-client.service.ts`, `portal-client/src/app/features/clients/models/oauth-client.model.ts`
-- Standalone OAuth client create page: `portal-client/src/app/features/clients/pages/client-create/`
+```json
+{
+  "application": {
+    "name": "Ticket Desk",
+    "appUrl": "https://tickets.example.com",
+    "accessType": "ALL_USERS",
+    "externalAuthEnabled": true
+  },
+  "oauthClient": {
+    "clientId": "ticket-desk",
+    "redirectUris": ["https://tickets.example.com/callback"],
+    "scopes": ["openid", "profile", "email"],
+    "confidential": true
+  }
+}
+```
 
-## Security Invariants
+Onboarding response:
 
-- PKCE stays required for every authorization-code client, including confidential clients.
-- Confidential client secrets are generated server-side, returned once, and stored only as a hash.
-- External app API keys are generated server-side, returned once, and stored only as a hash.
-- Never log or persist raw secrets in `audit_events`, `login_events`, browser storage, or application records.
-- Redirect URI changes are security-sensitive and must remain audited through the OAuth client API.
-- Deleting an OAuth client must continue to revoke related grants and consents.
-- Deleting an Application removes only the launchpad/catalog entry; it must not silently delete the linked OAuth client.
-- External login/register API keys must not grant admin API access and must only work for their own Application.
+```json
+{
+  "application": { "id": "…", "clientId": "ticket-desk", "externalAuthApiKeyIssued": true, "…": "…" },
+  "credentials": {
+    "issuerUrl": "https://sso.example.com",
+    "discoveryUrl": "https://sso.example.com/.well-known/openid-configuration",
+    "oidc": {
+      "clientId": "ticket-desk",
+      "clientSecret": "…only in this response…",
+      "confidential": true,
+      "redirectUris": ["https://tickets.example.com/callback", "https://sso.example.com/oauth2/popup-callback"],
+      "scopes": ["openid", "profile", "email"],
+      "popupCallbackUri": "https://sso.example.com/oauth2/popup-callback",
+      "clientExists": true
+    },
+    "externalAuth": {
+      "headerName": "X-Portal-App-Key",
+      "apiKey": "psso_app_…only in this response…",
+      "apiKeyPrefix": "psso_app_Ab1",
+      "apiKeyIssued": true,
+      "registrationEnabled": true,
+      "loginEndpoint": "https://sso.example.com/api/external/apps/{id}/login",
+      "registerEndpoint": "https://sso.example.com/api/external/apps/{id}/register"
+    }
+  }
+}
+```
 
-## Testing Checklist
+Validation:
 
-For changes in this area, run at least:
+| Case | Result |
+|---|---|
+| `oauthClient` set **and** `application.clientId` set | `400 PRTL-3003` |
+| Duplicate `client_id` | `409 PRTL-3001`; no app is created |
+| Linking an unregistered `clientId` | `404 PRTL-3002`. An unchanged link on update is allowed, so an app whose client was deleted can still be edited. |
+
+---
+
+## 5. Troubleshooting
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `redirect_uri` error on the Portal sign-in page | The app sent a URI that isn't registered, *exactly* (scheme, host, port, path, trailing slash). | Compare against **Keys & setup → Registered redirect URIs**. Edit the client on **OAuth Clients**. |
+| Tokens rejected with "invalid issuer" | `ISSUER_URL` doesn't match the public URL the app uses. | Set `ISSUER_URL` to the public HTTPS origin. See [deployment.md](deployment.md). |
+| `invalid_request` mentioning `code_challenge` | The app isn't sending PKCE. | PKCE S256 is mandatory for every client, including confidential ones. |
+| External API returns `403 PRTL-1002` | App disabled, external API off, or no key issued yet. | Enable it and click **Generate key**. |
+| External API returns `401 PRTL-1001` | Wrong or missing `X-Portal-App-Key`. | Rotate the key and update the app's backend env. |
+| Client secret lost | Only the hash is stored. | Create a new confidential client and re-link the app. |
+| Keys & setup says the linked client no longer exists | The client was deleted on OAuth Clients. | Edit the app and link another client. |
+
+---
+
+## 6. Code ownership
+
+Backend (`portal-server/src/main/java/com/tanmaysinghx/portalsso/`):
+
+| Concern | File |
+|---|---|
+| Onboarding transaction + credentials bundle | `application/service/ApplicationOnboardingService.java` |
+| App CRUD, API-key generation, client-link validation | `application/service/ApplicationService.java` |
+| Admin endpoints | `application/web/AdminApplicationController.java` |
+| External login/register API | `application/web/ExternalApplicationAuthController.java`, `application/service/ExternalApplicationAuthService.java` |
+| OAuth client creation (PKCE, secrets), shared with onboarding | `client/service/OAuthClientRegistrationService.java` |
+| OAuth client registry endpoints | `client/web/AdminOAuthClientController.java` |
+| Popup callback relay page | `security/web/AuthPageController.java` (`/oauth2/popup-callback`) |
+| Schema | `db/changelog/changes/004-create-oauth-clients-table.yaml`, `012-create-applications-table.yaml` |
+
+Frontend (`portal-client/src/app/`):
+
+| Concern | File |
+|---|---|
+| Applications page (form, Keys & setup modal) | `features/applications/pages/application-list/` |
+| `.env`, redirect URI and agent-guide builders (single source) | `features/applications/integration-snippets.ts` |
+| API service / models | `features/applications/services/application.service.ts`, `features/applications/models/application.model.ts` |
+| Per-stack code snippets | `shared/components/quickstart-modal/` |
+| Advanced client registry | `features/clients/` |
+
+## 7. Invariants (do not break)
+
+- PKCE stays required for every authorization-code client, including confidential ones.
+- Client secrets and API keys are generated server-side, returned once, and stored only as hashes.
+- Onboarding stays atomic: the client, app and key commit together or not at all.
+- Redirect URI changes go through the audited OAuth client API.
+- Deleting an OAuth client revokes its grants and consents. Deleting an Application leaves its client alone.
+- API keys never grant admin access and only work for their own Application.
+- Generated agent guides never embed secret values.
+
+## 8. Tests
 
 ```bash
 cd portal-server
-cmd /c .\mvnw test "-Dtest=ApplicationControllerIntegrationTest,AdminOAuthClientControllerTest,ConfidentialClientTest"
+cmd /c .\mvnw test "-Dtest=ApplicationOnboardingIntegrationTest,ApplicationControllerIntegrationTest,AdminOAuthClientControllerTest,ConfidentialClientTest"
+
+cd ../portal-client
+npm run build   # npm.cmd in PowerShell
 ```
-
-For frontend form changes:
-
-```bash
-cd portal-client
-npm run build
-```
-
-Use `npm.cmd` in PowerShell if script execution policy blocks `npm`.

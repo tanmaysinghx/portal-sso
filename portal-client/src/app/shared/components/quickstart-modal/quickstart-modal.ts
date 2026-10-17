@@ -1,4 +1,12 @@
 import { Component, computed, input, output, signal } from '@angular/core';
+import {
+  agentGuideFileName,
+  appRedirectUri,
+  buildAgentGuide,
+  downloadTextFile,
+  popupRedirectUri,
+} from '../../../features/applications/integration-snippets';
+import { ApplicationCredentials } from '../../../features/applications/models/application.model';
 
 export type TechStack = 'npm' | 'popup' | 'react' | 'angular' | 'spring' | 'jsp' | 'nodejs' | 'python' | 'go';
 
@@ -10,26 +18,22 @@ export type TechStack = 'npm' | 'popup' | 'react' | 'angular' | 'spring' | 'jsp'
 export class QuickstartModal {
   readonly open = input(false);
   readonly appName = input('My Application');
-  readonly clientId = input('portal-web-app');
   readonly appUrl = input('http://localhost:3000');
+  /** Real integration settings from the server; snippets fall back to placeholders without it. */
+  readonly credentials = input<ApplicationCredentials | null>(null);
   readonly dismiss = output<void>();
 
   readonly activeStack = signal<TechStack>('npm');
   readonly copied = signal(false);
 
-  readonly issuerUri = computed(() => {
-    if (typeof window !== 'undefined') {
-      return window.location.origin;
-    }
-    return 'http://localhost:8080';
-  });
+  readonly issuerUri = computed(() => this.credentials()?.issuerUrl ?? 'http://localhost:8080');
+  readonly clientId = computed(() => this.credentials()?.oidc?.clientId ?? 'your-client-id');
 
+  /** A URI that is actually registered for the client, so copied snippets work unmodified. */
   readonly redirectUri = computed(() => {
-    const url = this.appUrl();
-    if (url.endsWith('/')) {
-      return url + 'callback';
-    }
-    return url + '/callback';
+    const creds = this.credentials();
+    if (!creds) return `${this.issuerUri()}/oauth2/popup-callback`;
+    return appRedirectUri(creds) ?? popupRedirectUri(creds);
   });
 
   copySnippet(code: string): void {
@@ -39,117 +43,11 @@ export class QuickstartModal {
     });
   }
 
+  /** Same brief as the Applications page: built from real settings, contains no secrets. */
   downloadAgentPrompt(): void {
-    const issuer = this.issuerUri();
-    const client = this.clientId() || 'portal-client-id';
-    const appName = this.appName();
-    const appUrl = this.appUrl();
-    const redirect = `${issuer}/oauth2/popup-callback`;
-
-    const content = `# Portal SSO Integration Instructions for ${appName}
-
-> Give this file directly to an AI agent (Cursor, Claude Code, GitHub Copilot, ChatGPT, or Antigravity):
-> **"Integrate Portal SSO authentication into this repository following the instructions below."**
-
----
-
-## 1. Credentials & Configuration
-
-- **Portal URL**: \`${issuer}\`
-- **Client ID**: \`${client}\`
-- **Popup Callback URI**: \`${redirect}\`
-- **Application URL**: \`${appUrl}\`
-- **Default Scopes**: \`openid profile email\`
-
-### Environment Variables (\`.env\`)
-\`\`\`env
-PORTAL_URL=${issuer}
-PORTAL_CLIENT_ID=${client}
-PORTAL_REDIRECT_URI=${redirect}
-PORTAL_SCOPES=openid profile email
-\`\`\`
-
----
-
-## 2. Package Installation
-
-Install the official client SDK:
-
-\`\`\`bash
-# Official NPM registry:
-npm install @tanmaysinghx/portal-sso
-
-# Or direct from GitHub repository:
-npm install github:tanmaysinghx/portal-sso#path:packages/portal-sso
-\`\`\`
-
----
-
-## 3. Implementation Code
-
-### Option A: Drop-in UI Button (Any Framework / HTML)
-In your entry file (\`main.ts\` or \`index.tsx\`):
-\`\`\`ts
-import '@tanmaysinghx/portal-sso';
-\`\`\`
-
-In your template:
-\`\`\`html
-<portal-login-button
-  portal-url="${issuer}"
-  client-id="${client}"
-  theme="dark">
-</portal-login-button>
-
-<script>
-  document.querySelector('portal-login-button').addEventListener('login-success', (e) => {
-    const { user, session } = e.detail;
-    console.log('Logged in user:', user.name, user.email);
-  });
-</script>
-\`\`\`
-
-### Option B: React / Next.js
-\`\`\`tsx
-import { PortalSSO } from '@tanmaysinghx/portal-sso';
-
-export const sso = new PortalSSO({
-  portalUrl: '${issuer}',
-  clientId: '${client}',
-});
-
-// Inside your login component:
-async function handleLogin() {
-  const { user, accessToken } = await sso.loginWithPopup();
-  console.log('Signed in:', user.name, user.email);
-}
-\`\`\`
-
-### Option C: Angular (Standalone & Signals)
-\`\`\`typescript
-import { PortalSSO } from '@tanmaysinghx/portal-sso';
-
-const sso = new PortalSSO({
-  portalUrl: '${issuer}',
-  clientId: '${client}',
-});
-
-async function login() {
-  const session = await sso.loginWithPopup();
-  console.log('User:', session.user);
-}
-\`\`\`
-`;
-
-    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `PORTAL_SSO_${appName.toUpperCase().replace(/[^A-Z0-9]/g, '_')}_INSTRUCTIONS.md`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const creds = this.credentials();
+    if (!creds) return;
+    downloadTextFile(agentGuideFileName(), buildAgentGuide(this.appName(), this.appUrl(), creds));
   }
 
   getSnippet(stack: TechStack): string {
@@ -283,7 +181,7 @@ spring:
         registration:
           portal-sso:
             client-id: ${client}
-            client-secret: YOUR_CLIENT_SECRET # (leave blank if public client)
+            client-secret: \${PORTAL_CLIENT_SECRET:} # blank for public clients
             scope: openid,profile,email
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
@@ -305,7 +203,7 @@ upstreams = [
 provider = "oidc"
 oidc_issuer_url = "${issuer}"
 client_id = "${client}"
-client_secret = "YOUR_CLIENT_SECRET"
+client_secret = "\${PORTAL_CLIENT_SECRET}" # from env; omit for public clients
 redirect_url = "http://localhost:4180/oauth2/callback"
 
 ## Forward user claims as HTTP headers to your JSP (request.getHeader("X-Forwarded-Email"))
@@ -326,7 +224,7 @@ async function initAuth() {
   const portalIssuer = await Issuer.discover('${issuer}');
   const client = new portalIssuer.Client({
     client_id: '${client}',
-    client_secret: 'YOUR_CLIENT_SECRET',
+    client_secret: process.env.PORTAL_CLIENT_SECRET, // omit for public clients
     redirect_uris: ['${redirect}'],
     response_types: ['code'],
   });
@@ -346,7 +244,7 @@ oauth.register(
     name='portal_sso',
     server_metadata_url='${issuer}/.well-known/openid-configuration',
     client_id='${client}',
-    client_secret='YOUR_CLIENT_SECRET',
+    client_secret=os.environ.get('PORTAL_CLIENT_SECRET'),  # None for public clients
     client_kwargs={'scope': 'openid profile email'}
 )`;
 
@@ -359,7 +257,7 @@ import (
 
 var portalSSOConfig = &oauth2.Config{
     ClientID:     "${client}",
-    ClientSecret: "YOUR_CLIENT_SECRET",
+    ClientSecret: os.Getenv("PORTAL_CLIENT_SECRET"), // empty for public clients
     Scopes:       []string{"openid", "profile", "email"},
     Endpoint: oauth2.Endpoint{
         AuthURL:  "${issuer}/oauth2/authorize",

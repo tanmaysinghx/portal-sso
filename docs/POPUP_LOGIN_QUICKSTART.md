@@ -23,12 +23,14 @@ Portal SSO provides a seamless, Okta-style popup login window for user authentic
 3. Fill in the details:
    - **Name**: e.g., `My Customer Portal`
    - **Launch URL**: Your app URL, e.g. `http://localhost:3000` (or production domain).
-   - **SSO Registration**: Choose **Create client**.
-   - **Client ID**: e.g. `customer-portal-app` (public client, PKCE enabled by default).
-   - **Redirect URIs**: Include:
-     - `https://portal.tanmaysinghx.com/oauth2/popup-callback` *(pre-configured popup relay)*
-     - `http://localhost:3000` *(or your app origin)*
-4. Click **Create Application**. Done! Portal SSO displays all your credentials (`Client ID`, `Secret`, and `.env` config) in one place.
+   - **Single sign-on**: leave **New client** selected. The Client ID is generated from the name, the
+     launch URL becomes a redirect URI, and the popup relay `{PORTAL_URL}/oauth2/popup-callback`
+     is registered automatically.
+4. Click **Create application**. The **Keys & setup** modal shows the Client ID, registered redirect
+   URIs, a ready `.env`, and an **Agent guide** download, all in one place.
+
+See [APP_ONBOARDING.md](APP_ONBOARDING.md) for every option, and
+[AI_AGENT_INTEGRATION.md](AI_AGENT_INTEGRATION.md) to hand the integration to a coding agent.
 
 ---
 

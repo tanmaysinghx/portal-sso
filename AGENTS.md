@@ -91,7 +91,10 @@ portal-sso/
 When modifying or adding code, you **MUST** uphold these rules:
 
 ### App Onboarding Shortcut
-- For work related to adding, linking, or configuring user-facing apps and OAuth/OIDC clients, read `docs/APP_ONBOARDING.md` first. It is the compact agent guide for this domain and should usually be enough before opening the implementation files it names.
+- For work related to adding, linking, or configuring user-facing apps and OAuth/OIDC clients, read `docs/APP_ONBOARDING.md` first. It covers the onboarding flow, where every secret lives, the admin API, and which files own what.
+- New apps are created through `POST /api/admin/applications/onboard` (`ApplicationOnboardingService`), which creates the OAuth client, Application and API key in **one transaction**. Do not reintroduce multi-call creation from the frontend.
+- All `.env`, redirect-URI and agent-guide text shown in the admin UI comes from `portal-client/src/app/features/applications/integration-snippets.ts`. Change it there, not in components.
+- `docs/AI_AGENT_INTEGRATION.md` is the brief given to agents working in *other* repos that integrate with Portal SSO. Keep it in sync with `buildAgentGuide()`.
 - Keep the distinction clear: an **Application** is a launchpad/catalog entry; an **OAuth Client** is the OIDC relying-party registration. An Application may link to an OAuth Client by `clientId`, but deleting one must not silently delete the other.
 - Prefer simplifying admin workflows in the Applications UI while preserving the lower-level OAuth Clients page for advanced registry management.
 - External app login/register APIs are protected by per-Application API keys. Keys are generated server-side, shown once, stored hashed, and must be used only from the app backend, never browser JavaScript.

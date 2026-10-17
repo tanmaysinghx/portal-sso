@@ -100,3 +100,6 @@ logs/
 tmp/
 .cache/
 *.pid
+
+# npm pack output
+*.tgz

@@ -4,7 +4,10 @@ import { Observable } from 'rxjs';
 import {
   Application,
   ApplicationApiKeyResponse,
+  ApplicationCredentials,
+  ApplicationOnboardingResponse,
   CreateApplicationRequest,
+  OnboardApplicationRequest,
   UpdateApplicationRequest,
   UserApplication,
 } from '../models/application.model';
@@ -37,6 +40,16 @@ export class ApplicationService {
 
   createApplication(request: CreateApplicationRequest): Observable<Application> {
     return this.http.post<Application>('/api/admin/applications', request);
+  }
+
+  /** Creates the app, its optional OAuth client and API key atomically; returns all credentials once. */
+  onboardApplication(request: OnboardApplicationRequest): Observable<ApplicationOnboardingResponse> {
+    return this.http.post<ApplicationOnboardingResponse>('/api/admin/applications/onboard', request);
+  }
+
+  /** Integration settings for an existing app. Never includes secrets. */
+  getCredentials(id: string): Observable<ApplicationCredentials> {
+    return this.http.get<ApplicationCredentials>(`/api/admin/applications/${id}/credentials`);
   }
 
   updateApplication(id: string, request: UpdateApplicationRequest): Observable<Application> {

@@ -10,6 +10,7 @@ import com.tanmaysinghx.portalsso.application.web.dto.UpdateApplicationRequest;
 import com.tanmaysinghx.portalsso.application.web.dto.UserApplicationResponse;
 import com.tanmaysinghx.portalsso.audit.entity.AuditAction;
 import com.tanmaysinghx.portalsso.audit.service.AuditService;
+import com.tanmaysinghx.portalsso.client.repository.OAuthClientRepository;
 import com.tanmaysinghx.portalsso.common.error.ErrorCode;
 import com.tanmaysinghx.portalsso.common.error.ResourceNotFoundException;
 import com.tanmaysinghx.portalsso.user.entity.Role;
@@ -31,12 +32,15 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ApplicationService {
 
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
     private final ApplicationRepository applicationRepository;
     private final RoleRepository roleRepository;
     private final AuditService auditService;
     private final PasswordEncoder passwordEncoder;
     private final AccessRequestRepository accessRequestRepository;
     private final UserRepository userRepository;
+    private final OAuthClientRepository oAuthClientRepository;
 
     public ApplicationService(
             ApplicationRepository applicationRepository,
@@ -44,13 +48,15 @@ public class ApplicationService {
             AuditService auditService,
             PasswordEncoder passwordEncoder,
             AccessRequestRepository accessRequestRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            OAuthClientRepository oAuthClientRepository) {
         this.applicationRepository = applicationRepository;
         this.roleRepository = roleRepository;
         this.auditService = auditService;
         this.passwordEncoder = passwordEncoder;
         this.accessRequestRepository = accessRequestRepository;
         this.userRepository = userRepository;
+        this.oAuthClientRepository = oAuthClientRepository;
     }
 
     @Transactional(readOnly = true)
@@ -94,7 +100,7 @@ public class ApplicationService {
         app.setDescription(request.description() != null ? request.description().trim() : null);
         app.setIconUrl(request.iconUrl() != null && !request.iconUrl().isBlank() ? request.iconUrl().trim() : null);
         app.setCategory(request.category() != null && !request.category().isBlank() ? request.category().trim() : "General");
-        app.setClientId(request.clientId() != null && !request.clientId().isBlank() ? request.clientId().trim() : null);
+        app.setClientId(resolveLinkedClientId(request.clientId(), null));
         app.setAccessType(request.accessType() != null ? request.accessType() : ApplicationAccessType.ALL_USERS);
         app.setEnabled(request.enabled() != null ? request.enabled() : true);
         app.setExternalAuthEnabled(Boolean.TRUE.equals(request.externalAuthEnabled()));
@@ -131,7 +137,7 @@ public class ApplicationService {
         app.setDescription(request.description() != null ? request.description().trim() : null);
         app.setIconUrl(request.iconUrl() != null && !request.iconUrl().isBlank() ? request.iconUrl().trim() : null);
         app.setCategory(request.category() != null && !request.category().isBlank() ? request.category().trim() : "General");
-        app.setClientId(request.clientId() != null && !request.clientId().isBlank() ? request.clientId().trim() : null);
+        app.setClientId(resolveLinkedClientId(request.clientId(), app.getClientId()));
         app.setAccessType(request.accessType() != null ? request.accessType() : ApplicationAccessType.ALL_USERS);
         app.setEnabled(request.enabled() != null ? request.enabled() : true);
         app.setExternalAuthEnabled(Boolean.TRUE.equals(request.externalAuthEnabled()));
@@ -184,7 +190,21 @@ public class ApplicationService {
         return "psso_app_" + Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
-    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    /**
+     * Normalises a requested link and rejects a client_id that is not registered, so a typo cannot
+     * silently produce an app whose sign-in always fails. An unchanged link is accepted as-is so an
+     * app whose client was deleted can still be edited (and unlinked) without first re-creating it.
+     */
+    private String resolveLinkedClientId(String requested, String current) {
+        if (requested == null || requested.isBlank()) {
+            return null;
+        }
+        String clientId = requested.trim();
+        if (!clientId.equals(current) && oAuthClientRepository.findByClientId(clientId).isEmpty()) {
+            throw new ResourceNotFoundException(ErrorCode.CLIENT_NOT_FOUND, "No OAuth client registered with client_id: " + clientId);
+        }
+        return clientId;
+    }
 
     @Transactional
     public void delete(UUID id) {
