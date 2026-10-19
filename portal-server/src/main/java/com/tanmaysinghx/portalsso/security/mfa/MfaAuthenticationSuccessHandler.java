@@ -12,6 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.RememberMeServices;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Component;
 
@@ -28,11 +29,14 @@ public class MfaAuthenticationSuccessHandler implements AuthenticationSuccessHan
     public static final String MFA_PRE_AUTH_EMAIL_ATTR = "MFA_PRE_AUTH_EMAIL";
 
     private final UserRepository userRepository;
+    private final RememberMeServices rememberMeServices;
     private final SavedRequestAwareAuthenticationSuccessHandler defaultSuccessHandler =
             new SavedRequestAwareAuthenticationSuccessHandler();
 
-    public MfaAuthenticationSuccessHandler(UserRepository userRepository) {
+    public MfaAuthenticationSuccessHandler(
+            UserRepository userRepository, RememberMeServices rememberMeServices) {
         this.userRepository = userRepository;
+        this.rememberMeServices = rememberMeServices;
     }
 
     @Override
@@ -44,6 +48,10 @@ public class MfaAuthenticationSuccessHandler implements AuthenticationSuccessHan
         Optional<User> userOpt = userRepository.findByEmail(email);
 
         if (userOpt.isPresent() && userOpt.get().isMfaEnabled()) {
+            // Password success is not a completed sign-in. Do not retain a remember-me token
+            // before the user has supplied the second factor.
+            rememberMeServices.loginFail(request, response);
+
             // User requires MFA challenge. Prevent full authentication in session.
             HttpSession session = request.getSession(true);
             session.setAttribute(MFA_PRE_AUTH_EMAIL_ATTR, email);

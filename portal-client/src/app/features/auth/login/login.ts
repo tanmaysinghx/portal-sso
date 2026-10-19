@@ -96,7 +96,9 @@ export class Login {
     this.authService.login(this.email(), this.password(), this.rememberMe()).subscribe({
       next: (user) => {
         this.submitting.set(false);
-        if (user) {
+        if (user.status === 'mfa-required') {
+          window.location.assign('/mfa-challenge');
+        } else if (user.status === 'authenticated') {
           const params = new URLSearchParams(window.location.search);
           const returnUrl = params.get('return_url') || params.get('returnUrl') || params.get('redirect_uri');
           if (returnUrl) {
@@ -147,7 +149,9 @@ export class Login {
         this.authService.login(this.email(), this.password(), true).subscribe({
           next: (user) => {
             this.submitting.set(false);
-            if (user) {
+            if (user.status === 'mfa-required') {
+              window.location.assign('/mfa-challenge');
+            } else if (user.status === 'authenticated') {
               this.router.navigateByUrl('/dashboard');
             } else {
               this.setupRequired.set(false);

@@ -1,4 +1,4 @@
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, catchError, of, switchMap, tap } from 'rxjs';
 import { ADMIN_ROLE, CurrentUser } from '../models/current-user.model';
@@ -33,9 +33,10 @@ export class AuthService {
   /**
    * POST /login is form-login's endpoint, shared with the OAuth2 authorization_code flow's
    * server-rendered login page — its success/failure responses are redirect chains not meant
-   * for a fetch client, so we deliberately ignore them and confirm the outcome via /me instead.
+   * for a fetch client. We inspect the final redirect target so an MFA challenge can be shown in
+   * the browser, then confirm a password-only login via /me.
    */
-  login(email: string, password: string, rememberMe = false): Observable<CurrentUser | null> {
+  login(email: string, password: string, rememberMe = false): Observable<LoginResult> {
     let body = new HttpParams().set('username', email).set('password', password);
     if (rememberMe) {
       body = body.set('remember-me', 'true');
@@ -43,10 +44,24 @@ export class AuthService {
     return this.http
       .post('/login', body.toString(), {
         headers: new HttpHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' }),
+        observe: 'response',
+        responseType: 'text',
       })
       .pipe(
         catchError(() => of(null)),
-        switchMap(() => this.loadCurrentUser()),
+        switchMap((response) => {
+          if (isMfaChallengeResponse(response)) {
+            return of({ status: 'mfa-required' } as const);
+          }
+          if (response === null) {
+            return of({ status: 'failed' } as const);
+          }
+          return this.loadCurrentUser().pipe(
+            switchMap((user) => of(user
+              ? { status: 'authenticated', user } as const
+              : { status: 'failed' } as const)),
+          );
+        }),
       );
   }
 
@@ -62,4 +77,15 @@ export class AuthService {
     this.currentUserSignal.set(user);
     this.resolvedSignal.set(true);
   }
+}
+
+export type LoginResult =
+  | { status: 'mfa-required' }
+  | { status: 'authenticated'; user: CurrentUser }
+  | { status: 'failed' };
+
+function isMfaChallengeResponse(response: HttpResponse<string> | null): boolean {
+  if (!response?.url) return false;
+  const path = new URL(response.url, window.location.origin).pathname;
+  return path === '/mfa-challenge';
 }

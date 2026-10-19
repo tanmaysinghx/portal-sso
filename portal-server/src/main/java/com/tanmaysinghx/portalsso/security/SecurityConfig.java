@@ -104,8 +104,7 @@ public class SecurityConfig {
     @Order(1)
     SecurityFilterChain authorizationServerSecurityFilterChain(
             HttpSecurity http,
-            PortalUserDetailsService userDetailsService,
-            @Value("${app.security.remember-me-key:portal-sso-remember-me-key-3b71e86a}") String rememberMeKey) throws Exception {
+            MfaAwareRememberMeServices rememberMeServices) throws Exception {
         // getEndpointsMatcher() defers to this exact instance's state, populated only once it is
         // init()-ed as part of http.build() — it must be the same instance wired in below via
         // apply(), not a separate one (e.g. from oauth2AuthorizationServer(customizer), which
@@ -136,10 +135,7 @@ public class SecurityConfig {
                         new LoginUrlAuthenticationEntryPoint("/login"), new MediaTypeRequestMatcher(MediaType.TEXT_HTML)))
                 .oauth2ResourceServer(resourceServer -> resourceServer.jwt(Customizer.withDefaults()))
                 .rememberMe(rememberMe -> rememberMe
-                        .userDetailsService(userDetailsService)
-                        .key(rememberMeKey)
-                        .tokenValiditySeconds(30 * 24 * 60 * 60)
-                        .rememberMeParameter("remember-me"));
+                        .rememberMeServices(rememberMeServices));
 
         return http.build();
     }
@@ -161,9 +157,8 @@ public class SecurityConfig {
     @Order(3)
     SecurityFilterChain defaultSecurityFilterChain(
             HttpSecurity http,
-            PortalUserDetailsService userDetailsService,
             com.tanmaysinghx.portalsso.security.mfa.MfaAuthenticationSuccessHandler mfaSuccessHandler,
-            @Value("${app.security.remember-me-key:portal-sso-remember-me-key-3b71e86a}") String rememberMeKey) throws Exception {
+            MfaAwareRememberMeServices rememberMeServices) throws Exception {
         http.csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
                 .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
@@ -198,12 +193,17 @@ public class SecurityConfig {
                 // so the POST target and CSRF handling are unchanged.
                 .formLogin(form -> form.loginPage("/login").successHandler(mfaSuccessHandler).permitAll())
                 .rememberMe(rememberMe -> rememberMe
-                        .userDetailsService(userDetailsService)
-                        .key(rememberMeKey)
-                        .tokenValiditySeconds(30 * 24 * 60 * 60)
-                        .rememberMeParameter("remember-me"));
+                        .rememberMeServices(rememberMeServices));
 
         return http.build();
+    }
+
+    @Bean
+    MfaAwareRememberMeServices rememberMeServices(
+            PortalUserDetailsService userDetailsService,
+            com.tanmaysinghx.portalsso.user.repository.UserRepository userRepository,
+            @Value("${app.security.remember-me-key:portal-sso-remember-me-key-3b71e86a}") String rememberMeKey) {
+        return new MfaAwareRememberMeServices(rememberMeKey, userDetailsService, userRepository);
     }
 
     @Bean
