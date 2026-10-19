@@ -132,6 +132,21 @@ app:
       require-digit: true
       require-symbol: false
 
+  mail:
+    # Outbound email. Host, port, credentials, TLS mode and the From address are NOT here: an
+    # administrator sets them in Settings -> Email (SMTP) and they are stored in the smtp_settings
+    # table, so changing a relay needs neither a restart nor filesystem access on the host. The
+    # relay password is encrypted at rest with app.security.mfa.encryption-key, this deployment's
+    # single at-rest key.
+    #
+    # Only the timeouts live here, because the right value depends on the network rather than on
+    # who is administering the console. They are short on purpose: a test send that hangs for a
+    # minute is indistinguishable from a broken console, and a wedged relay must not be able to
+    # pin request threads.
+    connection-timeout: 10s
+    read-timeout: 10s
+    write-timeout: 10s
+
   analytics:
     retention:
       # login_events gains a row on every sign-in attempt. Deletes entries older than 48 hours.

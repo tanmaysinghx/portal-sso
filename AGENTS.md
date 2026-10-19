@@ -47,6 +47,7 @@ portal-sso/
 │   │   ├── common/            # BaseEntity, error handling, PageResponse, IP resolver
 │   │   ├── config/            # Cross-cutting Spring configs (JPA auditing, seeding)
 │   │   ├── database/          # In-app PostgreSQL/MySQL migration service & status API
+│   │   ├── mail/              # Admin-configured SMTP relay, encrypted credentials, test send
 │   │   ├── registration/      # Public self-registration (when enabled)
 │   │   ├── security/          # Spring Security, OAuth2 Authorization Server, MFA, keys
 │   │   ├── setup/             # Initial setup wizard API
@@ -69,7 +70,7 @@ portal-sso/
             ├── clients/       # OAuth client registry
             ├── dashboard/     # Sign-in analytics, KPIs, map, recency
             ├── roles/         # Role management & permissions
-            ├── settings/      # Branding, 2FA, DB migration, OIDC endpoints
+            ├── settings/      # Branding, 2FA, email (SMTP), DB migration, OIDC endpoints
             └── users/         # User accounts, lifecycle, unlock
 ```
 
@@ -108,7 +109,7 @@ When modifying or adding code, you **MUST** uphold these rules:
   - MySQL uses `TINYINT` for booleans; Postgres uses `BOOLEAN`.
 
 ### 2. Security & Credentials
-- **No Plaintext Secrets**: Passwords must always be hashed with `PasswordEncoder`. TOTP secrets must be encrypted via `MfaService` using AES-256-GCM.
+- **No Plaintext Secrets**: Passwords must always be hashed with `PasswordEncoder`. TOTP secrets must be encrypted via `MfaService` using AES-256-GCM. The SMTP relay password is encrypted the same way, under the same key (`app.security.mfa.encryption-key`) — it is the deployment's single at-rest key, and adding a second one would be another thing for an operator to back up and lose. It is never returned by the API: `SmtpSettingsResponse` reports only `passwordSet`.
 - **Never Log Secrets**: The `audit_events` and `login_events` tables must **never** record passwords, TOTP secrets, or recovery codes in `details` or `target_label`.
 - **PKCE is Non-Negotiable**: PKCE (`code_challenge`) is strictly enforced on all OAuth clients, both public and confidential.
 - **Protected Roles & Accounts**:
@@ -118,9 +119,15 @@ When modifying or adding code, you **MUST** uphold these rules:
 
 ### 3. Audit Trail vs. Sign-in Attempts
 - **Recent Sign-in Attempts (`login_events`)**: Records every authentication attempt (IP, user agent, success/failure, GeoIP). Governed by an automated retention policy (`app.analytics.retention.login-events-hours=48` by default) with an hourly purge job.
-- **Audit Log (`audit_events`)**: Append-only compliance log recording administrative changes (user created, role modified, client deleted, MFA reset, sign-in attempts). Entries can **never** be edited or deleted through application endpoints.
+- **Audit Log (`audit_events`)**: Append-only compliance log recording administrative changes (user created, role modified, client deleted, MFA reset, sign-in attempts, SMTP settings changed). Entries can **never** be edited or deleted through application endpoints. When auditing a configuration change, record **which fields changed, never their values** — see `SmtpSettingsService.describeChanges`.
 
-### 4. Client IP Resolution
+### 4. Outbound Email
+- SMTP settings are **database-stored and admin-edited** (`smtp_settings`, one row, `Settings → Email (SMTP)`), not `spring.mail.*` properties. Changing a relay must never require a restart or filesystem access on the host.
+- `MailService` is the only entry point for sending; `SmtpMailSender` is the only thing that speaks SMTP. Do not construct a `JavaMailSender` elsewhere.
+- Features that *need* mail should let `MailService.send` throw; features where mail is optional should check `MailService.isEnabled()` first. Never silently swallow a send failure a user is waiting on.
+- STARTTLS is sent as `starttls.required`, and there is deliberately no "trust any certificate" setting. Do not add one.
+
+### 5. Client IP Resolution
 - Never inspect `X-Forwarded-For` raw headers directly in controllers. Always use `ClientIpResolver.getClientIp(request)`.
 - When deployed behind reverse proxies, `server.forward-headers-strategy=FRAMEWORK` handles trusted proxy resolution centrally.
 

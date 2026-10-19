@@ -4,7 +4,7 @@ import { Subject, debounceTime } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SnackbarService } from '../../../../core/services/snackbar.service';
 import { Badge, BadgeTone } from '../../../../shared/components/badge/badge';
-import { AuditActionOption, AuditEvent } from '../../models/audit-event.model';
+import { AuditActionOption, AuditEvent, AuditTargetType } from '../../models/audit-event.model';
 import { AuditService } from '../../services/audit.service';
 
 const PAGE_SIZE = 25;
@@ -18,6 +18,14 @@ const PAGE_SIZE = 25;
  * accent against a field of grey is what makes a weakened control findable. The tone is never the
  * only signal either way: the label always says what happened.
  */
+const TARGET_TYPE_LABELS: Record<AuditTargetType, string> = {
+  USER: 'User',
+  OAUTH_CLIENT: 'OAuth client',
+  ROLE: 'Role',
+  APPLICATION: 'Application',
+  SYSTEM: 'Server settings',
+};
+
 const DESTRUCTIVE_ACTIONS = new Set(['USER_DISABLED', 'USER_MFA_RESET', 'CLIENT_DELETED', 'ROLE_DELETED', 'APPLICATION_DELETED']);
 
 @Component({
@@ -144,6 +152,14 @@ export class AuditList {
 
   toneFor(action: string): BadgeTone {
     return DESTRUCTIVE_ACTIONS.has(action) ? 'danger' : 'neutral';
+  }
+
+  /**
+   * A lookup rather than a ternary chain in the template, which fell through to 'User' for anything
+   * it did not list — so a target type added on the server silently mislabelled its rows here.
+   */
+  targetTypeLabel(targetType: AuditTargetType): string {
+    return TARGET_TYPE_LABELS[targetType] ?? targetType;
   }
 
   exportCsv(): void {

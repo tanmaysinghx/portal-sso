@@ -33,6 +33,18 @@
 
     <button
       type="button"
+      (click)="activeTab.set('email'); loadSmtpSettings()"
+      class="flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-all shrink-0"
+      [class]="activeTab() === 'email' ? 'bg-ink-900 text-white shadow-sm' : 'text-ink-500 hover:text-ink-900 hover:bg-ink-100'"
+    >
+      <svg class="h-4 w-4 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+      </svg>
+      <span>Email (SMTP)</span>
+    </button>
+
+    <button
+      type="button"
       (click)="activeTab.set('database'); loadDbStatus()"
       class="flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-all shrink-0"
       [class]="activeTab() === 'database' ? 'bg-ink-900 text-white shadow-sm' : 'text-ink-500 hover:text-ink-900 hover:bg-ink-100'"
@@ -332,7 +344,386 @@
     </div>
   }
 
-  <!-- TAB: Database & Migration -->
+  <!-- TAB 3: Email (SMTP) -->
+  @if (activeTab() === 'email') {
+    <div class="space-y-6">
+      <!-- Delivery Status Card -->
+      <div class="overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-sm">
+        <div class="border-b border-ink-100 bg-ink-50/50 px-6 py-4 flex items-center justify-between">
+          <div>
+            <h2 class="text-sm font-semibold text-ink-900">Outbound Email Status</h2>
+            <p class="text-xs text-ink-500">Whether this server can email your users, and when it last proved it.</p>
+          </div>
+          <button
+            type="button"
+            (click)="loadSmtpSettings()"
+            [disabled]="loadingSmtp()"
+            class="flex items-center gap-1.5 rounded-lg border border-ink-200 bg-white px-3 py-1.5 text-xs font-semibold text-ink-700 hover:bg-ink-50 disabled:opacity-50 transition"
+          >
+            <svg class="h-3.5 w-3.5 text-ink-500" [class.animate-spin]="loadingSmtp()" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+            </svg>
+            <span>Refresh</span>
+          </button>
+        </div>
+
+        <div class="p-6">
+          @if (loadingSmtp() && !smtpSettings()) {
+            <div class="py-12 text-center text-xs text-ink-500">Loading email settings...</div>
+          } @else if (smtpSettings(); as settings) {
+            @if (settings.usable) {
+              <div class="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50/80 p-4">
+                <svg class="h-5 w-5 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <h4 class="text-xs font-semibold text-emerald-900">Outbound Email Active</h4>
+                  <p class="text-xs text-emerald-700">
+                    Mail is relayed through {{ settings.host }}:{{ settings.port }} as {{ settings.fromAddress }}.
+                  </p>
+                </div>
+              </div>
+            } @else {
+              <div class="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50/80 p-4">
+                <svg class="h-5 w-5 text-amber-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+                <div>
+                  <h4 class="text-xs font-semibold text-amber-900">No Outbound Email</h4>
+                  <p class="mt-0.5 text-xs text-amber-700 leading-relaxed">
+                    Portal SSO cannot send mail yet. Configure a relay below and switch email on. Until then, a user who
+                    forgets their password needs an administrator, and nothing verifies that a self-registered address
+                    belongs to the person who typed it.
+                  </p>
+                </div>
+              </div>
+            }
+
+            <div class="mt-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="rounded-xl border border-ink-100 bg-ink-50/50 p-4">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-ink-500">Last Test Send</span>
+                @if (settings.lastTestAt) {
+                  <div class="mt-1 flex items-center gap-2">
+                    <span
+                      class="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                      [class]="settings.lastTestSuccessful ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'"
+                    >
+                      {{ settings.lastTestSuccessful ? 'Delivered' : 'Failed' }}
+                    </span>
+                    <span class="text-xs text-ink-700">{{ settings.lastTestAt | date: 'MMM d, y, HH:mm:ss' }}</span>
+                  </div>
+                  @if (!settings.lastTestSuccessful && settings.lastTestError) {
+                    <p class="mt-1.5 text-[11px] font-mono text-rose-700 break-words">{{ settings.lastTestError }}</p>
+                  }
+                } @else {
+                  <p class="mt-1 text-sm font-semibold text-ink-900">Never tested</p>
+                }
+              </div>
+
+              <div class="rounded-xl border border-ink-100 bg-ink-50/50 p-4">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-ink-500">Relay Credentials</span>
+                <p class="mt-1 text-sm font-semibold text-ink-900">
+                  {{ settings.username ? settings.username : 'None (unauthenticated relay)' }}
+                </p>
+                @if (settings.passwordSet) {
+                  <p class="text-[11px] text-ink-500">Password stored, encrypted at rest.</p>
+                }
+              </div>
+
+              <div class="rounded-xl border border-ink-100 bg-ink-50/50 p-4">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-ink-500">Last Changed By</span>
+                <p class="mt-1 text-sm font-semibold text-ink-900 truncate" [title]="settings.updatedBy">
+                  {{ settings.updatedBy ? settings.updatedBy : '—' }}
+                </p>
+                @if (settings.updatedAt) {
+                  <p class="text-[11px] text-ink-500">{{ settings.updatedAt | date: 'MMM d, y, HH:mm:ss' }}</p>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Relay Configuration Card -->
+      <div class="overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-sm">
+        <div class="border-b border-ink-100 bg-ink-50/50 px-6 py-4">
+          <h2 class="text-sm font-semibold text-ink-900">SMTP Relay</h2>
+          <p class="text-xs text-ink-500">
+            Stored in the database rather than in a configuration file, so changing a relay needs no restart. The
+            password is encrypted at rest and is never shown again once saved.
+          </p>
+        </div>
+
+        <div class="p-6 space-y-6">
+          <!-- Master switch -->
+          <div class="rounded-xl border border-ink-100 bg-ink-50/50 p-4">
+            <label class="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                [ngModel]="smtpEnabled()"
+                (ngModelChange)="smtpEnabled.set($event)"
+                class="mt-0.5 h-4 w-4 shrink-0 rounded border-ink-300 text-brand-600 focus:ring-brand-500/25"
+              />
+              <span>
+                <span class="block text-xs font-semibold text-ink-900">Send email from this server</span>
+                <span class="block text-[11px] text-ink-500">
+                  Leave this off while you fill in the settings below — they can be saved and tested either way. Turning
+                  it on requires a host, a port and a from address.
+                </span>
+              </span>
+            </label>
+          </div>
+
+          <!-- Transport security -->
+          <div>
+            <label class="block text-xs font-semibold text-ink-700 mb-2">1. Connection Security</label>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <button
+                type="button"
+                (click)="setSmtpTransportSecurity('STARTTLS')"
+                class="rounded-xl border-2 p-4 text-left transition-all cursor-pointer"
+                [class]="smtpTransportSecurity() === 'STARTTLS' ? 'border-brand-600 bg-brand-50/30 shadow-sm' : 'border-ink-200 bg-white hover:border-ink-300'"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-semibold text-ink-900">STARTTLS</span>
+                  @if (smtpTransportSecurity() === 'STARTTLS') {
+                    <span class="rounded bg-brand-600 px-1.5 py-0.2 text-[9px] font-bold text-white uppercase">Selected</span>
+                  }
+                </div>
+                <p class="mt-0.5 text-[11px] text-ink-500">Recommended. Upgrades to TLS on the submission port, usually 587.</p>
+              </button>
+
+              <button
+                type="button"
+                (click)="setSmtpTransportSecurity('SSL_TLS')"
+                class="rounded-xl border-2 p-4 text-left transition-all cursor-pointer"
+                [class]="smtpTransportSecurity() === 'SSL_TLS' ? 'border-brand-600 bg-brand-50/30 shadow-sm' : 'border-ink-200 bg-white hover:border-ink-300'"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-semibold text-ink-900">SSL / TLS</span>
+                  @if (smtpTransportSecurity() === 'SSL_TLS') {
+                    <span class="rounded bg-brand-600 px-1.5 py-0.2 text-[9px] font-bold text-white uppercase">Selected</span>
+                  }
+                </div>
+                <p class="mt-0.5 text-[11px] text-ink-500">TLS from the first byte, on the implicit-TLS port, usually 465.</p>
+              </button>
+
+              <button
+                type="button"
+                (click)="setSmtpTransportSecurity('NONE')"
+                class="rounded-xl border-2 p-4 text-left transition-all cursor-pointer"
+                [class]="smtpTransportSecurity() === 'NONE' ? 'border-amber-500 bg-amber-50/40 shadow-sm' : 'border-ink-200 bg-white hover:border-ink-300'"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-semibold text-ink-900">None</span>
+                  @if (smtpTransportSecurity() === 'NONE') {
+                    <span class="rounded bg-amber-500 px-1.5 py-0.2 text-[9px] font-bold text-white uppercase">Selected</span>
+                  }
+                </div>
+                <p class="mt-0.5 text-[11px] text-ink-500">Plaintext. Only for a relay on a private network — any password crosses the wire in the clear.</p>
+              </button>
+            </div>
+          </div>
+
+          <!-- Connection parameters -->
+          <div>
+            <label class="block text-xs font-semibold text-ink-700 mb-2">2. Relay Connection</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="sm:col-span-1 md:col-span-2">
+                <label for="smtp-host" class="block text-xs font-medium text-ink-600 mb-1">SMTP Host</label>
+                <input
+                  id="smtp-host"
+                  type="text"
+                  [ngModel]="smtpHost()"
+                  (ngModelChange)="smtpHost.set($event)"
+                  placeholder="smtp.example.com"
+                  autocomplete="off"
+                  class="block w-full rounded-xl border border-ink-300 px-3 py-2 text-xs text-ink-900 shadow-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25"
+                />
+              </div>
+
+              <div>
+                <label for="smtp-port" class="block text-xs font-medium text-ink-600 mb-1">Port</label>
+                <input
+                  id="smtp-port"
+                  type="number"
+                  [ngModel]="smtpPort()"
+                  (ngModelChange)="smtpPort.set($event)"
+                  class="block w-full rounded-xl border border-ink-300 px-3 py-2 text-xs text-ink-900 shadow-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25"
+                />
+              </div>
+
+              <div>
+                <label for="smtp-username" class="block text-xs font-medium text-ink-600 mb-1">Username (optional)</label>
+                <input
+                  id="smtp-username"
+                  type="text"
+                  [ngModel]="smtpUsername()"
+                  (ngModelChange)="smtpUsername.set($event)"
+                  placeholder="apikey"
+                  autocomplete="off"
+                  class="block w-full rounded-xl border border-ink-300 px-3 py-2 text-xs text-ink-900 shadow-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25"
+                />
+              </div>
+
+              <div class="sm:col-span-2 md:col-span-2">
+                <label for="smtp-password" class="block text-xs font-medium text-ink-600 mb-1">Password</label>
+                <input
+                  id="smtp-password"
+                  type="password"
+                  [ngModel]="smtpPassword()"
+                  (ngModelChange)="onSmtpPasswordInput($event)"
+                  [placeholder]="smtpSettings()?.passwordSet ? 'Stored — leave blank to keep it' : '••••••••••'"
+                  autocomplete="new-password"
+                  class="block w-full rounded-xl border border-ink-300 px-3 py-2 text-xs text-ink-900 shadow-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25"
+                />
+                @if (smtpSettings()?.passwordSet && !smtpPasswordTouched()) {
+                  <p class="mt-1 text-[11px] text-ink-500">A password is stored. Leave this blank to keep it, or type a new one to replace it.</p>
+                } @else if (smtpPasswordTouched() && !smtpPassword()) {
+                  <p class="mt-1 text-[11px] text-amber-700">Saving now will clear the stored password and connect without credentials.</p>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Envelope -->
+          <div>
+            <label class="block text-xs font-semibold text-ink-700 mb-2">3. Sender Identity</label>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label for="smtp-from" class="block text-xs font-medium text-ink-600 mb-1">From Address</label>
+                <input
+                  id="smtp-from"
+                  type="email"
+                  [ngModel]="smtpFromAddress()"
+                  (ngModelChange)="smtpFromAddress.set($event)"
+                  placeholder="no-reply@example.com"
+                  autocomplete="off"
+                  class="block w-full rounded-xl border border-ink-300 px-3 py-2 text-xs text-ink-900 shadow-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25"
+                />
+                <p class="mt-1 text-[11px] text-ink-500">Must be an address your relay is allowed to send as.</p>
+              </div>
+
+              <div>
+                <label for="smtp-from-name" class="block text-xs font-medium text-ink-600 mb-1">From Name (optional)</label>
+                <input
+                  id="smtp-from-name"
+                  type="text"
+                  [ngModel]="smtpFromName()"
+                  (ngModelChange)="smtpFromName.set($event)"
+                  placeholder="Portal SSO"
+                  autocomplete="off"
+                  class="block w-full rounded-xl border border-ink-300 px-3 py-2 text-xs text-ink-900 shadow-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25"
+                />
+              </div>
+
+              <div>
+                <label for="smtp-reply-to" class="block text-xs font-medium text-ink-600 mb-1">Reply-To (optional)</label>
+                <input
+                  id="smtp-reply-to"
+                  type="email"
+                  [ngModel]="smtpReplyTo()"
+                  (ngModelChange)="smtpReplyTo.set($event)"
+                  placeholder="support@example.com"
+                  autocomplete="off"
+                  class="block w-full rounded-xl border border-ink-300 px-3 py-2 text-xs text-ink-900 shadow-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25"
+                />
+              </div>
+            </div>
+          </div>
+
+          @if (smtpError()) {
+            <div class="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50/80 p-4">
+              <svg class="h-5 w-5 text-rose-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+              </svg>
+              <p class="text-xs text-rose-800">{{ smtpError() }}</p>
+            </div>
+          }
+
+          <div class="flex items-center justify-end gap-3 border-t border-ink-100 pt-5">
+            <button
+              type="button"
+              (click)="loadSmtpSettings()"
+              [disabled]="loadingSmtp() || savingSmtp()"
+              class="rounded-xl border border-ink-200 bg-white px-4 py-2 text-xs font-semibold text-ink-700 hover:bg-ink-50 disabled:opacity-50 transition"
+            >
+              Discard Changes
+            </button>
+            <button
+              type="button"
+              (click)="saveSmtpSettings()"
+              [disabled]="savingSmtp()"
+              class="rounded-xl bg-brand-600 px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-brand-700 disabled:opacity-50 transition"
+            >
+              {{ savingSmtp() ? 'Saving...' : 'Save Email Settings' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Test Send Card -->
+      <div class="overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-sm">
+        <div class="border-b border-ink-100 bg-ink-50/50 px-6 py-4">
+          <h2 class="text-sm font-semibold text-ink-900">Send a Test Message</h2>
+          <p class="text-xs text-ink-500">
+            Uses the values in the form above, saved or not, so you can prove a relay before committing to it. If you
+            have not retyped the password, the stored one is used.
+          </p>
+        </div>
+
+        <div class="p-6 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-end gap-3">
+            <div class="flex-1">
+              <label for="smtp-test-recipient" class="block text-xs font-medium text-ink-600 mb-1">Send to</label>
+              <input
+                id="smtp-test-recipient"
+                type="email"
+                [ngModel]="testRecipient()"
+                (ngModelChange)="testRecipient.set($event)"
+                placeholder="you@example.com"
+                autocomplete="off"
+                class="block w-full rounded-xl border border-ink-300 px-3 py-2 text-xs text-ink-900 shadow-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25"
+              />
+            </div>
+            <button
+              type="button"
+              (click)="sendTestEmail()"
+              [disabled]="sendingTestEmail()"
+              class="shrink-0 rounded-xl border border-ink-300 bg-white px-5 py-2 text-xs font-semibold text-ink-800 shadow-sm hover:bg-ink-50 disabled:opacity-50 transition"
+            >
+              {{ sendingTestEmail() ? 'Sending...' : 'Send Test Email' }}
+            </button>
+          </div>
+
+          @if (testEmailResult(); as result) {
+            @if (result.success) {
+              <div class="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50/80 p-4">
+                <svg class="h-5 w-5 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p class="text-xs text-emerald-800">{{ result.message }}</p>
+              </div>
+            } @else {
+              <div class="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50/80 p-4">
+                <svg class="h-5 w-5 text-rose-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+                <div>
+                  <h4 class="text-xs font-semibold text-rose-900">{{ result.message }}</h4>
+                  @if (result.detail) {
+                    <p class="mt-1 text-[11px] font-mono text-rose-700 break-words">{{ result.detail }}</p>
+                  }
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- TAB 4: Database & Migration -->
   @if (activeTab() === 'database') {
     <div class="space-y-6">
       <!-- Database Runtime Status Card -->
@@ -713,7 +1104,7 @@
     </div>
   }
 
-  <!-- TAB 3: OIDC Endpoints -->
+  <!-- TAB 5: OIDC Endpoints -->
   @if (activeTab() === 'endpoints') {
     <div class="overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-sm">
       <div class="border-b border-ink-100 bg-ink-50/50 px-6 py-4 flex items-center justify-between">
@@ -758,7 +1149,7 @@
     </div>
   }
 
-  <!-- TAB 4: System Stack & Diagnostics -->
+  <!-- TAB 6: System Stack & Diagnostics -->
   @if (activeTab() === 'system') {
     <div class="overflow-hidden rounded-2xl border border-ink-200 bg-white p-6 shadow-sm space-y-6">
       <div>

@@ -5,6 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.tanmaysinghx.portalsso.client.entity.OAuthClient;
 import com.tanmaysinghx.portalsso.client.repository.OAuthClientRepository;
 import com.tanmaysinghx.portalsso.config.JpaAuditingConfig;
+import com.tanmaysinghx.portalsso.mail.entity.SmtpSettings;
+import com.tanmaysinghx.portalsso.mail.entity.SmtpTransportSecurity;
+import com.tanmaysinghx.portalsso.mail.repository.SmtpSettingsRepository;
 import com.tanmaysinghx.portalsso.user.entity.Role;
 import com.tanmaysinghx.portalsso.user.entity.User;
 import com.tanmaysinghx.portalsso.user.repository.RoleRepository;
@@ -35,6 +38,9 @@ class SchemaValidationTest {
     @Autowired
     private OAuthClientRepository oAuthClientRepository;
 
+    @Autowired
+    private SmtpSettingsRepository smtpSettingsRepository;
+
     /**
      * Uses the role seeded by migration 011 rather than inserting one. That is not just to avoid
      * the unique-constraint clash: reading the seeded row back is what proves the literal UUID in
@@ -60,6 +66,36 @@ class SchemaValidationTest {
                 .extracting(Role::getName)
                 .contains("ROLE_ADMIN", "ROLE_USER");
         assertThat(roleRepository.findByName("ROLE_USER").orElseThrow().getId()).isNotNull();
+    }
+
+    /**
+     * The enum stored as a string and the single-row {@code config_key} are the two parts of this
+     * mapping a changelog typo would break, and both only fail on read — a VARCHAR column stores
+     * whatever Hibernate writes.
+     */
+    @Test
+    void persistsSmtpSettings() {
+        SmtpSettings settings = new SmtpSettings();
+        settings.setEnabled(true);
+        settings.setHost("smtp.example.com");
+        settings.setPort(587);
+        settings.setTransportSecurity(SmtpTransportSecurity.SSL_TLS);
+        settings.setUsername("relay-user");
+        settings.setPasswordEncrypted("ciphertext");
+        settings.setFromAddress("portal@example.com");
+        settings.setFromName("Portal SSO");
+        settings.setUpdatedBy("admin@example.com");
+
+        SmtpSettings saved = smtpSettingsRepository.save(settings);
+
+        SmtpSettings found = smtpSettingsRepository
+                .findByConfigKey(SmtpSettings.SINGLETON_KEY)
+                .orElseThrow();
+        assertThat(found.getId()).isEqualTo(saved.getId());
+        assertThat(found.getTransportSecurity()).isEqualTo(SmtpTransportSecurity.SSL_TLS);
+        assertThat(found.getPort()).isEqualTo(587);
+        assertThat(found.hasPassword()).isTrue();
+        assertThat(found.isUsable()).isTrue();
     }
 
     @Test

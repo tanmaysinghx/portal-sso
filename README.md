@@ -109,6 +109,30 @@ All settings are environment variables (or the equivalent Spring property).
 Password policy, lockout threshold, rate limits and log retention are documented inline in
 [`application.yml`](portal-server/src/main/resources/application.yml).
 
+### Outbound email (SMTP)
+
+There is deliberately **no `SPRING_MAIL_*` configuration**. An administrator sets the relay in
+**Settings → Email (SMTP)** — host, port, STARTTLS/SSL-TLS/none, optional credentials, from address
+and reply-to — and the values are stored in the database, so changing a relay needs neither a
+restart nor filesystem access on the host.
+
+- **Save, then prove it.** *Send Test Email* sends one message using whatever is in the form, saved
+  or not, so a relay can be verified before it is committed and switched on. The outcome is kept and
+  shown on the tab, so you can see whether this server has ever actually delivered anything.
+- **The password is encrypted at rest** with AES-256-GCM under `APP_SECURITY_MFA_ENCRYPTION_KEY`,
+  this deployment's single at-rest key (auto-generated into `~/.portal-sso/secrets/mfa.key` when
+  unset). It is never returned by the API and never written to the audit log. Back that key up and
+  the SMTP password survives with your TOTP secrets; lose it and both must be re-entered.
+- **STARTTLS is required, not merely offered.** A relay that stops advertising it fails rather than
+  silently downgrading to plaintext. There is no "trust any certificate" option: a relay behind a
+  private CA belongs in the JVM trust store.
+- Changes and test sends are recorded in the audit log as *Server settings* — which fields moved,
+  never their values.
+
+Only the transport timeouts stay properties (`app.mail.connection-timeout`, `read-timeout`,
+`write-timeout`, each `10s` by default), since the right value depends on the network rather than on
+who is administering the console.
+
 ---
 
 ## Connect an application

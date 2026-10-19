@@ -1,4 +1,4 @@
-export type AuditTargetType = 'USER' | 'OAUTH_CLIENT' | 'ROLE' | 'APPLICATION';
+export type AuditTargetType = 'USER' | 'OAUTH_CLIENT' | 'ROLE' | 'APPLICATION' | 'SYSTEM';
 
 export interface AuditEvent {
   id: string;

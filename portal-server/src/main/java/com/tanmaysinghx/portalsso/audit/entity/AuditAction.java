@@ -46,14 +46,21 @@ public enum AuditAction {
     APP_CONNECT_APPROVED(TargetType.APPLICATION, "App connection approved"),
     APP_CONNECT_DENIED(TargetType.APPLICATION, "App connection denied"),
     /** The app backend collected its credentials; the actor names the approving administrator. */
-    APP_CONNECT_REDEEMED(TargetType.APPLICATION, "App connection credentials delivered");
+    APP_CONNECT_REDEEMED(TargetType.APPLICATION, "App connection credentials delivered"),
+
+    /** Where this server sends mail from, and the credentials it uses — never the credentials themselves. */
+    SMTP_SETTINGS_UPDATED(TargetType.SYSTEM, "Email (SMTP) settings updated"),
+    /** Recorded on failure too: a failed test is how an operator learns a relay stopped accepting mail. */
+    SMTP_TEST_EMAIL_SENT(TargetType.SYSTEM, "Test email sent");
 
     /** What the action operates on. Stored so the log can be filtered by object as well as verb. */
     public enum TargetType {
         USER,
         OAUTH_CLIENT,
         ROLE,
-        APPLICATION
+        APPLICATION,
+        /** Server-wide configuration that belongs to no single user, client or application. */
+        SYSTEM
     }
 
     private final TargetType targetType;

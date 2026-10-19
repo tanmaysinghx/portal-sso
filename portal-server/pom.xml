@@ -57,6 +57,14 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-liquibase</artifactId>
 		</dependency>
+		<!-- SMTP delivery for operator-configured outbound email. There is deliberately no
+		     spring.mail.* configuration: host, port, credentials and TLS mode are stored in the
+		     smtp_settings table and edited by an administrator in the console, so a JavaMailSender
+		     is built from those rows at runtime rather than frozen at startup. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>

@@ -69,12 +69,16 @@ public enum ErrorCode {
     RESOURCE_CONFLICT("PRTL-4009", "A conflict occurred with existing resource state.", HttpStatus.CONFLICT),
     RATE_LIMIT_EXCEEDED("PRTL-4029", "Too many requests from this address.", HttpStatus.TOO_MANY_REQUESTS),
     UNSUPPORTED_MEDIA_TYPE("PRTL-4015", "Content-Type is not supported.", HttpStatus.UNSUPPORTED_MEDIA_TYPE),
+    /** Fields that are optional while email is switched off and required once it is enabled. */
+    INVALID_MAIL_SETTINGS("PRTL-4006", "The email settings are incomplete or invalid.", HttpStatus.BAD_REQUEST),
 
     // =========================================================================
     // 5000 Series: Server, Database & Internal Errors
     // =========================================================================
     INTERNAL_SERVER_ERROR("PRTL-5000", "An unexpected internal server error occurred.", HttpStatus.INTERNAL_SERVER_ERROR),
-    DATABASE_ERROR("PRTL-5001", "A database error occurred while processing the request.", HttpStatus.INTERNAL_SERVER_ERROR);
+    DATABASE_ERROR("PRTL-5001", "A database error occurred while processing the request.", HttpStatus.INTERNAL_SERVER_ERROR),
+    MAIL_NOT_CONFIGURED("PRTL-5002", "No outbound email relay is configured on this server.", HttpStatus.SERVICE_UNAVAILABLE),
+    MAIL_SEND_FAILED("PRTL-5003", "The email could not be sent.", HttpStatus.BAD_GATEWAY);
 
     private final String code;
     private final String defaultMessage;

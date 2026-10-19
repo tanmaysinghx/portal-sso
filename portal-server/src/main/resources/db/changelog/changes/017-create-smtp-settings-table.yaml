@@ -1,0 +1,92 @@
+databaseChangeLog:
+  - changeSet:
+      id: 017-create-smtp-settings-table
+      author: ai-agent
+      changes:
+        - createTable:
+            tableName: smtp_settings
+            # Server-wide outbound email configuration, edited by an administrator in the console
+            # rather than supplied as spring.mail.* properties — changing a relay should not require
+            # a restart or filesystem access on the host.
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              # Always the literal 'DEFAULT'. A unique constraint on a fixed value is what makes
+              # this a single-row table at the database level, so a concurrent first save cannot
+              # create two competing configurations that later reads would pick between at random.
+              - column:
+                  name: config_key
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uk_smtp_settings_config_key
+              # The master switch. Settings can be saved and tested while this is off, so an
+              # operator can stage a relay before any user-facing mail starts flowing through it.
+              - column:
+                  name: enabled
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: host
+                  type: VARCHAR(255)
+              - column:
+                  name: port
+                  type: INT
+              # NONE, STARTTLS or SSL_TLS — see SmtpTransportSecurity.
+              - column:
+                  name: transport_security
+                  type: VARCHAR(20)
+                  defaultValue: STARTTLS
+                  constraints:
+                    nullable: false
+              # Null means the relay takes no credentials (an internal MTA, or IP-allowlisted).
+              - column:
+                  name: username
+                  type: VARCHAR(255)
+              # AES-256-GCM ciphertext under the deployment's at-rest key, never plaintext, and
+              # never returned by the API. Nullable: see username.
+              - column:
+                  name: password_encrypted
+                  type: VARCHAR(2000)
+              - column:
+                  name: from_address
+                  type: VARCHAR(320)
+              - column:
+                  name: from_name
+                  type: VARCHAR(255)
+              - column:
+                  name: reply_to_address
+                  type: VARCHAR(320)
+              # Email of the administrator who last saved these settings. A plain column rather
+              # than a users FK: the record should survive that administrator being deleted.
+              - column:
+                  name: updated_by
+                  type: VARCHAR(255)
+              # Outcome of the last test send, so the console can show whether this relay has ever
+              # actually delivered anything rather than only that it was saved.
+              - column:
+                  name: last_test_at
+                  type: TIMESTAMP
+              - column:
+                  name: last_test_successful
+                  type: BOOLEAN
+              - column:
+                  name: last_test_error
+                  type: VARCHAR(1000)
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false

@@ -49,7 +49,11 @@ public class DatabaseMigrationService {
             "application_roles",
             "login_events",
             "audit_events",
-            "user_recovery_codes");
+            "user_recovery_codes",
+            // Server-wide email configuration. Easy to overlook because it is one row, but an
+            // operator who configures a relay on embedded H2 and then migrates would otherwise find
+            // email silently switched off on the target, with the encrypted password gone.
+            "smtp_settings");
 
     private final DataSource activeDataSource;
 
