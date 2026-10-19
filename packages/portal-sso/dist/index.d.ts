@@ -13,6 +13,8 @@ export declare class PortalSSO {
     readonly scope: string;
     readonly storageKey: string;
     private listeners;
+    private refreshTimer;
+    private refreshInFlight;
     constructor(config: PortalSSOConfig);
     /**
      * Opens an Okta-style popup login window for user authentication.
@@ -40,9 +42,18 @@ export declare class PortalSSO {
      */
     getSession(): PortalSession | null;
     /**
+     * Returns a session with a usable access token, refreshing it first when it is close to expiry.
+     * Prefer this in async request flows; the synchronous getSession() cannot wait for the token endpoint.
+     */
+    getSessionAsync(): Promise<PortalSession | null>;
+    /** Refreshes the current session now, using the rotated refresh token returned by Portal. */
+    refreshSession(): Promise<PortalSession | null>;
+    /**
      * Returns current access token or null if unauthenticated.
      */
     getAccessToken(): string | null;
+    /** Returns a usable access token, refreshing the session when needed. */
+    getAccessTokenAsync(): Promise<string | null>;
     /**
      * Logs out locally and clears stored session.
      */
@@ -52,5 +63,7 @@ export declare class PortalSSO {
      */
     onAuthStateChange(callback: AuthStateCallback): () => void;
     private notifyListeners;
+    private readStoredSession;
+    private scheduleRefresh;
 }
 //# sourceMappingURL=index.d.ts.map

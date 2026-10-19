@@ -205,7 +205,13 @@ interface PortalSSOConfig {
 - `getSession(): PortalSession | null`  
   Retrieves active session object with access/id tokens.
 - `getAccessToken(): string | null`  
-  Retrieves access token for making authenticated API calls.
+  Synchronous cached token accessor. Use `getAccessTokenAsync()` for API calls that must refresh first.
+- `getAccessTokenAsync(): Promise<string | null>`
+  Returns a usable access token, refreshing it when it is within 60 seconds of expiry.
+- `getSessionAsync(): Promise<PortalSession | null>`
+  Returns a session with a usable access token, refreshing it when needed.
+- `refreshSession(): Promise<PortalSession | null>`
+  Forces a refresh now and saves the rotated refresh token.
 - `logout(): void`  
   Clears local storage session and notifies listeners.
 - `onAuthStateChange(callback: (user: PortalUser | null) => void): () => void`  

@@ -98,7 +98,9 @@ Drop-in button: `import '@tanmaysinghx/portal-sso'`, then
 `<portal-login-button portal-url="…" client-id="…"></portal-login-button>`, and listen for the
 `login-success` event (`e.detail.user`).
 
-Send `Authorization: Bearer ${session.accessToken}` to the app's own API and validate it there (§5).
+Before API calls, get a current token with `const accessToken = await sso.getAccessTokenAsync()` and
+send `Authorization: Bearer ${accessToken}` to the app's own API. The SDK refreshes the access token
+before expiry and stores the rotated refresh token. Validate the access token at the app's API (§5).
 
 ---
 
