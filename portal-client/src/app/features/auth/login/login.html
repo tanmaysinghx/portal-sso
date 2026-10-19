@@ -329,7 +329,7 @@
                 </div>
               </div>
 
-              <div class="mt-4 flex items-center justify-between">
+              <div class="mt-4 flex flex-col items-start gap-1">
                 <label class="group flex cursor-pointer items-center gap-2">
                   <input
                     id="remember-me"
@@ -346,6 +346,9 @@
                     Keep me signed in for 30 days
                   </span>
                 </label>
+                <p class="pl-6 text-[11px] leading-4" [class]="themeService.isDark() ? 'text-ink-500' : 'text-slate-500'">
+                  For MFA accounts, this browser will skip MFA prompts for 30 days.
+                </p>
               </div>
 
               <button

@@ -27,6 +27,7 @@ import org.springframework.stereotype.Component;
 public class MfaAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
     public static final String MFA_PRE_AUTH_EMAIL_ATTR = "MFA_PRE_AUTH_EMAIL";
+    public static final String MFA_REMEMBER_ME_ATTR = "MFA_REMEMBER_ME";
 
     private final UserRepository userRepository;
     private final RememberMeServices rememberMeServices;
@@ -55,6 +56,7 @@ public class MfaAuthenticationSuccessHandler implements AuthenticationSuccessHan
             // User requires MFA challenge. Prevent full authentication in session.
             HttpSession session = request.getSession(true);
             session.setAttribute(MFA_PRE_AUTH_EMAIL_ATTR, email);
+            session.setAttribute(MFA_REMEMBER_ME_ATTR, isRememberMeRequested(request));
 
             // Clear the SecurityContext so endpoints under /api/** remain 401 until MFA completes
             SecurityContextHolder.clearContext();
@@ -66,5 +68,10 @@ public class MfaAuthenticationSuccessHandler implements AuthenticationSuccessHan
 
         // Standard user without MFA: proceed directly to saved request or default landing page
         defaultSuccessHandler.onAuthenticationSuccess(request, response, authentication);
+    }
+
+    private static boolean isRememberMeRequested(HttpServletRequest request) {
+        String value = request.getParameter("remember-me");
+        return "true".equalsIgnoreCase(value) || "on".equalsIgnoreCase(value) || "yes".equalsIgnoreCase(value) || "1".equals(value);
     }
 }

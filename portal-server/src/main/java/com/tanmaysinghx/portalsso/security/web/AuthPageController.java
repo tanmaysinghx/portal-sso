@@ -3,6 +3,7 @@ package com.tanmaysinghx.portalsso.security.web;
 import com.tanmaysinghx.portalsso.client.entity.OAuthClient;
 import com.tanmaysinghx.portalsso.client.repository.OAuthClientRepository;
 import com.tanmaysinghx.portalsso.security.PortalUserDetailsService;
+import com.tanmaysinghx.portalsso.security.MfaAwareRememberMeServices;
 import com.tanmaysinghx.portalsso.common.web.ClientIpResolver;
 import com.tanmaysinghx.portalsso.security.magiclink.service.MagicLinkService;
 import com.tanmaysinghx.portalsso.security.mfa.MfaAuthenticationSuccessHandler;
@@ -60,6 +61,7 @@ public class AuthPageController {
     private final PortalUserDetailsService userDetailsService;
     private final ApplicationEventPublisher eventPublisher;
     private final MagicLinkService magicLinkService;
+    private final MfaAwareRememberMeServices rememberMeServices;
     private final SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
 
     public AuthPageController(
@@ -69,7 +71,8 @@ public class AuthPageController {
             UserRepository userRepository,
             PortalUserDetailsService userDetailsService,
             ApplicationEventPublisher eventPublisher,
-            MagicLinkService magicLinkService) {
+            MagicLinkService magicLinkService,
+            MfaAwareRememberMeServices rememberMeServices) {
         this.clientRepository = clientRepository;
         this.consentService = consentService;
         this.mfaService = mfaService;
@@ -77,6 +80,7 @@ public class AuthPageController {
         this.userDetailsService = userDetailsService;
         this.eventPublisher = eventPublisher;
         this.magicLinkService = magicLinkService;
+        this.rememberMeServices = rememberMeServices;
     }
 
     @GetMapping("/login")
@@ -222,7 +226,14 @@ public class AuthPageController {
         SecurityContextHolder.setContext(context);
         securityContextRepository.saveContext(context, request, response);
 
+        boolean rememberMe = Boolean.TRUE.equals(session.getAttribute(MfaAuthenticationSuccessHandler.MFA_REMEMBER_ME_ATTR));
         session.removeAttribute(MfaAuthenticationSuccessHandler.MFA_PRE_AUTH_EMAIL_ATTR);
+        session.removeAttribute(MfaAuthenticationSuccessHandler.MFA_REMEMBER_ME_ATTR);
+        if (rememberMe) {
+            // This is the first point at which the password and second factor have both succeeded.
+            // MFA-aware signing binds the token to the currently enrolled MFA secret.
+            rememberMeServices.loginSuccessAfterMfa(request, response, authentication);
+        }
         eventPublisher.publishEvent(new AuthenticationSuccessEvent(authentication));
 
         // Follow saved request (e.g. from /oauth2/authorize) or land on root
