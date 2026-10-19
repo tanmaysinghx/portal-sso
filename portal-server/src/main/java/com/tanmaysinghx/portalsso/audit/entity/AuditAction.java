@@ -57,6 +57,8 @@ public enum AuditAction {
     EMAIL_SETTINGS_UPDATED(TargetType.SYSTEM, "Email settings updated"),
     /** Retention periods for sign-in attempt and administrative audit history. */
     ANALYTICS_RETENTION_UPDATED(TargetType.SYSTEM, "Log retention settings updated"),
+    /** Whether anonymous visitors may create Portal accounts and whether approval is required. */
+    REGISTRATION_SETTINGS_UPDATED(TargetType.SYSTEM, "Public registration settings updated"),
     /** A magic link was issued. Recorded because it is a credential that signs an account in. */
     MAGIC_LINK_REQUESTED(TargetType.USER, "Magic link requested"),
     /** A magic link was redeemed — this is a sign-in, and belongs in the trail as one. */

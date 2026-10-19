@@ -41,3 +41,5 @@ databaseChangeLog:
       file: db/changelog/changes/020-create-user-known-devices-table.yaml
   - include:
       file: db/changelog/changes/021-create-analytics-retention-settings-table.yaml
+  - include:
+      file: db/changelog/changes/022-create-registration-settings-table.yaml

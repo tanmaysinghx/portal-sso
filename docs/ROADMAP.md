@@ -32,7 +32,7 @@ _Last reviewed: 2026-10-19 (against `main` @ `4e9fd3c`)_
 - TOTP MFA (AES-256-GCM secrets, encryption-key rotation via `previous-encryption-key`) + recovery codes; admin MFA reset
 - Magic-link passwordless sign-in & sign-up (MFA still enforced, no enumeration)
 - New-device detection (browser + OS family) with alert email
-- Public self-registration (toggleable policy)
+- Public self-registration (admin-managed enable switch and optional account approval)
 - Per-path token-bucket rate limiting
 
 ### Applications & integration

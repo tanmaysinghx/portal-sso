@@ -7,6 +7,7 @@ import com.tanmaysinghx.portalsso.common.error.ErrorCode;
 import com.tanmaysinghx.portalsso.common.error.ResourceConflictException;
 import com.tanmaysinghx.portalsso.mail.service.NotificationService;
 import com.tanmaysinghx.portalsso.registration.config.RegistrationProperties;
+import com.tanmaysinghx.portalsso.registration.service.RegistrationSettingsService;
 import com.tanmaysinghx.portalsso.security.password.PasswordPolicy;
 import com.tanmaysinghx.portalsso.registration.web.dto.RegisterRequest;
 import com.tanmaysinghx.portalsso.registration.web.dto.RegistrationPolicyResponse;
@@ -36,8 +37,8 @@ import org.springframework.web.bind.annotation.RestController;
  * deliberate:
  *
  * <ul>
- *   <li><strong>Off by default.</strong> When {@code app.registration.enabled} is false the
- *       endpoint refuses everything, so an operator has to opt in.
+ *   <li><strong>Off by default.</strong> An operator must enable registration in Settings before
+ *       the endpoint accepts account creation.
  *   <li><strong>The server picks the role and the enabled flag</strong>, never the request — see
  *       {@link RegisterRequest}.
  *   <li><strong>Relying applications link here; they do not create users.</strong> A Portal SSO
@@ -60,6 +61,7 @@ public class PublicRegistrationController {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final RegistrationProperties properties;
+    private final RegistrationSettingsService registrationSettingsService;
     private final AuditService auditService;
     private final PasswordPolicy passwordPolicy;
     private final NotificationService notificationService;
@@ -69,6 +71,7 @@ public class PublicRegistrationController {
             RoleRepository roleRepository,
             PasswordEncoder passwordEncoder,
             RegistrationProperties properties,
+            RegistrationSettingsService registrationSettingsService,
             AuditService auditService,
             PasswordPolicy passwordPolicy,
             NotificationService notificationService) {
@@ -76,6 +79,7 @@ public class PublicRegistrationController {
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.properties = properties;
+        this.registrationSettingsService = registrationSettingsService;
         this.auditService = auditService;
         this.passwordPolicy = passwordPolicy;
         this.notificationService = notificationService;
@@ -87,14 +91,14 @@ public class PublicRegistrationController {
         // The password rules ride along so the sign-up page can state them before the user types,
         // rather than letting them find out one rejected submission at a time.
         return new RegistrationPolicyResponse(
-                properties.enabled(), properties.requireAdminApproval(), passwordPolicy.describe());
+                registrationSettingsService.isEnabled(), registrationSettingsService.requiresApproval(), passwordPolicy.describe());
     }
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     @Transactional
     public RegistrationResponse register(@Valid @RequestBody RegisterRequest request) {
-        if (!properties.enabled()) {
+        if (!registrationSettingsService.isEnabled()) {
             throw new BusinessRuleViolationException(
                     ErrorCode.REGISTRATION_DISABLED, "Self-registration is not enabled on this server.");
         }
@@ -119,11 +123,12 @@ public class PublicRegistrationController {
         User user = new User(email, passwordEncoder.encode(request.password()));
         user.setFirstName(request.firstName());
         user.setLastName(request.lastName());
-        user.setEnabled(!properties.requireAdminApproval());
+        boolean requiresApproval = registrationSettingsService.requiresApproval();
+        user.setEnabled(!requiresApproval);
         user.addRole(role);
 
         User saved = userRepository.save(user);
-        log.info("Self-registered account '{}' (pendingApproval={})", email, properties.requireAdminApproval());
+        log.info("Self-registered account '{}' (pendingApproval={})", email, requiresApproval);
 
         // Audited even though no administrator was involved — an account appearing without one is
         // exactly what someone reviewing the log needs to be able to account for. The actor records
@@ -132,7 +137,7 @@ public class PublicRegistrationController {
                 AuditAction.USER_SELF_REGISTERED,
                 saved.getId(),
                 email,
-                "role=%s, pendingApproval=%s".formatted(properties.defaultRole(), properties.requireAdminApproval()));
+                "role=%s, pendingApproval=%s".formatted(properties.defaultRole(), requiresApproval));
 
         // Only once the account can actually be used. Under require-admin-approval the account is
         // created disabled, and a "welcome, sign in here" message to someone who will be refused at
@@ -141,6 +146,6 @@ public class PublicRegistrationController {
             notificationService.sendWelcome(email, saved.getFirstName());
         }
 
-        return new RegistrationResponse(email, properties.requireAdminApproval());
+        return new RegistrationResponse(email, requiresApproval);
     }
 }

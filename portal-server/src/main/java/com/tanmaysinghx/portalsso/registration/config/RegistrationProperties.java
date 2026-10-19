@@ -3,7 +3,7 @@ package com.tanmaysinghx.portalsso.registration.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * Controls public self-registration.
+ * Supplies first-run defaults for public self-registration. Saved admin settings take precedence.
  *
  * <p>Defaults to <strong>off</strong>. A Portal SSO account is global rather than scoped to one
  * relying application — whoever registers can sign in to <em>every</em> app behind this server — so
