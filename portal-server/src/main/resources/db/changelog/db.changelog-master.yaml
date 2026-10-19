@@ -39,3 +39,5 @@ databaseChangeLog:
       file: db/changelog/changes/019-create-magic-link-tokens-table.yaml
   - include:
       file: db/changelog/changes/020-create-user-known-devices-table.yaml
+  - include:
+      file: db/changelog/changes/021-create-analytics-retention-settings-table.yaml

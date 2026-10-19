@@ -47,6 +47,7 @@ export const SETTINGS_GROUPS: SettingsGroup[] = [
     label: 'Platform',
     sections: [
       { path: 'database', label: 'Database', description: 'Current database and migration to PostgreSQL or MySQL.' },
+      { path: 'retention', label: 'Log retention', description: 'How long sign-in and audit events are kept.' },
       { path: 'system', label: 'System', description: 'Versions and runtime stack.' },
     ],
   },

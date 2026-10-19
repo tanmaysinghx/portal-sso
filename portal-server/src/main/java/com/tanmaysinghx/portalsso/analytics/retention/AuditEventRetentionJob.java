@@ -1,6 +1,7 @@
 package com.tanmaysinghx.portalsso.analytics.retention;
 
 import com.tanmaysinghx.portalsso.audit.repository.AuditEventRepository;
+import com.tanmaysinghx.portalsso.analytics.retention.service.AnalyticsRetentionSettingsService;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -27,41 +28,31 @@ public class AuditEventRetentionJob {
 
     private final AuditEventRepository repository;
     private final RetentionProperties properties;
+    private final AnalyticsRetentionSettingsService settingsService;
     private final TransactionTemplate transactionTemplate;
 
     public AuditEventRetentionJob(
             AuditEventRepository repository,
             RetentionProperties properties,
+            AnalyticsRetentionSettingsService settingsService,
             TransactionTemplate transactionTemplate) {
         this.repository = repository;
         this.properties = properties;
+        this.settingsService = settingsService;
         this.transactionTemplate = transactionTemplate;
     }
 
     @Scheduled(cron = "${app.analytics.retention.cron:0 30 3 * * *}")
     public void purgeExpiredAuditEvents() {
-        if (!properties.isAuditEventRetentionEnabled()) {
-            return;
-        }
         run();
     }
 
     public int run() {
-        if (!properties.isAuditEventRetentionEnabled()) {
-            return 0;
-        }
+        int retentionHours = settingsService.currentSettings().auditEventsHours();
+        if (retentionHours <= 0) return 0;
 
-        Duration retentionDuration;
-        String windowDescription;
-        if (properties.auditEventsHours() != null && properties.auditEventsHours() > 0) {
-            retentionDuration = Duration.ofHours(properties.auditEventsHours());
-            windowDescription = properties.auditEventsHours() + " hour(s)";
-        } else if (properties.auditEventsDays() != null && properties.auditEventsDays() > 0) {
-            retentionDuration = Duration.ofDays(properties.auditEventsDays());
-            windowDescription = properties.auditEventsDays() + " day(s)";
-        } else {
-            return 0;
-        }
+        Duration retentionDuration = Duration.ofHours(retentionHours);
+        String windowDescription = retentionHours + " hour(s)";
 
         Instant cutoff = Instant.now().minus(retentionDuration);
         int batchSize = properties.batchSize();

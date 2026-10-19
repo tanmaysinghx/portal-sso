@@ -13,8 +13,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @ConfigurationPropertiesScan
-// Drives the login_events retention job. Nothing else is scheduled yet, and retention is off by
-// default, so this is inert until an operator sets app.analytics.retention.login-events-days.
+// Drives scheduled login/audit history retention and other housekeeping jobs.
 @EnableScheduling
 public class PortalSsoAuthServerApplication {
 

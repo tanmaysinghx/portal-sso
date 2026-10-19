@@ -12,13 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
-/**
- * The default must be to keep everything.
- *
- * <p>An upgrade that silently deleted an operator's authentication history — the record they reach
- * for while investigating an incident — would be a worse defect than the unbounded growth retention
- * exists to fix. This pins the default rather than trusting a comment.
- */
+/** Pins the default login-event window until an administrator saves a different period. */
 @SpringBootTest
 @ActiveProfiles("test")
 @TestPropertySource(properties = {
@@ -37,7 +31,7 @@ class RetentionDisabledByDefaultTest {
     private RetentionProperties properties;
 
     @Test
-    void retentionIsEnabledByDefaultWith48Hours() {
+    void loginEventRetentionDefaultsTo48Hours() {
         assertThat(properties.isLoginEventRetentionEnabled()).isTrue();
         assertThat(properties.loginEventsHours()).isEqualTo(48);
     }

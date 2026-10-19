@@ -1,6 +1,7 @@
 package com.tanmaysinghx.portalsso.analytics.retention;
 
 import com.tanmaysinghx.portalsso.analytics.repository.LoginEventRepository;
+import com.tanmaysinghx.portalsso.analytics.retention.service.AnalyticsRetentionSettingsService;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -37,6 +38,7 @@ public class LoginEventRetentionJob {
 
     private final LoginEventRepository repository;
     private final RetentionProperties properties;
+    private final AnalyticsRetentionSettingsService settingsService;
 
     /**
      * A {@link TransactionTemplate} rather than {@code @Transactional} on a helper method: a method
@@ -49,17 +51,16 @@ public class LoginEventRetentionJob {
     public LoginEventRetentionJob(
             LoginEventRepository repository,
             RetentionProperties properties,
+            AnalyticsRetentionSettingsService settingsService,
             TransactionTemplate transactionTemplate) {
         this.repository = repository;
         this.properties = properties;
+        this.settingsService = settingsService;
         this.transactionTemplate = transactionTemplate;
     }
 
     @Scheduled(cron = "${app.analytics.retention.cron:0 30 3 * * *}")
     public void purgeExpiredLoginEvents() {
-        if (!properties.isLoginEventRetentionEnabled()) {
-            return;
-        }
         run();
     }
 
@@ -68,21 +69,11 @@ public class LoginEventRetentionJob {
      *     test can drive it without waiting for the cron.
      */
     public int run() {
-        if (!properties.isLoginEventRetentionEnabled()) {
-            return 0;
-        }
+        int retentionHours = settingsService.currentSettings().loginEventsHours();
+        if (retentionHours <= 0) return 0;
 
-        Duration retentionDuration;
-        String windowDescription;
-        if (properties.loginEventsHours() != null && properties.loginEventsHours() > 0) {
-            retentionDuration = Duration.ofHours(properties.loginEventsHours());
-            windowDescription = properties.loginEventsHours() + " hour(s)";
-        } else if (properties.loginEventsDays() != null && properties.loginEventsDays() > 0) {
-            retentionDuration = Duration.ofDays(properties.loginEventsDays());
-            windowDescription = properties.loginEventsDays() + " day(s)";
-        } else {
-            return 0;
-        }
+        Duration retentionDuration = Duration.ofHours(retentionHours);
+        String windowDescription = retentionHours + " hour(s)";
 
         Instant cutoff = Instant.now().minus(retentionDuration);
         int batchSize = properties.batchSize();

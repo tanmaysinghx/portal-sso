@@ -52,6 +52,7 @@ _Last reviewed: 2026-10-19 (against `main` @ `4e9fd3c`)_
 ### Governance & analytics
 - Append-only audit log with filters + CSV export
 - Login events with GeoIP, dashboard KPIs/map/recency, hourly retention purge (48 h default)
+- Admin-managed retention windows for login attempts and audit events, with scheduled cleanup and system audit entries
 
 ### Mail
 - DB-stored SMTP relay (encrypted password, test send, audited changes)
@@ -64,6 +65,7 @@ _Last reviewed: 2026-10-19 (against `main` @ `4e9fd3c`)_
 - Light/dark theme, console branding, product / docs / download pages
 - Settings split into grouped sub-routes (`/settings/branding`, `/email-delivery`, `/email-templates`, `/protocol`, `/database`, `/system`); old `?tab=` links redirect
 - GitHub Actions CI + release workflows
+- Release version labels read the latest GitHub release at runtime and cache it for six hours
 
 ---
 

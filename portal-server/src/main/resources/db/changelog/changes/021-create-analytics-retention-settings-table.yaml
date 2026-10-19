@@ -1,0 +1,46 @@
+databaseChangeLog:
+  - changeSet:
+      id: 021-create-analytics-retention-settings-table
+      author: ai-agent
+      changes:
+        - createTable:
+            tableName: analytics_retention_settings
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: config_key
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uk_analytics_retention_settings_config_key
+              - column:
+                  name: login_events_hours
+                  type: INT
+                  defaultValueNumeric: 48
+                  constraints:
+                    nullable: false
+              - column:
+                  name: audit_events_hours
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_by
+                  type: VARCHAR(255)
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false

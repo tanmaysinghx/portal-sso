@@ -1,6 +1,6 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { environment } from '../../../environments/environment';
+import { ReleaseVersionService } from '../../core/services/release-version.service';
 
 interface Screen {
   id: string;
@@ -37,12 +37,17 @@ interface Snippet {
   templateUrl: './product.html',
   styleUrl: './product.scss',
 })
-export class Product {
-  readonly version = environment.version;
+export class Product implements OnInit {
+  private readonly releaseVersionService = inject(ReleaseVersionService);
+  readonly version = this.releaseVersionService.version;
   readonly mobileNavOpen = signal(false);
   readonly activeScreen = signal('dashboard');
   readonly activeSnippet = signal('sdk');
   readonly copied = signal<string | null>(null);
+
+  ngOnInit(): void {
+    this.releaseVersionService.loadLatest();
+  }
 
   readonly screens: Screen[] = [
     {
