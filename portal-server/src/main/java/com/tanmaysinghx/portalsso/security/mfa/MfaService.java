@@ -157,6 +157,28 @@ public class MfaService {
         disableMfa(user);
     }
 
+    /**
+     * Replaces every recovery code, used or not, with a fresh set. The caller must have proved
+     * possession of the second factor first — see {@code AccountService.regenerateRecoveryCodes}.
+     */
+    @Transactional
+    public List<String> regenerateRecoveryCodes(User user) {
+        if (!user.isMfaEnabled()) {
+            throw new BusinessRuleViolationException(
+                    ErrorCode.INVALID_MFA_CODE, "Two-factor authentication is not enabled for this account.");
+        }
+        return generateAndPersistRecoveryCodes(user);
+    }
+
+    public int countUnusedRecoveryCodes(User user) {
+        return recoveryCodeRepository.findByUserAndUsedAtIsNull(user).size();
+    }
+
+    /** Whether enrolment can succeed at all — false when no at-rest encryption key is configured. */
+    public boolean isAvailable() {
+        return mfaEncryptionService.isConfigured();
+    }
+
     private List<String> generateAndPersistRecoveryCodes(User user) {
         recoveryCodeRepository.deleteByUser(user);
 

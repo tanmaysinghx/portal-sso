@@ -1,0 +1,346 @@
+<div class="space-y-6">
+  @if (!emailSettings()?.deliveryReady) {
+    <div class="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50/80 p-4">
+      <svg class="h-5 w-5 text-amber-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+      </svg>
+      <div>
+        <h4 class="text-xs font-semibold text-amber-900">No SMTP relay configured</h4>
+        <p class="mt-0.5 text-xs text-amber-700 leading-relaxed">
+          You can set everything up here, but nothing will be delivered until a relay is working.
+          <a routerLink="../email-delivery" class="font-semibold underline">Configure email delivery</a>
+        </p>
+      </div>
+    </div>
+  }
+
+  <!-- Branding Card -->
+  <div class="overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-sm">
+    <div class="border-b border-ink-100 bg-ink-50/50 px-6 py-4">
+      <h2 class="text-sm font-semibold text-ink-900">Email Branding</h2>
+      <p class="text-xs text-ink-500">
+        Applied to every message. Kept separate from the console branding above because email is
+        rendered on the server, and a logo in an email has to be a URL a mail client can fetch.
+      </p>
+    </div>
+
+    <div class="p-6 space-y-5">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label for="email-product" class="block text-xs font-medium text-ink-600 mb-1">Product Name</label>
+          <input
+            id="email-product"
+            type="text"
+            [ngModel]="emailProductName()"
+            (ngModelChange)="emailProductName.set($event)"
+            placeholder="Portal SSO"
+            class="block w-full rounded-xl border border-ink-300 px-3 py-2 text-xs text-ink-900 shadow-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25"
+          />
+          <p class="mt-1 text-[11px] text-ink-500">Used in subject lines and throughout the body.</p>
+        </div>
+
+        <div>
+          <label for="email-accent" class="block text-xs font-medium text-ink-600 mb-1">Accent Colour</label>
+          <div class="flex items-center gap-2">
+            <input
+              id="email-accent"
+              type="color"
+              [ngModel]="emailAccentColor()"
+              (ngModelChange)="emailAccentColor.set($event)"
+              class="h-9 w-12 shrink-0 cursor-pointer rounded-lg border border-ink-300 bg-white p-1"
+            />
+            <input
+              type="text"
+              [ngModel]="emailAccentColor()"
+              (ngModelChange)="emailAccentColor.set($event)"
+              placeholder="#F59E0B"
+              class="block w-full rounded-xl border border-ink-300 px-3 py-2 font-mono text-xs text-ink-900 shadow-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25"
+            />
+          </div>
+          <!--
+            Stated up front because the opposite is the natural assumption. Buttons use a fixed
+            near-black so their label is legible whatever accent is chosen — white on the default
+            amber is about 2:1 contrast, which is unreadable.
+          -->
+          <p class="mt-1 text-[11px] text-ink-500">Header rule, links and highlights. Buttons stay near-black so their text is always legible.</p>
+        </div>
+
+        <div class="sm:col-span-2">
+          <label for="email-logo" class="block text-xs font-medium text-ink-600 mb-1">Logo URL (optional)</label>
+          <input
+            id="email-logo"
+            type="url"
+            [ngModel]="emailLogoUrl()"
+            (ngModelChange)="emailLogoUrl.set($event)"
+            placeholder="https://cdn.example.com/logo.png"
+            class="block w-full rounded-xl border border-ink-300 px-3 py-2 text-xs text-ink-900 shadow-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25"
+          />
+          <p class="mt-1 text-[11px] text-ink-500">
+            Must be publicly reachable — a mail client fetches it from the recipient's network, so an
+            internal-only URL or a data URI will not render. Leave blank to use your product name as a wordmark.
+          </p>
+        </div>
+
+        <div>
+          <label for="email-support" class="block text-xs font-medium text-ink-600 mb-1">Support URL (optional)</label>
+          <input
+            id="email-support"
+            type="url"
+            [ngModel]="emailSupportUrl()"
+            (ngModelChange)="emailSupportUrl.set($event)"
+            placeholder="https://help.example.com"
+            class="block w-full rounded-xl border border-ink-300 px-3 py-2 text-xs text-ink-900 shadow-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25"
+          />
+        </div>
+
+        <div>
+          <label for="email-footer" class="block text-xs font-medium text-ink-600 mb-1">Footer Note (optional)</label>
+          <input
+            id="email-footer"
+            type="text"
+            [ngModel]="emailFooterNote()"
+            (ngModelChange)="emailFooterNote.set($event)"
+            placeholder="Internal use only."
+            class="block w-full rounded-xl border border-ink-300 px-3 py-2 text-xs text-ink-900 shadow-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25"
+          />
+        </div>
+      </div>
+
+      <div class="rounded-xl border border-ink-100 bg-ink-50/40 p-3">
+        <span class="text-[10px] font-bold uppercase tracking-wider text-ink-500">Links in email point to</span>
+        <p class="mt-0.5 text-xs font-mono text-ink-700 break-all">{{ emailSettings()?.portalUrl }}</p>
+        <p class="mt-1 text-[11px] text-ink-500">
+          Taken from <span class="font-mono">ISSUER_URL</span>. Set that to your public HTTPS origin — a wrong value
+          here sends sign-in links somewhere nobody can reach.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notifications Card -->
+  <div class="overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-sm">
+    <div class="border-b border-ink-100 bg-ink-50/50 px-6 py-4">
+      <h2 class="text-sm font-semibold text-ink-900">Notifications</h2>
+      <p class="text-xs text-ink-500">Which messages this server sends, and whether each one can currently be delivered.</p>
+    </div>
+
+    <div class="divide-y divide-ink-100">
+      <!-- Welcome -->
+      <div class="flex items-start justify-between gap-4 px-6 py-4">
+        <label class="flex items-start gap-3 cursor-pointer min-w-0">
+          <input
+            type="checkbox"
+            [ngModel]="notifyWelcome()"
+            (ngModelChange)="notifyWelcome.set($event)"
+            class="mt-0.5 h-4 w-4 shrink-0 rounded border-ink-300 text-brand-600 focus:ring-brand-500/25"
+          />
+          <span class="min-w-0">
+            <span class="block text-xs font-semibold text-ink-900">Welcome email</span>
+            <span class="block text-[11px] text-ink-500">Sent once, when an account is created — by an administrator, self-registration, or a magic link.</span>
+          </span>
+        </label>
+        <span class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold" [class]="statusClasses(emailSettings()?.notifications?.[0]?.status ?? 'OFF')">
+          {{ statusLabel(emailSettings()?.notifications?.[0]?.status ?? 'OFF') }}
+        </span>
+      </div>
+
+      <!-- New device -->
+      <div class="flex items-start justify-between gap-4 px-6 py-4">
+        <label class="flex items-start gap-3 cursor-pointer min-w-0">
+          <input
+            type="checkbox"
+            [ngModel]="notifyNewDevice()"
+            (ngModelChange)="notifyNewDevice.set($event)"
+            class="mt-0.5 h-4 w-4 shrink-0 rounded border-ink-300 text-brand-600 focus:ring-brand-500/25"
+          />
+          <span class="min-w-0">
+            <span class="block text-xs font-semibold text-ink-900">New device sign-in alert</span>
+            <span class="block text-[11px] text-ink-500">
+              Sent when an account signs in from a browser and operating system it has not used before.
+              Recommended — this is the one message that can tell a user their account has been taken.
+            </span>
+          </span>
+        </label>
+        <span class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold" [class]="statusClasses(emailSettings()?.notifications?.[1]?.status ?? 'OFF')">
+          {{ statusLabel(emailSettings()?.notifications?.[1]?.status ?? 'OFF') }}
+        </span>
+      </div>
+
+      <!-- Every sign-in -->
+      <div class="flex items-start justify-between gap-4 px-6 py-4">
+        <label class="flex items-start gap-3 cursor-pointer min-w-0">
+          <input
+            type="checkbox"
+            [ngModel]="notifySignIn()"
+            (ngModelChange)="notifySignIn.set($event)"
+            class="mt-0.5 h-4 w-4 shrink-0 rounded border-ink-300 text-brand-600 focus:ring-brand-500/25"
+          />
+          <span class="min-w-0">
+            <span class="block text-xs font-semibold text-ink-900">Every sign-in notice</span>
+            <span class="block text-[11px] text-ink-500">
+              Sent on every successful sign-in. Off by default: for a daily-driver account that is a message each
+              morning, which trains people to ignore the alert above.
+            </span>
+          </span>
+        </label>
+        <span class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold" [class]="statusClasses(emailSettings()?.notifications?.[2]?.status ?? 'OFF')">
+          {{ statusLabel(emailSettings()?.notifications?.[2]?.status ?? 'OFF') }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Magic Link Card -->
+  <div class="overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-sm">
+    <div class="border-b border-ink-100 bg-ink-50/50 px-6 py-4">
+      <h2 class="text-sm font-semibold text-ink-900">Passwordless Sign-in (Magic Links)</h2>
+      <p class="text-xs text-ink-500">
+        Users ask for a single-use link by email instead of typing a password. Two-factor authentication still
+        applies — a link proves the address, it does not replace a second factor.
+      </p>
+    </div>
+
+    <div class="p-6 space-y-5">
+      <label class="flex items-start gap-3 cursor-pointer rounded-xl border border-ink-100 bg-ink-50/50 p-4">
+        <input
+          type="checkbox"
+          [ngModel]="magicLinkEnabled()"
+          (ngModelChange)="setMagicLinkEnabled($event)"
+          class="mt-0.5 h-4 w-4 shrink-0 rounded border-ink-300 text-brand-600 focus:ring-brand-500/25"
+        />
+        <span>
+          <span class="block text-xs font-semibold text-ink-900">Allow sign-in with a magic link</span>
+          <span class="block text-[11px] text-ink-500">
+            Adds "Email me a sign-in link" to the sign-in page. Anyone with access to a user's mailbox can then sign
+            in as them, so this is only as strong as your users' email.
+          </span>
+        </span>
+      </label>
+
+      <label
+        class="flex items-start gap-3 rounded-xl border border-ink-100 bg-ink-50/50 p-4"
+        [class.opacity-50]="!magicLinkEnabled()"
+        [class.cursor-pointer]="magicLinkEnabled()"
+      >
+        <input
+          type="checkbox"
+          [disabled]="!magicLinkEnabled()"
+          [ngModel]="magicLinkRegistrationEnabled()"
+          (ngModelChange)="magicLinkRegistrationEnabled.set($event)"
+          class="mt-0.5 h-4 w-4 shrink-0 rounded border-ink-300 text-brand-600 focus:ring-brand-500/25 disabled:opacity-50"
+        />
+        <span>
+          <span class="block text-xs font-semibold text-ink-900">Allow a magic link to create an account</span>
+          <span class="block text-[11px] text-ink-500">
+            An unknown address gets a sign-up link instead. The account is created with no password and verified by
+            the link itself. A Portal SSO account grants access to every connected application, so treat this as
+            opening public registration.
+          </span>
+        </span>
+      </label>
+
+      <div class="max-w-xs">
+        <label for="magic-ttl" class="block text-xs font-medium text-ink-600 mb-1">Link lifetime (minutes)</label>
+        <input
+          id="magic-ttl"
+          type="number"
+          min="1"
+          max="60"
+          [disabled]="!magicLinkEnabled()"
+          [ngModel]="magicLinkTtlMinutes()"
+          (ngModelChange)="magicLinkTtlMinutes.set($event)"
+          class="block w-full rounded-xl border border-ink-300 px-3 py-2 text-xs text-ink-900 shadow-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25 disabled:bg-ink-50 disabled:opacity-60"
+        />
+        <p class="mt-1 text-[11px] text-ink-500">
+          1–60. A link is a credential sitting in a mailbox, so shorter is safer; 15 minutes is enough for someone to
+          switch to their mail and click.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  @if (emailError()) {
+    <div class="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50/80 p-4">
+      <svg class="h-5 w-5 text-rose-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+      </svg>
+      <p class="text-xs text-rose-800">{{ emailError() }}</p>
+    </div>
+  }
+
+  <div class="flex items-center justify-between gap-3 rounded-2xl border border-ink-200 bg-white px-6 py-4 shadow-sm">
+    <p class="text-[11px] text-ink-500">
+      @if (emailSettings()?.updatedBy) {
+        Last changed by {{ emailSettings()?.updatedBy }}
+        @if (emailSettings()?.updatedAt) {
+          on {{ emailSettings()?.updatedAt | date: 'MMM d, y, HH:mm' }}
+        }
+      } @else {
+        Not configured yet — defaults are in effect.
+      }
+    </p>
+    <div class="flex items-center gap-3">
+      <button
+        type="button"
+        (click)="loadEmailSettings()"
+        [disabled]="loadingEmail() || savingEmail()"
+        class="rounded-xl border border-ink-200 bg-white px-4 py-2 text-xs font-semibold text-ink-700 hover:bg-ink-50 disabled:opacity-50 transition"
+      >
+        Discard Changes
+      </button>
+      <button
+        type="button"
+        (click)="saveEmailSettings()"
+        [disabled]="savingEmail()"
+        class="rounded-xl bg-brand-600 px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-brand-700 disabled:opacity-50 transition"
+      >
+        {{ savingEmail() ? 'Saving...' : 'Save Template Settings' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Preview Card -->
+  <div class="overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-sm">
+    <div class="border-b border-ink-100 bg-ink-50/50 px-6 py-4">
+      <h2 class="text-sm font-semibold text-ink-900">Preview a Message</h2>
+      <p class="text-xs text-ink-500">
+        Sends the real template with sample details, whether or not that notification is switched on — so you can see
+        one before turning it on. Previews say so in the subject and the body.
+      </p>
+    </div>
+
+    <div class="p-6 space-y-4">
+      <div class="max-w-md">
+        <label for="preview-to" class="block text-xs font-medium text-ink-600 mb-1">Send previews to</label>
+        <input
+          id="preview-to"
+          type="email"
+          [ngModel]="previewRecipient()"
+          (ngModelChange)="previewRecipient.set($event)"
+          placeholder="you@example.com"
+          class="block w-full rounded-xl border border-ink-300 px-3 py-2 text-xs text-ink-900 shadow-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25"
+        />
+      </div>
+
+      <!-- Driven by the server's enum, so this list cannot drift from what actually exists. -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        @for (notification of emailSettings()?.notifications ?? []; track notification.type) {
+          <div class="flex items-center justify-between gap-3 rounded-xl border border-ink-200 p-3.5">
+            <div class="min-w-0">
+              <p class="text-xs font-semibold text-ink-900 truncate">{{ notification.label }}</p>
+              <p class="text-[11px] text-ink-500 line-clamp-2">{{ notification.description }}</p>
+            </div>
+            <button
+              type="button"
+              (click)="sendPreview(notification.type)"
+              [disabled]="previewSending() !== null"
+              class="shrink-0 rounded-lg border border-ink-300 bg-white px-3 py-1.5 text-xs font-semibold text-ink-800 hover:bg-ink-50 disabled:opacity-50 transition"
+            >
+              {{ previewSending() === notification.type ? 'Sending...' : 'Send' }}
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

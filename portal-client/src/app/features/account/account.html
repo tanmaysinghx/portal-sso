@@ -1,0 +1,571 @@
+<div class="animate-fade-in-up">
+  <div class="mb-7">
+    <h1 class="text-[22px] font-semibold tracking-tight text-ink-900">My Account</h1>
+    <p class="mt-1 text-sm text-ink-500">Your profile, password, two-factor authentication and the devices you sign in from.</p>
+  </div>
+
+  @if (loading() && !account()) {
+    <div class="space-y-4" aria-busy="true">
+      <div class="h-28 animate-pulse rounded-2xl bg-ink-100"></div>
+      <div class="h-64 animate-pulse rounded-2xl bg-ink-100"></div>
+    </div>
+  } @else if (loadError() && !account()) {
+    <div class="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
+      <p>{{ loadError() }}</p>
+      <button type="button" (click)="loadAccount()" class="mt-3 font-semibold underline">Try again</button>
+    </div>
+  } @else if (account(); as a) {
+    <!-- Identity summary -->
+    <section class="mb-6 rounded-2xl border border-ink-200 bg-white p-5 shadow-sm sm:p-6">
+      <div class="flex flex-col gap-5 sm:flex-row sm:items-center">
+        <div class="flex min-w-0 flex-1 items-center gap-4">
+          <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-red-500 text-lg font-semibold text-white">
+            {{ initials() }}
+          </div>
+          <div class="min-w-0">
+            <p class="truncate text-base font-semibold text-ink-900">{{ displayName() }}</p>
+            @if (displayName() !== a.email) {
+              <p class="truncate text-sm text-ink-500">{{ a.email }}</p>
+            }
+            <div class="mt-1.5 flex flex-wrap gap-1.5">
+              @for (role of roleLabels(); track role) {
+                <app-badge [tone]="role === 'Administrator' ? 'brand' : 'neutral'">{{ role }}</app-badge>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- At-a-glance security posture -->
+        <dl class="grid grid-cols-3 gap-2 sm:w-auto sm:gap-3">
+          <div class="rounded-xl bg-ink-50 px-3 py-2.5">
+            <dt class="text-[10px] font-semibold uppercase tracking-wider text-ink-500">2FA</dt>
+            <dd class="mt-0.5 text-sm font-semibold" [class]="a.mfaEnabled ? 'text-emerald-700' : 'text-amber-700'">
+              {{ a.mfaEnabled ? 'On' : 'Off' }}
+            </dd>
+          </div>
+          <div class="rounded-xl bg-ink-50 px-3 py-2.5">
+            <dt class="text-[10px] font-semibold uppercase tracking-wider text-ink-500">Member since</dt>
+            <dd class="mt-0.5 text-sm font-semibold text-ink-900">{{ a.createdAt ? (a.createdAt | date: 'MMM y') : '—' }}</dd>
+          </div>
+          <div class="rounded-xl bg-ink-50 px-3 py-2.5">
+            <dt class="text-[10px] font-semibold uppercase tracking-wider text-ink-500">Last sign-in</dt>
+            <dd class="mt-0.5 text-sm font-semibold text-ink-900">{{ a.lastLoginAt ? (a.lastLoginAt | date: 'MMM d') : '—' }}</dd>
+          </div>
+        </dl>
+      </div>
+
+      @if (!a.mfaEnabled && a.mfaAvailable) {
+        <div class="mt-5 flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50/80 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p class="text-xs leading-relaxed text-amber-900">
+            <span class="font-semibold">Add a second factor.</span>
+            With two-factor authentication on, a stolen password alone is not enough to get into your account.
+          </p>
+          <button
+            type="button"
+            (click)="startMfaEnrollment()"
+            [disabled]="mfaSubmitting()"
+            class="shrink-0 rounded-lg bg-amber-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-amber-700 disabled:opacity-50"
+          >
+            Turn on 2FA
+          </button>
+        </div>
+      }
+    </section>
+
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-[13rem_minmax(0,1fr)]">
+      <!-- Section nav: sticky on desktop, a scrollable chip row on small screens -->
+      <nav aria-label="Account sections" class="lg:sticky lg:top-6 lg:self-start">
+        <ul class="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 lg:mx-0 lg:flex-col lg:overflow-visible lg:px-0">
+          @for (s of sections; track s.id) {
+            <li class="shrink-0">
+              <button
+                type="button"
+                (click)="scrollTo(s.id)"
+                class="w-full rounded-lg px-3 py-2 text-left text-[13px] font-medium text-ink-600 transition hover:bg-ink-100 hover:text-ink-900"
+              >
+                {{ s.label }}
+              </button>
+            </li>
+          }
+        </ul>
+      </nav>
+
+      <div class="min-w-0 space-y-6">
+        <!-- Profile -->
+        <section id="account-profile" class="scroll-mt-6 rounded-2xl border border-ink-200 bg-white shadow-sm">
+          <header class="border-b border-ink-100 px-5 py-4 sm:px-6">
+            <h2 class="text-sm font-semibold text-ink-900">Profile</h2>
+            <p class="text-xs text-ink-500">How your name appears to administrators and in apps you sign in to.</p>
+          </header>
+          <form class="space-y-4 p-5 sm:p-6" (ngSubmit)="saveProfile()">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label for="account-first-name" class="mb-1 block text-xs font-medium text-ink-700">First name</label>
+                <input
+                  id="account-first-name"
+                  name="firstName"
+                  type="text"
+                  autocomplete="given-name"
+                  maxlength="100"
+                  [ngModel]="firstName()"
+                  (ngModelChange)="firstName.set($event)"
+                  class="block w-full rounded-lg border border-ink-300 px-3.5 py-2 text-sm text-ink-900 shadow-sm placeholder:text-ink-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+                />
+              </div>
+              <div>
+                <label for="account-last-name" class="mb-1 block text-xs font-medium text-ink-700">Last name</label>
+                <input
+                  id="account-last-name"
+                  name="lastName"
+                  type="text"
+                  autocomplete="family-name"
+                  maxlength="100"
+                  [ngModel]="lastName()"
+                  (ngModelChange)="lastName.set($event)"
+                  class="block w-full rounded-lg border border-ink-300 px-3.5 py-2 text-sm text-ink-900 shadow-sm placeholder:text-ink-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+                />
+              </div>
+            </div>
+            <div>
+              <label for="account-email" class="mb-1 block text-xs font-medium text-ink-700">Email</label>
+              <input
+                id="account-email"
+                type="email"
+                [value]="a.email"
+                disabled
+                class="block w-full cursor-not-allowed rounded-lg border border-ink-200 bg-ink-50 px-3.5 py-2 text-sm text-ink-500"
+              />
+              <p class="mt-1 text-[11px] text-ink-500">Your email is your sign-in name. Ask an administrator to change it.</p>
+            </div>
+            <div class="flex items-center justify-end gap-2 border-t border-ink-100 pt-4">
+              @if (profileDirty()) {
+                <button type="button" (click)="resetProfile()" class="rounded-lg px-3.5 py-2 text-xs font-medium text-ink-600 hover:bg-ink-100">
+                  Discard
+                </button>
+              }
+              <button
+                type="submit"
+                [disabled]="!profileDirty() || savingProfile()"
+                class="rounded-lg bg-brand-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-brand-700 disabled:opacity-50"
+              >
+                {{ savingProfile() ? 'Saving…' : 'Save profile' }}
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <!-- Password -->
+        <section id="account-password" class="scroll-mt-6 rounded-2xl border border-ink-200 bg-white shadow-sm">
+          <header class="border-b border-ink-100 px-5 py-4 sm:px-6">
+            <h2 class="text-sm font-semibold text-ink-900">Password</h2>
+            <p class="text-xs text-ink-500">Changing it signs you out everywhere else.</p>
+          </header>
+          <form class="p-5 sm:p-6" (ngSubmit)="changePassword()">
+            <!-- Hidden username lets password managers file the new password under the right account. -->
+            <input type="email" name="username" autocomplete="username" [value]="a.email" class="hidden" aria-hidden="true" tabindex="-1" />
+
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr)_15rem]">
+              <div class="space-y-4">
+                @if (passwordError()) {
+                  <div role="alert" class="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">{{ passwordError() }}</div>
+                }
+                <div>
+                  <label for="account-current-password" class="mb-1 block text-xs font-medium text-ink-700">Current password</label>
+                  <input
+                    id="account-current-password"
+                    name="currentPassword"
+                    [type]="showPasswords() ? 'text' : 'password'"
+                    autocomplete="current-password"
+                    [ngModel]="currentPassword()"
+                    (ngModelChange)="currentPassword.set($event)"
+                    class="block w-full rounded-lg border border-ink-300 px-3.5 py-2 text-sm text-ink-900 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+                  />
+                </div>
+                <div>
+                  <label for="account-new-password" class="mb-1 block text-xs font-medium text-ink-700">New password</label>
+                  <input
+                    id="account-new-password"
+                    name="newPassword"
+                    [type]="showPasswords() ? 'text' : 'password'"
+                    autocomplete="new-password"
+                    [attr.maxlength]="a.passwordPolicy.maxLength"
+                    [ngModel]="newPassword()"
+                    (ngModelChange)="newPassword.set($event)"
+                    aria-describedby="account-password-rules"
+                    class="block w-full rounded-lg border border-ink-300 px-3.5 py-2 text-sm text-ink-900 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+                  />
+                </div>
+                <div>
+                  <label for="account-confirm-password" class="mb-1 block text-xs font-medium text-ink-700">Confirm new password</label>
+                  <input
+                    id="account-confirm-password"
+                    name="confirmPassword"
+                    [type]="showPasswords() ? 'text' : 'password'"
+                    autocomplete="new-password"
+                    [ngModel]="confirmPassword()"
+                    (ngModelChange)="confirmPassword.set($event)"
+                    class="block w-full rounded-lg border px-3.5 py-2 text-sm text-ink-900 shadow-sm focus:outline-none focus:ring-2"
+                    [class]="confirmPassword() && !passwordsMatch() ? 'border-red-300 focus:border-red-500 focus:ring-red-500/25' : 'border-ink-300 focus:border-brand-500 focus:ring-brand-500/25'"
+                  />
+                  @if (confirmPassword() && !passwordsMatch()) {
+                    <p class="mt-1 text-[11px] text-red-600">Passwords don't match.</p>
+                  }
+                </div>
+                <label class="inline-flex cursor-pointer items-center gap-2 text-xs text-ink-600">
+                  <input
+                    type="checkbox"
+                    name="showPasswords"
+                    [ngModel]="showPasswords()"
+                    (ngModelChange)="showPasswords.set($event)"
+                    class="h-3.5 w-3.5 rounded border-ink-300 text-brand-600 focus:ring-brand-500"
+                  />
+                  Show passwords
+                </label>
+              </div>
+
+              <div id="account-password-rules" class="self-start rounded-xl bg-ink-50 p-4">
+                <p class="text-[11px] font-semibold uppercase tracking-wider text-ink-500">Requirements</p>
+                <ul class="mt-2 space-y-1.5">
+                  @for (rule of checklist(); track rule.label) {
+                    <li class="flex items-center gap-2 text-xs" [class]="rule.met ? 'text-emerald-700' : 'text-ink-500'">
+                      @if (rule.met) {
+                        <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                      } @else {
+                        <span class="flex h-3.5 w-3.5 shrink-0 items-center justify-center" aria-hidden="true"><span class="h-1.5 w-1.5 rounded-full bg-ink-300"></span></span>
+                      }
+                      <span>{{ rule.label }}</span>
+                      <span class="sr-only">{{ rule.met ? '(met)' : '(not met)' }}</span>
+                    </li>
+                  }
+                </ul>
+              </div>
+            </div>
+
+            <div class="mt-5 flex justify-end border-t border-ink-100 pt-4">
+              <button
+                type="submit"
+                [disabled]="!canChangePassword()"
+                class="rounded-lg bg-brand-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-brand-700 disabled:opacity-50"
+              >
+                {{ changingPassword() ? 'Changing…' : 'Change password' }}
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <!-- Two-factor -->
+        <section id="account-two-factor" class="scroll-mt-6 rounded-2xl border border-ink-200 bg-white shadow-sm">
+          <header class="flex items-start justify-between gap-3 border-b border-ink-100 px-5 py-4 sm:px-6">
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="text-sm font-semibold text-ink-900">Two-factor authentication</h2>
+                <app-badge [tone]="a.mfaEnabled ? 'success' : 'neutral'">{{ a.mfaEnabled ? 'On' : 'Off' }}</app-badge>
+              </div>
+              <p class="text-xs text-ink-500">A 6-digit code from an authenticator app, asked for after your password or sign-in link.</p>
+            </div>
+          </header>
+
+          <div class="divide-y divide-ink-100">
+            <div class="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+              <div class="flex items-center gap-3">
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 ring-1 ring-inset ring-brand-500/20">
+                  <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-sm font-medium text-ink-900">Authenticator app</p>
+                  <p class="text-xs text-ink-500">
+                    @if (a.mfaEnabled) {
+                      Configured. You'll be asked for a code each time you sign in.
+                    } @else if (!a.mfaAvailable) {
+                      Unavailable: this server has no encryption key configured. Contact your administrator.
+                    } @else {
+                      Google Authenticator, 1Password, Authy or any TOTP app.
+                    }
+                  </p>
+                </div>
+              </div>
+              @if (a.mfaEnabled) {
+                <button
+                  type="button"
+                  (click)="openDisableModal()"
+                  class="shrink-0 rounded-lg border border-red-200 bg-white px-3.5 py-2 text-xs font-semibold text-red-700 shadow-sm transition hover:bg-red-50"
+                >
+                  Turn off
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  (click)="startMfaEnrollment()"
+                  [disabled]="mfaSubmitting() || !a.mfaAvailable"
+                  class="shrink-0 rounded-lg bg-brand-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-brand-700 disabled:opacity-50"
+                >
+                  {{ mfaSubmitting() ? 'Preparing…' : 'Set up' }}
+                </button>
+              }
+            </div>
+
+            @if (a.mfaEnabled) {
+              <div class="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+                <div class="flex items-center gap-3">
+                  <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ink-100 text-ink-600">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium text-ink-900">Recovery codes</p>
+                    <p class="text-xs" [class]="a.recoveryCodesRemaining <= 2 ? 'text-amber-700' : 'text-ink-500'">
+                      {{ a.recoveryCodesRemaining }} unused. Each one signs you in once if you lose your phone.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  (click)="openRegenerateModal()"
+                  class="shrink-0 rounded-lg border border-ink-300 bg-white px-3.5 py-2 text-xs font-semibold text-ink-700 shadow-sm transition hover:bg-ink-50"
+                >
+                  Generate new codes
+                </button>
+              </div>
+            }
+          </div>
+        </section>
+
+        <!-- Devices -->
+        <section id="account-devices" class="scroll-mt-6 rounded-2xl border border-ink-200 bg-white shadow-sm">
+          <header class="flex flex-col gap-2 border-b border-ink-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <div>
+              <h2 class="text-sm font-semibold text-ink-900">Recognised devices</h2>
+              <p class="text-xs text-ink-500">Browsers you've signed in from. A sign-in from anything else sends you an alert.</p>
+            </div>
+            <a
+              routerLink="/sessions"
+              class="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-brand-700 hover:text-brand-800"
+            >
+              Manage active sessions
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+              </svg>
+            </a>
+          </header>
+
+          @if (loadingDevices()) {
+            <div class="space-y-3 p-5 sm:p-6">
+              <div class="h-10 animate-pulse rounded-lg bg-ink-100"></div>
+              <div class="h-10 animate-pulse rounded-lg bg-ink-100"></div>
+            </div>
+          } @else if (devices().length === 0) {
+            <p class="p-6 text-center text-xs text-ink-500">No devices recorded yet. They appear after your next sign-in.</p>
+          } @else {
+            <ul class="divide-y divide-ink-100">
+              @for (device of devices(); track device.id) {
+                <li class="flex items-center gap-3 px-5 py-4 sm:px-6">
+                  <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-ink-100 text-ink-600">
+                    <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
+                    </svg>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-2">
+                      <p class="truncate text-sm font-medium text-ink-900">{{ device.label }}</p>
+                      @if (device.current) {
+                        <span class="shrink-0 whitespace-nowrap"><app-badge tone="success">This device</app-badge></span>
+                      }
+                    </div>
+                    <p class="truncate text-xs text-ink-500">
+                      Last used {{ device.lastSeenAt | date: 'MMM d, y, h:mm a' }}
+                      @if (device.lastLocation) { · {{ device.lastLocation }} }
+                      @if (device.lastIpAddress) { · <span class="font-mono">{{ device.lastIpAddress }}</span> }
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    (click)="deviceToForget.set(device)"
+                    class="shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-medium text-ink-500 transition hover:bg-red-50 hover:text-red-700"
+                    [attr.aria-label]="'Remove ' + device.label"
+                  >
+                    Remove
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Two-factor setup / recovery codes -->
+@if (showMfaModal()) {
+  <div class="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto p-4 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="mfa-modal-title">
+    <div class="fixed inset-0 bg-ink-950/70 backdrop-blur-sm" (click)="mfaStep() === 'setup' && closeMfaModal()"></div>
+    <div class="relative z-10 w-full max-w-md rounded-2xl border border-ink-200 bg-white p-6 shadow-2xl">
+      @if (mfaStep() === 'setup') {
+        <h3 id="mfa-modal-title" class="text-base font-semibold text-ink-900">Set up two-factor authentication</h3>
+        <ol class="mt-4 space-y-4 text-xs text-ink-700">
+          <li>
+            <p class="font-medium text-ink-900">1. Scan this code with your authenticator app</p>
+            <div class="mx-auto mt-3 flex h-44 w-44 items-center justify-center rounded-xl border border-ink-200 bg-white p-2">
+              <img [src]="mfaQrUrl()" alt="QR code for your authenticator app" class="h-40 w-40" />
+            </div>
+            <details class="mt-2">
+              <summary class="cursor-pointer text-[11px] text-ink-500 hover:text-ink-700">Can't scan? Enter the key manually</summary>
+              <code class="mt-1.5 block select-all break-all rounded-lg bg-ink-50 p-2.5 font-mono text-xs font-semibold text-ink-900">{{ mfaSecret() }}</code>
+            </details>
+          </li>
+          <li>
+            <label for="mfa-code" class="font-medium text-ink-900">2. Enter the 6-digit code it shows</label>
+            <input
+              id="mfa-code"
+              type="text"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              maxlength="6"
+              [ngModel]="mfaCode()"
+              (ngModelChange)="mfaCode.set($event)"
+              (keydown.enter)="confirmMfa()"
+              placeholder="123456"
+              class="mt-1.5 block w-full rounded-xl border border-ink-300 py-2.5 text-center font-mono text-lg tracking-[0.4em] text-ink-900 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+            />
+          </li>
+        </ol>
+        @if (mfaError()) {
+          <p role="alert" class="mt-3 rounded-lg border border-red-200 bg-red-50 p-2.5 text-xs text-red-700">{{ mfaError() }}</p>
+        }
+        <div class="mt-5 flex justify-end gap-2">
+          <button type="button" (click)="closeMfaModal()" class="rounded-lg border border-ink-200 px-4 py-2 text-xs font-medium text-ink-700 hover:bg-ink-50">Cancel</button>
+          <button
+            type="button"
+            (click)="confirmMfa()"
+            [disabled]="mfaSubmitting() || mfaCode().length !== 6"
+            class="rounded-lg bg-brand-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-brand-700 disabled:opacity-50"
+          >
+            {{ mfaSubmitting() ? 'Verifying…' : 'Verify and turn on' }}
+          </button>
+        </div>
+      } @else {
+        <h3 id="mfa-modal-title" class="text-base font-semibold text-ink-900">Save your recovery codes</h3>
+        <p class="mt-1 text-xs text-ink-500">
+          Each code signs you in once if you lose your authenticator. They are shown <strong>only now</strong>;
+          any older codes no longer work.
+        </p>
+        <div class="mt-4 grid grid-cols-2 gap-2 rounded-xl border border-ink-200 bg-ink-50 p-3 font-mono text-xs font-semibold text-ink-900">
+          @for (code of recoveryCodes(); track code) {
+            <div class="rounded-md border border-ink-200 bg-white px-2 py-1.5 text-center">{{ code }}</div>
+          }
+        </div>
+        <div class="mt-4 flex gap-2">
+          <button type="button" (click)="copyRecoveryCodes()" class="flex-1 rounded-lg border border-ink-300 bg-white px-3 py-2 text-xs font-semibold text-ink-700 hover:bg-ink-50">
+            {{ recoveryCodesCopied() ? 'Copied' : 'Copy' }}
+          </button>
+          <button type="button" (click)="downloadRecoveryCodes()" class="flex-1 rounded-lg border border-ink-300 bg-white px-3 py-2 text-xs font-semibold text-ink-700 hover:bg-ink-50">
+            Download .txt
+          </button>
+        </div>
+        <button type="button" (click)="closeMfaModal()" class="mt-3 w-full rounded-lg bg-brand-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-brand-700">
+          I've saved them
+        </button>
+      }
+    </div>
+  </div>
+}
+
+<!-- Turn off two-factor -->
+@if (showDisableModal()) {
+  <div class="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="disable-mfa-title">
+    <div class="fixed inset-0 bg-ink-950/70 backdrop-blur-sm" (click)="showDisableModal.set(false)"></div>
+    <form class="relative z-10 w-full max-w-sm rounded-2xl border border-ink-200 bg-white p-6 shadow-2xl" (ngSubmit)="disableMfa()">
+      <h3 id="disable-mfa-title" class="text-base font-semibold text-ink-900">Turn off two-factor authentication?</h3>
+      <p class="mt-1 text-xs text-ink-500">Your account will be protected by your password alone, and your recovery codes will stop working.</p>
+      <label for="disable-mfa-password" class="mt-4 block text-xs font-medium text-ink-700">Confirm your password</label>
+      <input
+        id="disable-mfa-password"
+        name="password"
+        type="password"
+        autocomplete="current-password"
+        [ngModel]="disablePassword()"
+        (ngModelChange)="disablePassword.set($event)"
+        class="mt-1 block w-full rounded-lg border border-ink-300 px-3.5 py-2 text-sm text-ink-900 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+      />
+      @if (disableError()) {
+        <p role="alert" class="mt-2 text-xs text-red-600">{{ disableError() }}</p>
+      }
+      <div class="mt-5 flex justify-end gap-2">
+        <button type="button" (click)="showDisableModal.set(false)" class="rounded-lg border border-ink-200 px-4 py-2 text-xs font-medium text-ink-700 hover:bg-ink-50">Cancel</button>
+        <button
+          type="submit"
+          [disabled]="disableSubmitting() || !disablePassword()"
+          class="rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-red-700 disabled:opacity-50"
+        >
+          {{ disableSubmitting() ? 'Turning off…' : 'Turn off' }}
+        </button>
+      </div>
+    </form>
+  </div>
+}
+
+<!-- Regenerate recovery codes -->
+@if (showRegenerateModal()) {
+  <div class="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="regen-title">
+    <div class="fixed inset-0 bg-ink-950/70 backdrop-blur-sm" (click)="showRegenerateModal.set(false)"></div>
+    <form class="relative z-10 w-full max-w-sm rounded-2xl border border-ink-200 bg-white p-6 shadow-2xl" (ngSubmit)="regenerateRecoveryCodes()">
+      <h3 id="regen-title" class="text-base font-semibold text-ink-900">Generate new recovery codes</h3>
+      <p class="mt-1 text-xs text-ink-500">Your current codes will stop working. Enter a code from your authenticator app to continue.</p>
+      <label for="regen-code" class="mt-4 block text-xs font-medium text-ink-700">Authenticator code</label>
+      <input
+        id="regen-code"
+        name="code"
+        type="text"
+        inputmode="numeric"
+        autocomplete="one-time-code"
+        [ngModel]="regenerateCode()"
+        (ngModelChange)="regenerateCode.set($event)"
+        placeholder="123456"
+        class="mt-1 block w-full rounded-lg border border-ink-300 px-3.5 py-2 text-center font-mono text-base tracking-[0.3em] text-ink-900 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+      />
+      @if (regenerateError()) {
+        <p role="alert" class="mt-2 text-xs text-red-600">{{ regenerateError() }}</p>
+      }
+      <div class="mt-5 flex justify-end gap-2">
+        <button type="button" (click)="showRegenerateModal.set(false)" class="rounded-lg border border-ink-200 px-4 py-2 text-xs font-medium text-ink-700 hover:bg-ink-50">Cancel</button>
+        <button
+          type="submit"
+          [disabled]="regenerating() || !regenerateCode().trim()"
+          class="rounded-lg bg-brand-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-brand-700 disabled:opacity-50"
+        >
+          {{ regenerating() ? 'Generating…' : 'Generate' }}
+        </button>
+      </div>
+    </form>
+  </div>
+}
+
+<!-- Forget device -->
+@if (deviceToForget(); as device) {
+  <div class="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="forget-title">
+    <div class="fixed inset-0 bg-ink-950/70 backdrop-blur-sm" (click)="deviceToForget.set(null)"></div>
+    <div class="relative z-10 w-full max-w-sm rounded-2xl border border-ink-200 bg-white p-6 shadow-2xl">
+      <h3 id="forget-title" class="text-base font-semibold text-ink-900">Remove {{ device.label }}?</h3>
+      <p class="mt-1 text-xs text-ink-500">
+        It won't be signed out, but its next sign-in will be treated as new and trigger an alert.
+        To sign a device out now, use <a routerLink="/sessions" class="font-semibold text-brand-700 underline">active sessions</a>.
+      </p>
+      <div class="mt-5 flex justify-end gap-2">
+        <button type="button" (click)="deviceToForget.set(null)" class="rounded-lg border border-ink-200 px-4 py-2 text-xs font-medium text-ink-700 hover:bg-ink-50">Cancel</button>
+        <button
+          type="button"
+          (click)="confirmForgetDevice()"
+          [disabled]="forgettingDevice()"
+          class="rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-red-700 disabled:opacity-50"
+        >
+          {{ forgettingDevice() ? 'Removing…' : 'Remove' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

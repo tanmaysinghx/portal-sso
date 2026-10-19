@@ -1,0 +1,101 @@
+<div class="overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-sm">
+  <div class="border-b border-ink-100 bg-ink-50/50 px-6 py-4 flex items-center justify-between">
+    <div>
+      <h2 class="text-sm font-semibold text-ink-900">RFC Protocol Endpoints</h2>
+      <p class="text-xs text-ink-500">Use these standard endpoints to connect your applications.</p>
+    </div>
+  </div>
+
+  <div class="divide-y divide-ink-100">
+    @for (ep of endpoints; track ep.path) {
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-5 hover:bg-ink-50/50 transition">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="rounded px-2 py-0.5 font-mono text-[10px] font-bold" [class]="ep.method === 'GET' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'">{{ ep.method }}</span>
+            <h3 class="text-xs font-semibold text-ink-900">{{ ep.name }}</h3>
+          </div>
+          <p class="mt-1 text-[11px] text-ink-500">{{ ep.description }}</p>
+          <code class="mt-1 block font-mono text-xs text-brand-700">{{ ep.path }}</code>
+        </div>
+
+        <button
+          type="button"
+          (click)="copyToClipboard(ep.path, ep.path)"
+          class="inline-flex items-center gap-1.5 rounded-lg border border-ink-200 bg-white px-3 py-1.5 text-xs font-medium text-ink-700 shadow-sm hover:bg-ink-50 hover:border-ink-300 transition shrink-0"
+        >
+          @if (copiedPath() === ep.path) {
+            <svg class="h-3.5 w-3.5 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+            <span class="text-emerald-700">Copied!</span>
+          } @else {
+            <svg class="h-3.5 w-3.5 text-ink-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" />
+            </svg>
+            <span>Copy URL</span>
+          }
+        </button>
+      </div>
+    }
+  </div>
+</div>
+
+<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+  <div class="rounded-2xl border border-ink-200 bg-white p-6 shadow-sm space-y-4">
+    <div class="flex items-center gap-3">
+      <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600 ring-1 ring-inset ring-amber-500/20">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <div>
+        <h2 class="text-sm font-semibold text-ink-900">Token Lifecycles</h2>
+        <p class="text-xs text-ink-500">Configured time-to-live settings for JWT tokens</p>
+      </div>
+    </div>
+
+    <div class="space-y-3 pt-2 text-xs divide-y divide-ink-100">
+      <div class="flex justify-between py-2">
+        <span class="text-ink-600 font-medium">Access Token TTL</span>
+        <span class="font-semibold text-ink-900">15 minutes (900s)</span>
+      </div>
+      <div class="flex justify-between py-2">
+        <span class="text-ink-600 font-medium">Refresh Token TTL</span>
+        <span class="font-semibold text-ink-900">30 days</span>
+      </div>
+      <div class="flex justify-between py-2">
+        <span class="text-ink-600 font-medium">Refresh Token Reuse</span>
+        <span class="rounded bg-emerald-50 text-emerald-700 font-semibold px-2 py-0.5 ring-1 ring-emerald-600/20">Disabled (One-Time Rotation)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="rounded-2xl border border-ink-200 bg-white p-6 shadow-sm space-y-4">
+    <div class="flex items-center gap-3">
+      <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-inset ring-emerald-500/20">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+        </svg>
+      </div>
+      <div>
+        <h2 class="text-sm font-semibold text-ink-900">Cryptographic Signing Keys</h2>
+        <p class="text-xs text-ink-500">Persistent RSA 2048-bit keystore status</p>
+      </div>
+    </div>
+
+    <div class="space-y-3 pt-2 text-xs divide-y divide-ink-100">
+      <div class="flex justify-between py-2">
+        <span class="text-ink-600 font-medium">Algorithm</span>
+        <span class="font-semibold font-mono text-ink-900">RS256 (2048-bit RSA)</span>
+      </div>
+      <div class="flex justify-between py-2">
+        <span class="text-ink-600 font-medium">Key Persistence</span>
+        <span class="rounded bg-emerald-50 text-emerald-700 font-semibold px-2 py-0.5 ring-1 ring-emerald-600/20">Database Stored (JPA / Liquibase)</span>
+      </div>
+      <div class="flex justify-between py-2">
+        <span class="text-ink-600 font-medium">Zero-Downtime Rotation</span>
+        <span class="font-semibold text-ink-900">Supported (Multi-key JWKS)</span>
+      </div>
+    </div>
+  </div>
+</div>

@@ -62,7 +62,19 @@ public enum AuditAction {
     /** A magic link created an account, which is account creation with no administrator involved. */
     MAGIC_LINK_SIGN_UP(TargetType.USER, "Account created with a magic link"),
     /** An account signed in from a browser and operating system it had not used before. */
-    NEW_DEVICE_SIGN_IN(TargetType.USER, "Sign-in from a new device");
+    NEW_DEVICE_SIGN_IN(TargetType.USER, "Sign-in from a new device"),
+
+    /** The account holder changed their own name. Details name the fields, never the values. */
+    USER_PROFILE_UPDATED(TargetType.USER, "Profile updated"),
+    /** The account holder changed their own password; their other sessions are signed out with it. */
+    USER_PASSWORD_CHANGED(TargetType.USER, "Password changed"),
+    /** Self-service enrolment, distinct from {@link #USER_MFA_RESET} which an administrator performs. */
+    USER_MFA_ENABLED(TargetType.USER, "Two-factor authentication enabled"),
+    USER_MFA_DISABLED(TargetType.USER, "Two-factor authentication disabled"),
+    /** The previous set stops working, so this is a credential change like any other. */
+    USER_RECOVERY_CODES_REGENERATED(TargetType.USER, "Recovery codes regenerated"),
+    /** A remembered device was forgotten, so its next sign-in raises a new-device alert again. */
+    USER_DEVICE_FORGOTTEN(TargetType.USER, "Remembered device removed");
 
     /** What the action operates on. Stored so the log can be filtered by object as well as verb. */
     public enum TargetType {

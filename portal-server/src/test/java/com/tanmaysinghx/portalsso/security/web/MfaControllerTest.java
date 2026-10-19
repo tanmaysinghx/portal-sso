@@ -152,7 +152,9 @@ class MfaControllerTest {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"password\":\"WrongPassword!\"}"))
-                .andExpect(status().isUnauthorized());
+                // 400, not 401: the session is fine, only the re-confirmation failed.
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("PRTL-2012"));
 
         assertThat(userRepository.findByEmail(EMAIL).orElseThrow().isMfaEnabled()).isTrue();
 

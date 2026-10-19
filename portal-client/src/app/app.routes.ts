@@ -45,6 +45,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/apps/pages/user-apps/user-apps').then((m) => m.UserApps),
       },
       {
+        path: 'account',
+        loadComponent: () => import('./features/account/account').then((m) => m.Account),
+      },
+      {
         path: 'sessions',
         loadComponent: () => import('./features/sessions/sessions').then((m) => m.Sessions),
       },
@@ -101,8 +105,7 @@ export const routes: Routes = [
       },
       {
         path: 'settings',
-        loadComponent: () =>
-          import('./features/settings/settings').then((m) => m.Settings),
+        loadChildren: () => import('./features/settings/settings.routes').then((m) => m.SETTINGS_ROUTES),
         canActivate: [adminGuard],
       },
     ],

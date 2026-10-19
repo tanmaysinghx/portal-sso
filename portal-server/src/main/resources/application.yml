@@ -189,6 +189,11 @@ app:
       # endpoint a mail-flood tool aimed at third parties and a way to burn a relay's reputation.
       # Tight on purpose: a real user asks for one link, occasionally two.
       "[/api/public/magic-link/request]": { capacity: 3, per-minute: 5 }
+      # Self-service endpoints that check a password or a TOTP code. The caller already holds a
+      # session, but a stolen one must not become a free oracle for guessing the password behind it.
+      "[/api/user/account/password]": { capacity: 5, per-minute: 5 }
+      "[/api/user/account/recovery-codes]": { capacity: 5, per-minute: 5 }
+      "[/api/mfa/disable]": { capacity: 5, per-minute: 5 }
 
   connect:
     # "Connect with Portal SSO": apps register themselves, an administrator approves at

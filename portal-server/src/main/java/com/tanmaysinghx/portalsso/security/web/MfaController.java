@@ -1,5 +1,8 @@
 package com.tanmaysinghx.portalsso.security.web;
 
+import com.tanmaysinghx.portalsso.audit.entity.AuditAction;
+import com.tanmaysinghx.portalsso.audit.service.AuditService;
+import com.tanmaysinghx.portalsso.common.error.BusinessRuleViolationException;
 import com.tanmaysinghx.portalsso.common.error.ErrorCode;
 import com.tanmaysinghx.portalsso.common.error.ResourceNotFoundException;
 import com.tanmaysinghx.portalsso.security.mfa.MfaService;
@@ -9,7 +12,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import java.util.List;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,12 +36,17 @@ public class MfaController {
     private final MfaService mfaService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuditService auditService;
 
     public MfaController(
-            MfaService mfaService, UserRepository userRepository, PasswordEncoder passwordEncoder) {
+            MfaService mfaService,
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            AuditService auditService) {
         this.mfaService = mfaService;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.auditService = auditService;
     }
 
     @GetMapping("/status")
@@ -59,6 +66,7 @@ public class MfaController {
             @Valid @RequestBody MfaConfirmRequest request, Authentication authentication) {
         User user = getUser(authentication);
         List<String> recoveryCodes = mfaService.confirmSetup(user, request.code());
+        auditService.record(AuditAction.USER_MFA_ENABLED, user.getId(), user.getEmail(), null);
         return new MfaConfirmResponse(true, recoveryCodes);
     }
 
@@ -67,10 +75,11 @@ public class MfaController {
             @Valid @RequestBody MfaDisableRequest request, Authentication authentication) {
         User user = getUser(authentication);
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            throw new com.tanmaysinghx.portalsso.common.error.BusinessRuleViolationException(
-                    ErrorCode.INVALID_CREDENTIALS, "Invalid password confirmation.");
+            throw new BusinessRuleViolationException(
+                    ErrorCode.CURRENT_PASSWORD_INCORRECT, "Invalid password confirmation.");
         }
         mfaService.disableMfa(user);
+        auditService.record(AuditAction.USER_MFA_DISABLED, user.getId(), user.getEmail(), null);
         return new MfaStatusResponse(false);
     }
 

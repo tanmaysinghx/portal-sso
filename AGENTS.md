@@ -92,6 +92,9 @@ portal-sso/
 
 When modifying or adding code, you **MUST** uphold these rules:
 
+### Feature Roadmap
+- `docs/ROADMAP.md` is the working tracker of implemented and upcoming features. When starting a feature, move it to **In progress**; when it ships, move it to **Implemented**. `docs/FEATURES.md` is the older public matrix and is out of date.
+
 ### App Onboarding Shortcut
 - For work related to adding, linking, or configuring user-facing apps and OAuth/OIDC clients, read `docs/APP_ONBOARDING.md` first. It covers the onboarding flow, where every secret lives, the admin API, and which files own what.
 - New apps are created through `POST /api/admin/applications/onboard` (`ApplicationOnboardingService`), which creates the OAuth client, Application and API key in **one transaction**. Do not reintroduce multi-call creation from the frontend.

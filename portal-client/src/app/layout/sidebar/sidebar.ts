@@ -30,6 +30,10 @@ export class Sidebar implements OnInit {
   readonly pendingRequestsCount = signal(0);
 
   ngOnInit() {
+    // Admin-only endpoint: asking as an ordinary user just produces a 403 in the console.
+    if (!this.authService.isAdmin()) {
+      return;
+    }
     this.accessRequestService.getPendingCount().subscribe(
       res => this.pendingRequestsCount.set(res.pending)
     );

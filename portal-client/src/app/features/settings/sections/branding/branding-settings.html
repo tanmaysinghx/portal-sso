@@ -1,0 +1,143 @@
+<div class="space-y-6">
+  <!-- Live Preview Card -->
+  <div class="overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-sm">
+    <div class="border-b border-ink-100 bg-ink-50/50 px-6 py-4">
+      <h2 class="text-sm font-semibold text-ink-900">Header & Lockup Preview</h2>
+      <p class="text-xs text-ink-500">Live demonstration of how your company logo and name appear across the sidebar and login cards.</p>
+    </div>
+
+    <div class="p-6">
+      <div class="rounded-xl border border-ink-800 bg-ink-950 p-5 text-white shadow-inner">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            @if (companyLogoUrlInput()) {
+              <!-- Paired Micro-Badge Lockup -->
+              <div class="flex items-center gap-2 rounded-xl bg-ink-900/90 p-1.5 ring-1 ring-ink-800 shrink-0">
+                <img src="logo-mark.svg" alt="Portal SSO" class="h-6 w-6 shrink-0" />
+                <div class="h-4 w-px bg-ink-700"></div>
+                <img
+                  [src]="companyLogoUrlInput()"
+                  alt="Company Logo"
+                  class="h-6 max-w-[48px] object-contain rounded shrink-0"
+                />
+              </div>
+              <div>
+                <div class="text-sm font-semibold tracking-tight text-white">{{ companyNameInput() || 'Your Organization' }}</div>
+                <div class="text-[10px] font-medium tracking-wide text-amber-400 uppercase">Single Sign-On</div>
+              </div>
+            } @else {
+              <div class="flex items-center gap-2.5">
+                <img src="logo-mark.svg" alt="Portal SSO" class="h-8 w-8" />
+                <div class="flex flex-col leading-none">
+                  <span class="text-sm font-semibold tracking-tight text-white">Portal SSO</span>
+                  <span class="mt-0.5 text-[10px] font-medium uppercase tracking-widest text-ink-500">Identity</span>
+                </div>
+              </div>
+              <span class="ml-auto text-xs text-ink-500 italic">Default Portal SSO branding</span>
+            }
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="rounded bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+              Live Sync Active
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Branding Edit Form -->
+  <div class="overflow-hidden rounded-2xl border border-ink-200 bg-white p-6 shadow-sm space-y-5">
+    <div>
+      <h2 class="text-sm font-semibold text-ink-900">Custom Organization Details</h2>
+      <p class="text-xs text-ink-500">Specify your company name and upload your logo asset.</p>
+    </div>
+
+    @if (uploadError()) {
+      <div class="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+        <svg class="h-4 w-4 shrink-0 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+        </svg>
+        <span>{{ uploadError() }}</span>
+      </div>
+    }
+
+    <div class="space-y-4 max-w-xl">
+      <div>
+        <label for="settings-company-name" class="mb-1 block text-xs font-medium text-ink-700">Organization / Company Name</label>
+        <input
+          id="settings-company-name"
+          type="text"
+          [ngModel]="companyNameInput()"
+          (ngModelChange)="companyNameInput.set($event)"
+          placeholder="e.g. Acme Corp / TS Group"
+          class="block w-full rounded-lg border border-ink-300 px-3.5 py-2 text-sm text-ink-900 shadow-sm placeholder:text-ink-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+        />
+        <p class="mt-1 text-[11px] text-ink-500">Updates browser title to "[Company] | Portal SSO" and headers.</p>
+      </div>
+
+      <div>
+        <label class="mb-1 block text-xs font-medium text-ink-700">Upload Company Logo</label>
+        <div class="flex items-center gap-3">
+          <label class="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-ink-300 bg-ink-50 px-4 py-2.5 text-xs font-medium text-ink-700 hover:bg-ink-100 transition shadow-sm">
+            <svg class="h-4 w-4 text-ink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+            </svg>
+            <span>Choose Image File</span>
+            <input
+              type="file"
+              accept="image/png, image/jpeg, image/svg+xml, image/webp"
+              (change)="onFileSelected($event)"
+              class="hidden"
+            />
+          </label>
+
+          @if (companyLogoUrlInput()) {
+            <button
+              type="button"
+              (click)="companyLogoUrlInput.set('')"
+              class="text-xs text-red-600 hover:text-red-700 font-medium"
+            >
+              Remove Logo
+            </button>
+          }
+        </div>
+        <p class="mt-1.5 text-[11px] text-ink-500">Supported formats: Transparent PNG, SVG, JPG, WebP (max 2MB). Automatically updates the browser tab favicon.</p>
+      </div>
+
+      <div>
+        <label for="settings-logo-url" class="mb-1 block text-xs font-medium text-ink-700">Or Image URL</label>
+        <input
+          id="settings-logo-url"
+          type="url"
+          [ngModel]="companyLogoUrlInput()"
+          (ngModelChange)="companyLogoUrlInput.set($event)"
+          placeholder="https://example.com/logo.svg"
+          class="block w-full rounded-lg border border-ink-300 px-3.5 py-2 text-sm text-ink-900 shadow-sm placeholder:text-ink-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+        />
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between border-t border-ink-100 pt-5 mt-6">
+      <button
+        type="button"
+        (click)="resetBranding()"
+        class="text-xs font-medium text-ink-500 hover:text-red-600 transition"
+      >
+        Reset to Default Branding
+      </button>
+
+      <button
+        type="button"
+        (click)="saveBranding()"
+        class="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2.5 text-xs font-semibold text-white shadow-md shadow-brand-600/20 hover:bg-brand-700 transition"
+      >
+        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+        </svg>
+        <span>Save Branding</span>
+      </button>
+    </div>
+  </div>
+</div>

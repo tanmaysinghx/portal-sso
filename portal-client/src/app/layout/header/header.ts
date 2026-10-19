@@ -5,6 +5,7 @@ import { Subject, debounceTime, switchMap, of, catchError } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UserService } from '../../features/users/services/user.service';
 import { OAuthClientService } from '../../features/clients/services/oauth-client.service';
+import { AuthService } from '../../core/services/auth.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
 
 export interface SearchItem {
@@ -33,6 +34,8 @@ export class Header {
   private readonly router = inject(Router);
   private readonly snackbarService = inject(SnackbarService);
   private readonly elementRef = inject(ElementRef);
+  readonly authService = inject(AuthService);
+  readonly initial = computed(() => (this.authService.currentUser()?.email ?? '?').charAt(0).toUpperCase());
 
   readonly searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
 
@@ -74,11 +77,19 @@ export class Header {
     },
     {
       id: 'nav-settings',
-      title: 'Settings & Branding',
+      title: 'Settings',
       category: 'Navigation',
-      description: 'Configure company logo, token lifecycles, and security keys',
+      description: 'Branding, email delivery, OIDC endpoints and database',
       route: '/settings',
       icon: 'settings',
+    },
+    {
+      id: 'nav-account',
+      title: 'My Account',
+      category: 'Navigation',
+      description: 'Change your password, two-factor authentication and devices',
+      route: '/account',
+      icon: 'users',
     },
     {
       id: 'act-copy-discovery',

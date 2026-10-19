@@ -35,6 +35,13 @@ public enum ErrorCode {
     LAST_ADMIN_PROHIBITED("PRTL-2009", "This would leave the server with no administrator.", HttpStatus.BAD_REQUEST),
     SELF_DEMOTION_PROHIBITED("PRTL-2010", "You cannot remove your own administrator role.", HttpStatus.BAD_REQUEST),
     WEAK_PASSWORD("PRTL-2011", "The password does not meet the configured policy.", HttpStatus.BAD_REQUEST),
+    /**
+     * A signed-in user re-confirming their password got it wrong. Deliberately 400, not 401: the
+     * session is still valid, and a 401 would read to a client as "you have been signed out".
+     */
+    CURRENT_PASSWORD_INCORRECT("PRTL-2012", "The current password is incorrect.", HttpStatus.BAD_REQUEST),
+    PASSWORD_UNCHANGED("PRTL-2013", "The new password must be different from the current one.", HttpStatus.BAD_REQUEST),
+    DEVICE_NOT_FOUND("PRTL-2014", "The requested device was not found.", HttpStatus.NOT_FOUND),
 
     // =========================================================================
     // 3000 Series: OAuth2 Client Management
