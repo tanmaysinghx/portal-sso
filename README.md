@@ -22,7 +22,8 @@
 - **OAuth 2.1 + OIDC:** authorization code + PKCE (enforced on every client, confidential ones included), refresh-token rotation, discovery, JWKS, UserInfo and revocation.
 - **Application catalog:** one screen registers an app, its OAuth client and its API key, and shows every credential in one place.
 - **User portal:** a launchpad of the apps each user can access, with role-restricted apps and access requests.
-- **Security defaults:** BCrypt passwords, TOTP MFA (AES-256-GCM encrypted secrets), account lockout, per-IP rate limiting, an append-only audit log, and persistent rotating RSA signing keys.
+- **Security defaults:** hashed passwords, TOTP MFA (AES-256-GCM encrypted secrets), account lockout, per-IP rate limiting, an append-only audit log, and persistent rotating RSA signing keys.
+- **Email & passwordless:** admin-configured SMTP relay, themed transactional templates (welcome, new-device alert, sign-in notice), and optional magic-link sign-in and sign-up.
 - **Operations:** a single jar with the console embedded, Spring Session JDBC for clustering, and a one-click migration from the embedded H2 database to PostgreSQL or MySQL.
 - **Client SDK:** [`@tanmaysinghx/portal-sso`](packages/portal-sso) provides popup or redirect login and a drop-in `<portal-login-button>`.
 
@@ -132,6 +133,48 @@ restart nor filesystem access on the host.
 Only the transport timeouts stay properties (`app.mail.connection-timeout`, `read-timeout`,
 `write-timeout`, each `10s` by default), since the right value depends on the network rather than on
 who is administering the console.
+
+### Email templates & notifications
+
+**Settings → Email Templates** controls what gets sent and how it looks. Branding is set here rather
+than taken from the console's own branding, because console branding lives in the administrator's
+browser and email is rendered on the server.
+
+| Message | Default | Sent when |
+|---|---|---|
+| **Welcome** | On | An account is created — by an administrator, self-registration, or a magic link. Only for an account that is enabled, so nobody is invited to sign in before they can. |
+| **New device sign-in** | On | An account signs in from a browser and OS it has not used before. The one message that can tell a user their account has been taken. |
+| **Every sign-in** | Off | Every successful sign-in. Off by default: for a daily-driver account that is a message each morning, which trains people to ignore the alert above. |
+| **Magic link sign-in / sign-up** | Off | A user asks for a passwordless link (see below). |
+
+Each row shows a live status — **On**, **Off**, or **On · no relay** when a notification is enabled
+but nothing can actually be delivered. **Send** mails any template to you with sample data, whether
+or not it is switched on, so you can see one before turning it on; previews say so in the subject
+and the body.
+
+Templates are table-based HTML with a plain-text alternative, themed on the console's design tokens.
+A device is matched on browser and OS **family only** — including versions would fire a security
+alert at every browser auto-update. Links point at `ISSUER_URL`, so set that to your public origin.
+
+### Passwordless sign-in (magic links)
+
+Off by default. Once enabled in **Settings → Email Templates**, both sign-in pages offer "Email me a
+sign-in link", and a second switch lets an unknown address receive a sign-up link that creates the
+account (treat that as opening public registration — a Portal SSO account reaches every connected
+app).
+
+- Tokens are 256 bits of `SecureRandom`; only a SHA-256 is stored, so a database dump is not a stack
+  of working sign-in links. Single use, 1–60 minute lifetime (15 default), and requesting a new link
+  cancels the outstanding ones.
+- **MFA is not bypassed.** An account with a second factor still gets the challenge — a link proves
+  the address, it does not replace the factor. Disabled and locked accounts get no link.
+- **Requesting a link never reveals whether an account exists**, including when the relay is broken.
+- Rate limited per IP (`app.rate-limit`) *and* per address (`app.magic-link.max-per-address-per-window`,
+  5 per 15 minutes) — the per-IP limit alone is defeated by rotating source addresses to flood one
+  mailbox. Spent tokens are purged after `app.magic-link.retention` (7 days).
+
+Accounts created by a magic link have no password, so they sign in by link until an administrator
+sets one.
 
 ---
 

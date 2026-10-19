@@ -1,0 +1,62 @@
+databaseChangeLog:
+  - changeSet:
+      id: 020-create-user-known-devices-table
+      author: ai-agent
+      changes:
+        - createTable:
+            tableName: user_known_devices
+            # What makes a "new device sign-in" alert possible. It cannot be derived from
+            # login_events: those are purged after 48 hours by the retention job, so every device a
+            # user had not touched in two days would look new and the alert would become noise.
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: VARCHAR(36)
+                  constraints:
+                    nullable: false
+              # SHA-256 of browser family + OS family + device type, hex-encoded. Versions are
+              # deliberately excluded: including them would fire a security alert at every Chrome
+              # auto-update, and an alert that cries wolf monthly is one nobody reads.
+              - column:
+                  name: device_hash
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: false
+              # Human-readable form of the same signature, e.g. "Chrome on macOS", shown in the alert.
+              - column:
+                  name: device_label
+                  type: VARCHAR(255)
+              - column:
+                  name: last_ip_address
+                  type: VARCHAR(45)
+              - column:
+                  name: last_country_name
+                  type: VARCHAR(100)
+              - column:
+                  name: last_seen_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        # One row per user per device. The unique constraint is the real guard: without it two
+        # near-simultaneous sign-ins from the same new device would both insert, and the second
+        # would look recognised ever after while having also sent its own alert.
+        - addUniqueConstraint:
+            tableName: user_known_devices
+            columnNames: user_id, device_hash
+            constraintName: uk_user_known_devices_user_device

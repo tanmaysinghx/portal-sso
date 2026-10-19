@@ -1,0 +1,76 @@
+databaseChangeLog:
+  - changeSet:
+      id: 019-create-magic-link-tokens-table
+      author: ai-agent
+      changes:
+        - createTable:
+            tableName: magic_link_tokens
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              # SHA-256 of the token that was emailed, hex-encoded. The token itself is never
+              # stored: it is a bearer credential that signs someone in, so a database dump must
+              # not be a stack of working sign-in links. Unique so a lookup is an indexed point
+              # read rather than a scan, and so a collision could never silently match two rows.
+              - column:
+                  name: token_hash
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uk_magic_link_tokens_token_hash
+              # Lower-cased. Not a users FK: a SIGN_UP token is issued before the account exists.
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              # SIGN_IN or SIGN_UP. Stored so a link minted to create an account can never be
+              # replayed against an existing one, or the reverse.
+              - column:
+                  name: purpose
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: expires_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              # Set the moment a link is redeemed. Single use: a link sitting in a mailbox, or in a
+              # mail gateway's link-scanner logs, must not keep working.
+              - column:
+                  name: consumed_at
+                  type: TIMESTAMP
+              - column:
+                  name: requester_ip
+                  type: VARCHAR(45)
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+        # Drives both the per-address issue-rate check and the retention purge.
+        - createIndex:
+            indexName: ix_magic_link_tokens_email_created
+            tableName: magic_link_tokens
+            columns:
+              - column:
+                  name: email
+              - column:
+                  name: created_at
+        - createIndex:
+            indexName: ix_magic_link_tokens_expires_at
+            tableName: magic_link_tokens
+            columns:
+              - column:
+                  name: expires_at

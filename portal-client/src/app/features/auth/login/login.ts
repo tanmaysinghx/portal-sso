@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { BrandingService } from '../../../core/services/branding.service';
+import { MagicLinkService } from '../../../core/services/magic-link.service';
 import { RegistrationService } from '../../../core/services/registration.service';
 import { SetupService } from '../../../core/services/setup.service';
 import { ThemeService } from '../../../core/services/theme.service';
@@ -17,11 +18,22 @@ export class Login {
   private readonly router = inject(Router);
   private readonly registrationService = inject(RegistrationService);
   private readonly setupService = inject(SetupService);
+  private readonly magicLinkService = inject(MagicLinkService);
   readonly brandingService = inject(BrandingService);
   readonly themeService = inject(ThemeService);
 
   /** Drives the "Create one" link — self-registration is off unless the server says otherwise. */
   readonly registrationPolicy = this.registrationService.policy;
+
+  /** Drives the passwordless option — off unless an administrator has enabled it. */
+  readonly magicLinkPolicy = this.magicLinkService.policy;
+
+  /** Magic link request state. Separate from `error`/`successMessage` so a failed password
+   *  attempt and a sent link cannot overwrite each other's banner. */
+  readonly magicLinkEmail = signal('');
+  readonly magicLinkSending = signal(false);
+  readonly magicLinkMessage = signal<string | null>(null);
+  readonly magicLinkError = signal<string | null>(null);
 
   readonly email = signal('');
   readonly password = signal('');
@@ -53,6 +65,15 @@ export class Login {
           this.router.navigateByUrl('/apps');
         }
       }
+    });
+
+    // Loaded up front so the passwordless option is present on first paint rather than appearing
+    // under the cursor a moment after the password form has rendered.
+    this.magicLinkService.loadPolicy().subscribe({
+      error: () => {
+        // A server with the feature off still answers this, so a failure here means the request
+        // itself did not land. Leaving the default (disabled) simply hides the option.
+      },
     });
 
     this.setupService.getStatus().subscribe({
@@ -144,6 +165,35 @@ export class Login {
         this.submitting.set(false);
         const msg = err.error?.message || err.error?.error || 'Setup initialization failed. Please verify password requirements and try again.';
         this.error.set(msg);
+      },
+    });
+  }
+
+  requestMagicLink(): void {
+    const email = this.magicLinkEmail().trim();
+    if (!email) {
+      this.magicLinkError.set('Enter your email address first.');
+      return;
+    }
+
+    this.magicLinkSending.set(true);
+    this.magicLinkMessage.set(null);
+    this.magicLinkError.set(null);
+
+    this.magicLinkService.requestLink(email).subscribe({
+      next: (res) => {
+        this.magicLinkSending.set(false);
+        // The server's own wording, which is deliberately the same whether or not the address has
+        // an account. Composing a message here risked saying something more specific than the
+        // server is willing to confirm.
+        this.magicLinkMessage.set(res.message);
+        this.magicLinkEmail.set('');
+      },
+      error: (err) => {
+        this.magicLinkSending.set(false);
+        this.magicLinkError.set(
+          err.error?.message || 'Sign-in links are not available right now. Use your password instead.',
+        );
       },
     });
   }

@@ -362,6 +362,85 @@
                 {{ submitting() ? 'Signing in...' : 'Sign in' }}
               </button>
             </form>
+
+            <!--
+              Passwordless alternative, shown only when an administrator has enabled it. Outside the
+              password <form> on purpose: nested forms are invalid HTML, and sharing one would send
+              the password field to an endpoint with no use for it.
+            -->
+            @if (magicLinkPolicy().enabled) {
+              <div class="mt-6">
+                <div class="flex items-center gap-3">
+                  <span class="h-px flex-1" [class]="themeService.isDark() ? 'bg-ink-700' : 'bg-slate-200'"></span>
+                  <span
+                    class="text-[10px] font-semibold uppercase tracking-wider"
+                    [class]="themeService.isDark() ? 'text-ink-500' : 'text-slate-400'"
+                  >
+                    or
+                  </span>
+                  <span class="h-px flex-1" [class]="themeService.isDark() ? 'bg-ink-700' : 'bg-slate-200'"></span>
+                </div>
+
+                @if (magicLinkMessage()) {
+                  <div
+                    class="mt-4 flex items-start gap-2.5 rounded-lg border p-3"
+                    [class]="themeService.isDark() ? 'border-emerald-800 bg-emerald-950/40' : 'border-emerald-200 bg-emerald-50'"
+                  >
+                    <svg class="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p class="text-xs" [class]="themeService.isDark() ? 'text-emerald-200' : 'text-emerald-800'">
+                      {{ magicLinkMessage() }}
+                    </p>
+                  </div>
+                } @else {
+                  <div class="mt-4">
+                    <label
+                      for="magic-link-email"
+                      class="mb-1.5 block text-xs font-medium"
+                      [class]="themeService.isDark() ? 'text-ink-300' : 'text-slate-700'"
+                    >
+                      Email me a sign-in link
+                    </label>
+                    <div class="flex gap-2">
+                      <input
+                        id="magic-link-email"
+                        type="email"
+                        name="magicLinkEmail"
+                        autocomplete="email"
+                        [ngModel]="magicLinkEmail()"
+                        (ngModelChange)="magicLinkEmail.set($event)"
+                        (keyup.enter)="requestMagicLink()"
+                        placeholder="you@example.com"
+                        class="min-w-0 flex-1 rounded-lg border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400"
+                        [class]="themeService.isDark() ? 'border-ink-700 bg-ink-900 text-white placeholder:text-ink-500' : 'border-slate-300 bg-white text-slate-900 placeholder:text-slate-400'"
+                      />
+                      <button
+                        type="button"
+                        (click)="requestMagicLink()"
+                        [disabled]="magicLinkSending()"
+                        class="shrink-0 rounded-lg border px-4 py-2.5 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:cursor-not-allowed disabled:opacity-60"
+                        [class]="themeService.isDark() ? 'border-ink-700 text-ink-200 hover:bg-ink-800' : 'border-slate-300 text-slate-800 hover:bg-slate-50'"
+                      >
+                        {{ magicLinkSending() ? 'Sending...' : 'Send link' }}
+                      </button>
+                    </div>
+
+                    @if (magicLinkError()) {
+                      <p class="mt-2 text-xs text-rose-500">{{ magicLinkError() }}</p>
+                    } @else {
+                      <p class="mt-2 text-xs" [class]="themeService.isDark() ? 'text-ink-500' : 'text-slate-500'">
+                        @if (magicLinkPolicy().registrationEnabled) {
+                          No password needed. If you do not have an account yet, the link will create one.
+                        } @else {
+                          No password needed. The link works once and expires shortly.
+                        }
+                      </p>
+                    }
+                  </div>
+                }
+              </div>
+            }
           }
 
           <div class="mt-6 space-y-3 text-center">

@@ -3,6 +3,8 @@ package com.tanmaysinghx.portalsso.security.web;
 import com.tanmaysinghx.portalsso.client.entity.OAuthClient;
 import com.tanmaysinghx.portalsso.client.repository.OAuthClientRepository;
 import com.tanmaysinghx.portalsso.security.PortalUserDetailsService;
+import com.tanmaysinghx.portalsso.common.web.ClientIpResolver;
+import com.tanmaysinghx.portalsso.security.magiclink.service.MagicLinkService;
 import com.tanmaysinghx.portalsso.security.mfa.MfaAuthenticationSuccessHandler;
 import com.tanmaysinghx.portalsso.security.mfa.MfaService;
 import com.tanmaysinghx.portalsso.user.entity.User;
@@ -57,6 +59,7 @@ public class AuthPageController {
     private final UserRepository userRepository;
     private final PortalUserDetailsService userDetailsService;
     private final ApplicationEventPublisher eventPublisher;
+    private final MagicLinkService magicLinkService;
     private final SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
 
     public AuthPageController(
@@ -65,13 +68,15 @@ public class AuthPageController {
             MfaService mfaService,
             UserRepository userRepository,
             PortalUserDetailsService userDetailsService,
-            ApplicationEventPublisher eventPublisher) {
+            ApplicationEventPublisher eventPublisher,
+            MagicLinkService magicLinkService) {
         this.clientRepository = clientRepository;
         this.consentService = consentService;
         this.mfaService = mfaService;
         this.userRepository = userRepository;
         this.userDetailsService = userDetailsService;
         this.eventPublisher = eventPublisher;
+        this.magicLinkService = magicLinkService;
     }
 
     @GetMapping("/login")
@@ -80,6 +85,7 @@ public class AuthPageController {
             HttpServletResponse response,
             @RequestParam(required = false) String error,
             @RequestParam(required = false) String logout,
+            @RequestParam(name = "link", required = false) String link,
             Model model) {
 
         // Auto-login: If user is already authenticated and not logging out / erroring, resume flow immediately
@@ -106,6 +112,12 @@ public class AuthPageController {
 
         model.addAttribute("error", error != null);
         model.addAttribute("loggedOut", logout != null);
+
+        // Offered only when an administrator has turned it on, so the sign-in page does not
+        // advertise a route that answers every request with "not enabled".
+        model.addAttribute("magicLinkEnabled", magicLinkService.isEnabled());
+        model.addAttribute("magicLinkSent", "sent".equals(link));
+        model.addAttribute("magicLinkFailed", "error".equals(link));
 
         resolveClientFromSavedRequest(request, response)
                 .ifPresent(client -> {
@@ -142,6 +154,33 @@ public class AuthPageController {
                 });
 
         return "mfa-challenge";
+    }
+
+    /**
+     * Requests a magic link from the server-rendered sign-in page.
+     *
+     * <p>A form POST rather than the JSON endpoint, because this page is reached mid-redirect
+     * during an OAuth2 flow and must work without JavaScript. Thymeleaf adds the CSRF field to any
+     * {@code th:action} form, so this is protected exactly as the password form is.
+     *
+     * <p>Redirects back with a flag instead of rendering, so the outcome survives a refresh and the
+     * saved OAuth2 request in the session is left untouched — the user is about to resume it from
+     * their mailbox.
+     */
+    @PostMapping("/login/magic-link")
+    public String requestMagicLink(
+            @RequestParam("email") String email, HttpServletRequest request) {
+        try {
+            magicLinkService.requestLink(
+                    email, ClientIpResolver.getClientIp(request), request.getHeader("User-Agent"));
+            // "sent" whatever actually happened — the service does not reveal whether the address
+            // has an account, so neither can this page.
+            return "redirect:/login?link=sent";
+        } catch (RuntimeException e) {
+            // Only reached when the feature is off or no relay is configured: both describe the
+            // server rather than the address, so showing a failure here leaks nothing.
+            return "redirect:/login?link=error";
+        }
     }
 
     @PostMapping("/mfa-challenge")

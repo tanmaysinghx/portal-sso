@@ -44,6 +44,22 @@
             <span>You have signed out.</span>
           </div>
 
+          <!-- Magic link sent banner -->
+          <div th:if="${magicLinkSent}" class="alert-banner alert-ok" role="status">
+            <svg style="flex-shrink:0;width:16px;height:16px;margin-top:1px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+            </svg>
+            <span>If that address can sign in here, a link is on its way. It expires shortly and works once.</span>
+          </div>
+
+          <!-- Magic link unavailable banner -->
+          <div th:if="${magicLinkFailed}" class="alert-banner alert-error" role="alert">
+            <svg style="flex-shrink:0;width:16px;height:16px;margin-top:1px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+            <span>Sign-in links are not available on this server right now. Use your password, or contact an administrator.</span>
+          </div>
+
           <!-- Username field -->
           <div class="form-group">
             <label for="username">Username</label>
@@ -100,6 +116,36 @@
           <!-- Primary Sign in button -->
           <button type="submit" class="btn-sign-in">Sign in</button>
         </form>
+
+        <!--/*
+          Passwordless alternative. A separate <form> rather than a second button inside the
+          password form: nesting forms is invalid HTML, and sharing one would submit the password
+          field to an endpoint that has no use for it.
+        */-->
+        <div th:if="${magicLinkEnabled}">
+          <div style="display:flex;align-items:center;gap:10px;margin:18px 0 14px;">
+            <span style="flex:1;height:1px;background:var(--header-border);"></span>
+            <span style="font-size:11px;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted);">or</span>
+            <span style="flex:1;height:1px;background:var(--header-border);"></span>
+          </div>
+
+          <form method="post" th:action="@{/login/magic-link}">
+            <div class="form-group">
+              <label for="magicLinkEmail">Email me a sign-in link</label>
+              <input
+                id="magicLinkEmail"
+                name="email"
+                type="email"
+                autocomplete="email"
+                required
+                placeholder="you@example.com"
+              />
+            </div>
+            <button type="submit" class="btn-sign-in" style="background:transparent;color:var(--btn-primary);border:1px solid var(--btn-primary);">
+              Send sign-in link
+            </button>
+          </form>
+        </div>
 
         <!-- Okta-style left-aligned footer links -->
         <div class="footer-links">

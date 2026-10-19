@@ -1,0 +1,99 @@
+databaseChangeLog:
+  - changeSet:
+      id: 018-create-email-settings-table
+      author: ai-agent
+      changes:
+        - createTable:
+            tableName: email_settings
+            # How mail LOOKS and WHICH messages are sent, as opposed to smtp_settings, which is how
+            # mail is delivered. Split deliberately: an operator changes relays without touching
+            # templates, and turns a notification off without touching the relay.
+            columns:
+              - column:
+                  name: id
+                  type: VARCHAR(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              # Always 'DEFAULT'; the unique constraint is what makes this a single-row table.
+              - column:
+                  name: config_key
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uk_email_settings_config_key
+              # Branding. The console's own branding lives in browser localStorage and so is
+              # invisible to the server; mail is rendered server-side and needs its own copy.
+              - column:
+                  name: product_name
+                  type: VARCHAR(100)
+              - column:
+                  name: logo_url
+                  type: VARCHAR(1000)
+              # Hex, e.g. #F59E0B. Drives buttons, the header rule and link colour in every template.
+              - column:
+                  name: accent_color
+                  type: VARCHAR(9)
+              - column:
+                  name: support_url
+                  type: VARCHAR(1000)
+              - column:
+                  name: footer_note
+                  type: VARCHAR(500)
+              # Per-notification switches. Default to the ones a user would be surprised NOT to
+              # get: a welcome on account creation and an alert when an unrecognised device signs
+              # in. A mail on EVERY sign-in is off by default — for a daily-driver account that is
+              # one message per morning, which trains people to ignore the alerts that matter.
+              - column:
+                  name: welcome_enabled
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: new_device_enabled
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: sign_in_notice_enabled
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: magic_link_enabled
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              # Whether a magic link may CREATE an account, not just sign one in. Separate from
+              # magic_link_enabled because passwordless sign-in for existing users and passwordless
+              # self-registration are very different decisions.
+              - column:
+                  name: magic_link_registration_enabled
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: magic_link_ttl_minutes
+                  type: INT
+                  defaultValueNumeric: 15
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_by
+                  type: VARCHAR(255)
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false

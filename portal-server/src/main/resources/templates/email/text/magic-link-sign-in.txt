@@ -1,0 +1,24 @@
+[# th:if="${preview}"]
+[PREVIEW] Sent from the admin console with sample details. Nothing happened on your account.
+
+[/]
+YOUR SIGN-IN LINK
+
+Someone asked for a sign-in link for this address on [(${brand.productName})].
+If that was you, open the link below - no password needed.
+
+[(${linkUrl})]
+
+This link works once and expires in [(${expiresInMinutes})] minutes. Asking for a new
+link cancels this one.
+
+DIDN'T ASK FOR THIS?
+You can ignore this email - the link does nothing until it is opened, and nobody
+can sign in without it. If these keep arriving, tell an administrator: it means
+someone knows your address and is trying.
+
+--
+[(${brand.productName})] - [(${brand.portalUrl})]
+[# th:if="${brand.hasFooterNote()}"][(${brand.footerNote})]
+[/][# th:if="${brand.hasSupportUrl()}"]Need help? [(${brand.supportUrl})]
+[/]This is an automated message about your account. You cannot reply to it.

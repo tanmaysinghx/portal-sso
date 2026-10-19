@@ -1,0 +1,31 @@
+[# th:if="${preview}"]
+[PREVIEW] Sent from the admin console with sample details. Nothing happened on your account.
+
+[/]
+WELCOME TO [(${brand.productName})]
+
+[# th:if="${firstName}"]Hi [(${firstName})],[/][# th:unless="${firstName}"]Hi,[/] your account is ready.
+
+One sign-in gets you into every application your organisation has connected to
+[(${brand.productName})]. Sign in once and the apps you have access to are listed
+on your home screen.
+
+Sign in: [(${signInUrl})]
+
+TURN ON TWO-FACTOR AUTHENTICATION
+Your account unlocks every connected application, which makes it worth a second
+factor. It takes about a minute under Settings.
+
+MISSING AN APPLICATION?
+Some apps are restricted. If you cannot see one you need, request access from
+your home screen and an administrator will review it.
+
+WE WILL TELL YOU ABOUT NEW SIGN-INS
+If your account is used from a device it has not been used from before, you will
+get an email about it. Worth not ignoring.
+
+--
+[(${brand.productName})] - [(${brand.portalUrl})]
+[# th:if="${brand.hasFooterNote()}"][(${brand.footerNote})]
+[/][# th:if="${brand.hasSupportUrl()}"]Need help? [(${brand.supportUrl})]
+[/]This is an automated message about your account. You cannot reply to it.

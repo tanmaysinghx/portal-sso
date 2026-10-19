@@ -2,6 +2,8 @@ package com.tanmaysinghx.portalsso.user.web;
 
 import com.tanmaysinghx.portalsso.audit.entity.AuditAction;
 import com.tanmaysinghx.portalsso.audit.service.AuditService;
+import com.tanmaysinghx.portalsso.mail.service.NotificationService;
+import com.tanmaysinghx.portalsso.security.device.KnownDeviceService;
 import com.tanmaysinghx.portalsso.common.api.PageResponse;
 import com.tanmaysinghx.portalsso.common.error.BusinessRuleViolationException;
 import com.tanmaysinghx.portalsso.common.error.ErrorCode;
@@ -52,6 +54,8 @@ public class AdminUserController {
     private final UserQueryService userQueryService;
     private final PasswordPolicy passwordPolicy;
     private final com.tanmaysinghx.portalsso.user.service.UserImportService userImportService;
+    private final NotificationService notificationService;
+    private final KnownDeviceService knownDeviceService;
 
     public AdminUserController(
             UserRepository userRepository,
@@ -62,7 +66,9 @@ public class AdminUserController {
             RoleService roleService,
             UserQueryService userQueryService,
             PasswordPolicy passwordPolicy,
-            com.tanmaysinghx.portalsso.user.service.UserImportService userImportService) {
+            com.tanmaysinghx.portalsso.user.service.UserImportService userImportService,
+            NotificationService notificationService,
+            KnownDeviceService knownDeviceService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
@@ -72,6 +78,8 @@ public class AdminUserController {
         this.userQueryService = userQueryService;
         this.passwordPolicy = passwordPolicy;
         this.userImportService = userImportService;
+        this.notificationService = notificationService;
+        this.knownDeviceService = knownDeviceService;
     }
 
     /**
@@ -135,6 +143,13 @@ public class AdminUserController {
                 saved.getId(),
                 saved.getEmail(),
                 "roles=%s, enabled=%s".formatted(String.join(" ", roleNames), saved.isEnabled()));
+
+        // Asynchronous and failure-swallowing, so a relay problem cannot turn a created account
+        // into a 500 for the administrator who created it. Sent only for an enabled account: a
+        // "welcome, sign in here" message to someone who cannot yet sign in is worse than silence.
+        if (saved.isEnabled()) {
+            notificationService.sendWelcome(saved.getEmail(), saved.getFirstName());
+        }
 
         return UserResponse.from(saved);
     }
@@ -224,6 +239,14 @@ public class AdminUserController {
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND, "No user found with ID: " + id));
 
         mfaService.adminResetMfa(user);
+
+        // An MFA reset is what an administrator does when an account may be compromised, or when a
+        // user has lost the device. Either way the devices this account has signed in from are no
+        // longer evidence of anything, so they stop counting as recognised and the next sign-in
+        // from each raises a fresh alert. Leaving them trusted would silence the alerts at exactly
+        // the moment they matter most.
+        knownDeviceService.forgetDevicesFor(user.getId());
+
         auditService.record(AuditAction.USER_MFA_RESET, user.getId(), user.getEmail(), null);
         return UserResponse.from(user);
     }

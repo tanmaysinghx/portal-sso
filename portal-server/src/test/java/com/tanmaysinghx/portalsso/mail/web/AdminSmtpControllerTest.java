@@ -17,6 +17,7 @@ import com.tanmaysinghx.portalsso.mail.entity.SmtpTransportSecurity;
 import com.tanmaysinghx.portalsso.mail.repository.SmtpSettingsRepository;
 import com.tanmaysinghx.portalsso.mail.web.dto.SendTestEmailRequest;
 import com.tanmaysinghx.portalsso.mail.web.dto.UpdateSmtpSettingsRequest;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +57,15 @@ class AdminSmtpControllerTest {
 
     @BeforeEach
     void clearSettings() {
+        smtpSettingsRepository.deleteAll();
+    }
+
+    /**
+     * Leaves no relay behind. The row is server-wide and the Spring context is shared across test
+     * classes, so a configured relay changes what unrelated tests see.
+     */
+    @AfterEach
+    void clearSettingsAfterwards() {
         smtpSettingsRepository.deleteAll();
     }
 

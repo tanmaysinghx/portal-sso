@@ -42,16 +42,30 @@ class AuthPageControllerTest {
     }
 
     /**
-     * Exactly one CSRF field must be rendered. Thymeleaf injects one into any form with
+     * Every form must carry exactly one CSRF field. Thymeleaf injects one into any form with
      * {@code th:action}; adding a second by hand made the POST fail with 403 — verified live.
+     *
+     * <p>Counted per form rather than per page. The page legitimately has more than one form when
+     * magic links are enabled — the password form and the "email me a link" form — and each needs
+     * its own token. A page-wide count conflated "two tokens in one form", which breaks the POST,
+     * with "two forms each holding one", which is correct.
      */
     @Test
-    void theLoginFormCarriesExactlyOneCsrfField() throws Exception {
+    void everyFormOnTheLoginPageCarriesExactlyOneCsrfField() throws Exception {
         String html = mockMvc.perform(get("/login")).andReturn().getResponse().getContentAsString();
-        int occurrences = html.split("name=\"_csrf\"", -1).length - 1;
-        org.assertj.core.api.Assertions.assertThat(occurrences)
-                .as("a duplicated _csrf parameter is rejected by the CSRF filter")
-                .isEqualTo(1);
+
+        String[] forms = html.split("<form", -1);
+        org.assertj.core.api.Assertions.assertThat(forms.length - 1)
+                .as("the login page renders at least the password form")
+                .isGreaterThanOrEqualTo(1);
+
+        for (int i = 1; i < forms.length; i++) {
+            String form = forms[i].split("</form>", -1)[0];
+            int occurrences = form.split("name=\"_csrf\"", -1).length - 1;
+            org.assertj.core.api.Assertions.assertThat(occurrences)
+                    .as("form %d: a duplicated _csrf parameter is rejected by the CSRF filter", i)
+                    .isEqualTo(1);
+        }
     }
 
     @Test

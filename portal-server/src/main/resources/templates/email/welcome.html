@@ -1,0 +1,61 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{_layout :: page('Your account is ready — here is how to sign in.', ~{::#content})}">
+<body>
+<div id="content" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+
+  <th:block th:if="${preview}" th:replace="~{_components :: previewBanner}"></th:block>
+
+  <h1 class="sm-h1" style="margin:0 0 14px; font-size:25px; line-height:33px; font-weight:700; letter-spacing:-0.02em; color:#18181b;">
+    Welcome to <span th:text="${brand.productName}">Portal SSO</span>
+  </h1>
+
+  <p style="margin:0 0 16px; font-size:15px; line-height:24px; color:#52525b;">
+    <span th:if="${firstName}" th:text="'Hi ' + ${firstName} + ','">Hi Alex,</span>
+    <span th:unless="${firstName}">Hi,</span>
+    your account is ready.
+  </p>
+
+  <p style="margin:0 0 28px; font-size:15px; line-height:24px; color:#52525b;">
+    One sign-in gets you into every application your organisation has connected to
+    <span th:text="${brand.productName}">Portal SSO</span>. Sign in once and the apps you have access
+    to are listed on your home screen.
+  </p>
+
+  <th:block th:replace="~{_components :: button(${signInUrl}, 'Sign in')}"></th:block>
+
+  <!--/* Three short lines rather than a paragraph. This is the only message a user gets before
+         they have ever used the product, so it is the one chance to say what the unfamiliar parts
+         — second factor, access requests — are for, without writing a manual. */-->
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:28px 0 0;">
+    <tr>
+      <td style="padding:0 0 14px;">
+        <p style="margin:0 0 3px; font-size:13px; line-height:20px; font-weight:600; color:#18181b;">Turn on two-factor authentication</p>
+        <p style="margin:0; font-size:13px; line-height:20px; color:#71717a;">
+          Your account unlocks every connected application, which makes it worth a second factor.
+          It takes about a minute under Settings.
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:0 0 14px;">
+        <p style="margin:0 0 3px; font-size:13px; line-height:20px; font-weight:600; color:#18181b;">Missing an application?</p>
+        <p style="margin:0; font-size:13px; line-height:20px; color:#71717a;">
+          Some apps are restricted. If you cannot see one you need, request access from your home
+          screen and an administrator will review it.
+        </p>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <p style="margin:0 0 3px; font-size:13px; line-height:20px; font-weight:600; color:#18181b;">We will tell you about new sign-ins</p>
+        <p style="margin:0; font-size:13px; line-height:20px; color:#71717a;">
+          If your account is used from a device it has not been used from before, you will get an
+          email about it. Worth not ignoring.
+        </p>
+      </td>
+    </tr>
+  </table>
+</div>
+</body>
+</html>

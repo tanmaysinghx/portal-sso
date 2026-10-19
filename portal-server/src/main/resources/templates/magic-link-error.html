@@ -1,0 +1,59 @@
+<!doctype html>
+<!--/*
+  Shown when a magic link cannot be redeemed. Uses the same widget chrome as the sign-in page, so
+  arriving here does not feel like leaving the product.
+
+  It names the specific reason rather than saying "invalid link". Safe, because reaching this page
+  at all means the caller already holds an unguessable token — there is nothing left to enumerate —
+  and necessary, because "expired" and "already used" call for different actions, and a user told
+  only "invalid" will retry the same dead link from their mailbox.
+*/-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign-in link · Portal SSO</title>
+  <link rel="icon" type="image/svg+xml" href="/logo.svg">
+  <th:block th:replace="~{_styles :: styles}"></th:block>
+</head>
+<body>
+  <div class="widget-container">
+    <div class="widget-card">
+      <div class="widget-header">
+        <div class="logo-fallback">
+          <img src="/logo.svg" alt="Portal SSO">
+          <span th:text="${productName} ?: 'Portal SSO'">Portal SSO</span>
+        </div>
+      </div>
+
+      <div class="widget-body">
+        <h1 class="widget-title">This link didn't work</h1>
+
+        <div class="alert-banner alert-error" role="alert">
+          <svg style="flex-shrink:0;width:16px;height:16px;margin-top:1px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+          <span th:text="${message}">This sign-in link is not valid.</span>
+        </div>
+
+        <p style="margin-bottom:18px; font-size:13px; color:var(--text-muted); line-height:1.6;">
+          Sign-in links work once and expire quickly, so an older one in your mailbox will not open.
+          Request a fresh link from the sign-in page.
+        </p>
+
+        <a href="/sign-in" class="btn-sign-in" style="display:block; text-align:center; text-decoration:none;">
+          Back to sign in
+        </a>
+
+        <div class="footer-links">
+          <!--/* The error code is here rather than in the message: it means nothing to the person
+                 reading it, but it is the first thing an administrator asks for. */-->
+          <span th:if="${errorCode}" th:text="'Reference: ' + ${errorCode}" style="color:var(--text-muted);">Reference: PRTL-4012</span>
+        </div>
+      </div>
+    </div>
+
+    <p class="badge-powered">Powered by <strong>Portal SSO</strong></p>
+  </div>
+</body>
+</html>

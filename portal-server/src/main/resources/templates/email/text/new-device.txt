@@ -1,0 +1,29 @@
+[# th:if="${preview}"]
+[PREVIEW] Sent from the admin console with sample details. Nothing happened on your account.
+
+[/]
+SECURITY ALERT: NEW DEVICE SIGNED IN
+
+[# th:if="${firstName}"]Hi [(${firstName})],[/][# th:unless="${firstName}"]Hi,[/] your [(${brand.productName})] account was just used to
+sign in from a device it has not signed in from before.
+
+  Device:     [(${deviceLabel} ?: 'Unknown device')]
+  When:       [(${occurredAt})]
+[# th:if="${hasLocation}"]  Near:       [(${location})]
+[/]  IP address: [(${ipAddress} ?: 'Unknown')]
+
+If that was you, nothing more is needed - this device will not be flagged again.
+
+IF THIS WASN'T YOU
+Change your password now and review your active sessions; both are under Settings
+once you sign in. If you cannot sign in, contact an administrator straight away.
+
+A device is recognised by its browser and operating system, so a new browser on a
+familiar machine counts as new. Any location is approximate and derived from the
+IP address.
+
+--
+[(${brand.productName})] - [(${brand.portalUrl})]
+[# th:if="${brand.hasFooterNote()}"][(${brand.footerNote})]
+[/][# th:if="${brand.hasSupportUrl()}"]Need help? [(${brand.supportUrl})]
+[/]This is an automated message about your account. You cannot reply to it.

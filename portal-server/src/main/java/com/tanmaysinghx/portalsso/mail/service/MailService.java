@@ -49,13 +49,24 @@ public class MailService {
      *     {@code MAIL_SEND_FAILED} when the relay could not be reached or rejected the message.
      */
     public void send(String to, String subject, String body) {
+        send(to, subject, body, null);
+    }
+
+    /**
+     * Sends a message with both a plain-text and an HTML body.
+     *
+     * @param html the rich body, or null for text only.
+     * @throws PortalException {@code MAIL_NOT_CONFIGURED} when no usable relay is configured, or
+     *     {@code MAIL_SEND_FAILED} when the relay could not be reached or rejected the message.
+     */
+    public void send(String to, String subject, String text, String html) {
         SmtpSettings settings = settingsService.currentSettings();
         if (!settings.isUsable()) {
             throw new PortalException(ErrorCode.MAIL_NOT_CONFIGURED);
         }
         SmtpConnection connection = settingsService.toConnection(settings);
         try {
-            mailSender.send(connection, to, subject, body);
+            mailSender.send(connection, to, subject, text, html);
         } catch (MailException | SmtpMailSender.MessagingFailure e) {
             // The relay host and the envelope addresses belong in the server log; the password does
             // not, and is not interpolated into anything here.

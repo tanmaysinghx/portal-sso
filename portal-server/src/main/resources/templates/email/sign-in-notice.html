@@ -1,0 +1,28 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{_layout :: page('A record of the sign-in to your account just now.', ~{::#content})}">
+<body>
+<div id="content" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+
+  <th:block th:if="${preview}" th:replace="~{_components :: previewBanner}"></th:block>
+
+  <!--/* No alert pill and no urgent language. This fires on every sign-in, including the user's
+         own, five seconds ago, deliberately — it is a record, not a warning. Dressing it up the way
+         the new-device alert is dressed up would make both meaningless. */-->
+  <h1 class="sm-h1" style="margin:0 0 14px; font-size:25px; line-height:33px; font-weight:700; letter-spacing:-0.02em; color:#18181b;">
+    You signed in
+  </h1>
+
+  <p style="margin:0 0 20px; font-size:15px; line-height:24px; color:#52525b;">
+    <span th:if="${firstName}" th:text="'Hi ' + ${firstName} + ','">Hi Alex,</span>
+    <span th:unless="${firstName}">Hi,</span>
+    here is a record of a sign-in to your
+    <span th:text="${brand.productName}">Portal SSO</span> account.
+  </p>
+
+  <th:block th:replace="~{_components :: signInDetails}"></th:block>
+
+  <th:block th:replace="~{_components :: securityFooter}"></th:block>
+</div>
+</body>
+</html>

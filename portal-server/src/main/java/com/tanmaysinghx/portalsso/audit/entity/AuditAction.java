@@ -51,7 +51,18 @@ public enum AuditAction {
     /** Where this server sends mail from, and the credentials it uses — never the credentials themselves. */
     SMTP_SETTINGS_UPDATED(TargetType.SYSTEM, "Email (SMTP) settings updated"),
     /** Recorded on failure too: a failed test is how an operator learns a relay stopped accepting mail. */
-    SMTP_TEST_EMAIL_SENT(TargetType.SYSTEM, "Test email sent");
+    SMTP_TEST_EMAIL_SENT(TargetType.SYSTEM, "Test email sent"),
+
+    /** Branding, which notifications are sent, and magic-link policy. */
+    EMAIL_SETTINGS_UPDATED(TargetType.SYSTEM, "Email settings updated"),
+    /** A magic link was issued. Recorded because it is a credential that signs an account in. */
+    MAGIC_LINK_REQUESTED(TargetType.USER, "Magic link requested"),
+    /** A magic link was redeemed — this is a sign-in, and belongs in the trail as one. */
+    MAGIC_LINK_SIGN_IN(TargetType.USER, "Signed in with a magic link"),
+    /** A magic link created an account, which is account creation with no administrator involved. */
+    MAGIC_LINK_SIGN_UP(TargetType.USER, "Account created with a magic link"),
+    /** An account signed in from a browser and operating system it had not used before. */
+    NEW_DEVICE_SIGN_IN(TargetType.USER, "Sign-in from a new device");
 
     /** What the action operates on. Stored so the log can be filtered by object as well as verb. */
     public enum TargetType {

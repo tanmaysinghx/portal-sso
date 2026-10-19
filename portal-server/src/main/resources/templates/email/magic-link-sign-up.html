@@ -1,0 +1,58 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{_layout :: page('Confirm this address to finish creating your account.', ~{::#content})}">
+<body>
+<div id="content" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+
+  <th:block th:if="${preview}" th:replace="~{_components :: previewBanner}"></th:block>
+
+  <h1 class="sm-h1" style="margin:0 0 14px; font-size:25px; line-height:33px; font-weight:700; letter-spacing:-0.02em; color:#18181b;">
+    Finish creating your account
+  </h1>
+
+  <p style="margin:0 0 16px; font-size:15px; line-height:24px; color:#52525b;">
+    Someone asked to create a <span th:text="${brand.productName}">Portal SSO</span> account for this
+    address. Confirming it both proves the address is yours and creates the account — there is no
+    password to choose.
+  </p>
+
+  <!--/* Says plainly that clicking creates something. The sign-in link is reversible in effect; this
+         one is not, and a confirmation step that hides what it confirms is how people end up with
+         accounts they did not mean to create. */-->
+  <p style="margin:0 0 28px; font-size:15px; line-height:24px; color:#52525b;">
+    If you did not ask for this, ignore this email and no account will be created.
+  </p>
+
+  <th:block th:replace="~{_components :: button(${linkUrl}, 'Create my account')}"></th:block>
+
+  <p style="margin:16px 0 24px; font-size:13px; line-height:20px; color:#71717a;">
+    This link works once and expires in
+    <strong style="color:#3f3f46;" th:text="${expiresInMinutes} + ' minutes'">15 minutes</strong>.
+  </p>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+         style="margin:0 0 24px; background-color:#fafafa; border:1px solid #e4e4e7; border-radius:10px;">
+    <tr>
+      <td style="padding:14px 16px;">
+        <p style="margin:0 0 6px; font-size:11px; line-height:16px; font-weight:600; letter-spacing:0.03em; text-transform:uppercase; color:#a1a1aa;">
+          Or paste this into your browser
+        </p>
+        <a th:href="${linkUrl}" th:text="${linkUrl}"
+           style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12px; line-height:18px; color:#3f3f46; text-decoration:none; word-break:break-all;">https://sso.example.com/magic-link?token=…</a>
+      </td>
+    </tr>
+  </table>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #e4e4e7;">
+    <tr>
+      <td style="padding:20px 0 0; font-size:13px; line-height:21px; color:#52525b;">
+        An account here signs you in to every application your organisation has connected to
+        <span th:text="${brand.productName}">Portal SSO</span>. It is created without a password, so
+        you sign in by asking for a link each time. You can add two-factor authentication under
+        Settings, and an administrator can set a password for you if you would rather use one.
+      </td>
+    </tr>
+  </table>
+</div>
+</body>
+</html>

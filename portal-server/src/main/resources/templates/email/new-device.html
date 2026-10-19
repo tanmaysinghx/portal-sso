@@ -1,0 +1,50 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{_layout :: page('A device that has not signed in before just signed in to your account.', ~{::#content})}">
+<body>
+<div id="content" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+
+  <th:block th:if="${preview}" th:replace="~{_components :: previewBanner}"></th:block>
+
+  <!--/* An amber pill, not a red one. Red says "something is wrong", and the overwhelmingly most
+         likely explanation for this message is that the user bought a laptop or opened a different
+         browser. Alarming people over their own routine behaviour is how an alert earns a filter
+         rule. The tone escalates only in the closing paragraph, which is where it belongs. */-->
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 18px;">
+    <tr>
+      <td style="padding:5px 11px; background-color:#fff8ed; border:1px solid #fedba8; border-radius:999px; font-size:11px; line-height:16px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; color:#9a3412;">
+        Security alert
+      </td>
+    </tr>
+  </table>
+
+  <h1 class="sm-h1" style="margin:0 0 14px; font-size:25px; line-height:33px; font-weight:700; letter-spacing:-0.02em; color:#18181b;">
+    New device signed in
+  </h1>
+
+  <p style="margin:0 0 20px; font-size:15px; line-height:24px; color:#52525b;">
+    <span th:if="${firstName}" th:text="'Hi ' + ${firstName} + ','">Hi Alex,</span>
+    <span th:unless="${firstName}">Hi,</span>
+    your <span th:text="${brand.productName}">Portal SSO</span> account was just used to sign in from
+    a device it has not signed in from before.
+  </p>
+
+  <th:block th:replace="~{_components :: signInDetails}"></th:block>
+
+  <p style="margin:0 0 4px; font-size:15px; line-height:24px; color:#52525b;">
+    If that was you, nothing more is needed — this device will not be flagged again.
+  </p>
+
+  <th:block th:replace="~{_components :: securityFooter}"></th:block>
+
+  <!--/* States the limits of the signal rather than implying precision it does not have. A
+         recipient who knows the location came from an IP lookup will not panic at a neighbouring
+         city, and one who knows the device is matched by browser and OS only will not expect it to
+         distinguish two identical laptops. */-->
+  <p style="margin:18px 0 0; font-size:12px; line-height:19px; color:#a1a1aa;">
+    A device is recognised by its browser and operating system, so a new browser on a familiar
+    machine counts as new. Any location is approximate and derived from the IP address.
+  </p>
+</div>
+</body>
+</html>

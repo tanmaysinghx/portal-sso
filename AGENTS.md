@@ -47,9 +47,10 @@ portal-sso/
 │   │   ├── common/            # BaseEntity, error handling, PageResponse, IP resolver
 │   │   ├── config/            # Cross-cutting Spring configs (JPA auditing, seeding)
 │   │   ├── database/          # In-app PostgreSQL/MySQL migration service & status API
-│   │   ├── mail/              # Admin-configured SMTP relay, encrypted credentials, test send
+│   │   ├── mail/              # SMTP relay, email templates, notifications, branding
 │   │   ├── registration/      # Public self-registration (when enabled)
-│   │   ├── security/          # Spring Security, OAuth2 Authorization Server, MFA, keys
+│   │   ├── security/          # Spring Security, OAuth2 Authorization Server, MFA, keys,
+│   │   │                      #   magiclink/ (passwordless), device/ (new-device alerts)
 │   │   ├── setup/             # Initial setup wizard API
 │   │   └── user/              # User accounts, platform roles, credentials
 │   └── src/main/resources/
@@ -70,7 +71,7 @@ portal-sso/
             ├── clients/       # OAuth client registry
             ├── dashboard/     # Sign-in analytics, KPIs, map, recency
             ├── roles/         # Role management & permissions
-            ├── settings/      # Branding, 2FA, email (SMTP), DB migration, OIDC endpoints
+            ├── settings/      # Branding, 2FA, email (SMTP), email templates, DB migration, OIDC
             └── users/         # User accounts, lifecycle, unlock
 ```
 
@@ -122,12 +123,21 @@ When modifying or adding code, you **MUST** uphold these rules:
 - **Audit Log (`audit_events`)**: Append-only compliance log recording administrative changes (user created, role modified, client deleted, MFA reset, sign-in attempts, SMTP settings changed). Entries can **never** be edited or deleted through application endpoints. When auditing a configuration change, record **which fields changed, never their values** — see `SmtpSettingsService.describeChanges`.
 
 ### 4. Outbound Email
-- SMTP settings are **database-stored and admin-edited** (`smtp_settings`, one row, `Settings → Email (SMTP)`), not `spring.mail.*` properties. Changing a relay must never require a restart or filesystem access on the host.
-- `MailService` is the only entry point for sending; `SmtpMailSender` is the only thing that speaks SMTP. Do not construct a `JavaMailSender` elsewhere.
+- SMTP settings are **database-stored and admin-edited** (`smtp_settings`, one row, `Settings → Email (SMTP)`), not `spring.mail.*` properties. Changing a relay must never require a restart or filesystem access on the host. `email_settings` is the separate row holding branding, the per-notification switches and magic-link policy (`Settings → Email Templates`) — keep the "how it is delivered" / "what is sent" seam.
+- `MailService` is the only entry point for sending; `SmtpMailSender` is the only thing that speaks SMTP; `NotificationService` is the only thing that renders a notification. Do not construct a `JavaMailSender` elsewhere.
 - Features that *need* mail should let `MailService.send` throw; features where mail is optional should check `MailService.isEnabled()` first. Never silently swallow a send failure a user is waiting on.
 - STARTTLS is sent as `starttls.required`, and there is deliberately no "trust any certificate" setting. Do not add one.
+- **Notifications are `@Async` on `portalMailExecutor` and swallow failures.** They fire from the sign-in path, and a relay problem must never add SMTP latency to a sign-in or fail one. `SignInNotifier` is deliberately a separate component from `LoginAttemptListener` so the swallow-everything boundary is explicit.
+- **Templates:** Thymeleaf pairs under `templates/email/<name>.html` + `templates/email/text/<name>.txt`, one per `EmailTemplateType`, rendered by two dedicated `SpringTemplateEngine` beans (never the MVC engine, and never a plain `TemplateEngine` — OGNL is not on the classpath). Always send both bodies. Table-based HTML with inline styles; a configured accent drives rules and links but **never a button background** — see `_layout.html`.
+- Email branding is duplicated in `email_settings` on purpose: console branding (`BrandingService`) lives in browser `localStorage` and the server cannot see it.
 
-### 5. Client IP Resolution
+### 5. Magic Links (Passwordless)
+- Off by default, enabled per-deployment in the console. `MagicLinkService` owns issuing and redeeming.
+- Non-negotiable properties: 256-bit `SecureRandom` token, **only the SHA-256 stored**, single use, short TTL, issuing cancels outstanding links, constant-time compare, purpose-bound (`SIGN_IN` vs `SIGN_UP`), and **MFA is still required** — route to `/mfa-challenge` via `MFA_PRE_AUTH_EMAIL_ATTR`, never straight to an authenticated context.
+- `MagicLinkPageController` must keep rotating the session id (`request.changeSessionId()`) before granting authority, and must keep publishing `AuthenticationSuccessEvent` so the sign-in reaches `login_events`, the lockout reset and the new-device check like any other.
+- **`requestLink` must answer identically for every address**, including when the relay is unconfigured or failing. The deliverability check runs *before* the account lookup, and send failures are logged rather than returned, specifically to preserve that. Do not "improve" the error reporting here.
+
+### 6. Client IP Resolution
 - Never inspect `X-Forwarded-For` raw headers directly in controllers. Always use `ClientIpResolver.getClientIp(request)`.
 - When deployed behind reverse proxies, `server.forward-headers-strategy=FRAMEWORK` handles trusted proxy resolution centrally.
 

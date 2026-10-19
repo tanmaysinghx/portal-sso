@@ -1,0 +1,58 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{_layout :: page('Your single-use sign-in link. Expires shortly.', ~{::#content})}">
+<body>
+<div id="content" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+
+  <th:block th:if="${preview}" th:replace="~{_components :: previewBanner}"></th:block>
+
+  <h1 class="sm-h1" style="margin:0 0 14px; font-size:25px; line-height:33px; font-weight:700; letter-spacing:-0.02em; color:#18181b;">
+    Your sign-in link
+  </h1>
+
+  <!--/* Leads with the fact that someone asked for this, because that is how the recipient decides
+         whether to trust it. A sign-in link is indistinguishable in shape from a phishing mail, and
+         the only honest defence is to be precise about what was requested and when. */-->
+  <p style="margin:0 0 24px; font-size:15px; line-height:24px; color:#52525b;">
+    Someone asked for a sign-in link for this address on
+    <span th:text="${brand.productName}">Portal SSO</span>. If that was you, use the button below —
+    no password needed.
+  </p>
+
+  <th:block th:replace="~{_components :: button(${linkUrl}, 'Sign in')}"></th:block>
+
+  <p style="margin:16px 0 24px; font-size:13px; line-height:20px; color:#71717a;">
+    This link works once and expires in
+    <strong style="color:#3f3f46;" th:text="${expiresInMinutes} + ' minutes'">15 minutes</strong>.
+    Asking for a new link cancels this one.
+  </p>
+
+  <!--/* The URL in full, because the button is unusable in a plain-text-only client and because a
+         cautious user wants to read where a link goes before clicking it. word-break is required:
+         a 43-character token on one line forces horizontal scroll on a phone otherwise. */-->
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+         style="margin:0 0 24px; background-color:#fafafa; border:1px solid #e4e4e7; border-radius:10px;">
+    <tr>
+      <td style="padding:14px 16px;">
+        <p style="margin:0 0 6px; font-size:11px; line-height:16px; font-weight:600; letter-spacing:0.03em; text-transform:uppercase; color:#a1a1aa;">
+          Or paste this into your browser
+        </p>
+        <a th:href="${linkUrl}" th:text="${linkUrl}"
+           style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12px; line-height:18px; color:#3f3f46; text-decoration:none; word-break:break-all;">https://sso.example.com/magic-link?token=…</a>
+      </td>
+    </tr>
+  </table>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #e4e4e7;">
+    <tr>
+      <td style="padding:20px 0 0; font-size:13px; line-height:21px; color:#52525b;">
+        <strong style="color:#18181b; font-weight:600;">Didn't ask for this?</strong>
+        You can ignore this email — the link does nothing until it is opened, and nobody can sign in
+        without it. If these keep arriving, tell an administrator: it means someone knows your
+        address and is trying.
+      </td>
+    </tr>
+  </table>
+</div>
+</body>
+</html>

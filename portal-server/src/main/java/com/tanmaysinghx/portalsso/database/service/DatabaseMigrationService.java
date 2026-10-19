@@ -53,7 +53,16 @@ public class DatabaseMigrationService {
             // Server-wide email configuration. Easy to overlook because it is one row, but an
             // operator who configures a relay on embedded H2 and then migrates would otherwise find
             // email silently switched off on the target, with the encrypted password gone.
-            "smtp_settings");
+            "smtp_settings",
+            "email_settings",
+            // Not optional, despite looking like a cache. Lose this and every user's familiar
+            // laptop counts as a new device after the migration, so the whole directory receives a
+            // security alert at once — which is both alarming and the fastest way to teach people
+            // the alert means nothing.
+            "user_known_devices",
+            // Outstanding magic links keep working across the move, and the retention tail that
+            // answers "was a link issued for this address?" survives with them.
+            "magic_link_tokens");
 
     private final DataSource activeDataSource;
 

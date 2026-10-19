@@ -33,3 +33,9 @@ databaseChangeLog:
       file: db/changelog/changes/016-create-app-connect-requests-table.yaml
   - include:
       file: db/changelog/changes/017-create-smtp-settings-table.yaml
+  - include:
+      file: db/changelog/changes/018-create-email-settings-table.yaml
+  - include:
+      file: db/changelog/changes/019-create-magic-link-tokens-table.yaml
+  - include:
+      file: db/changelog/changes/020-create-user-known-devices-table.yaml

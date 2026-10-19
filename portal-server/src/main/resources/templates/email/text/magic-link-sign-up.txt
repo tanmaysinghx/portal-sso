@@ -1,0 +1,27 @@
+[# th:if="${preview}"]
+[PREVIEW] Sent from the admin console with sample details. Nothing happened on your account.
+
+[/]
+FINISH CREATING YOUR ACCOUNT
+
+Someone asked to create a [(${brand.productName})] account for this address.
+Confirming it both proves the address is yours and creates the account - there is
+no password to choose.
+
+If you did not ask for this, ignore this email and no account will be created.
+
+Create my account:
+[(${linkUrl})]
+
+This link works once and expires in [(${expiresInMinutes})] minutes.
+
+An account here signs you in to every application your organisation has connected
+to [(${brand.productName})]. It is created without a password, so you sign in by
+asking for a link each time. You can add two-factor authentication under Settings,
+and an administrator can set a password for you if you would rather use one.
+
+--
+[(${brand.productName})] - [(${brand.portalUrl})]
+[# th:if="${brand.hasFooterNote()}"][(${brand.footerNote})]
+[/][# th:if="${brand.hasSupportUrl()}"]Need help? [(${brand.supportUrl})]
+[/]This is an automated message about your account. You cannot reply to it.

@@ -39,18 +39,41 @@ public class SmtpMailSender {
     }
 
     /**
+     * Sends a plain-text message.
+     *
      * @throws MessagingFailure when the message cannot be assembled — a malformed address, say.
      * @throws MailException when the relay cannot be reached, refuses the credentials, or rejects
      *     the message.
      */
     public void send(SmtpConnection connection, String to, String subject, String body) {
+        send(connection, to, subject, body, null);
+    }
+
+    /**
+     * Sends a message with both bodies as {@code multipart/alternative}.
+     *
+     * <p>Order is not cosmetic: {@code MimeMessageHelper.setText(text, html)} writes the text part
+     * first, and the last part a client understands is the one it shows. Reversing them would make
+     * every client render the text version.
+     *
+     * @param html the rich body, or null to send text only.
+     * @throws MessagingFailure when the message cannot be assembled — a malformed address, say.
+     * @throws MailException when the relay cannot be reached, refuses the credentials, or rejects
+     *     the message.
+     */
+    public void send(SmtpConnection connection, String to, String subject, String text, String html) {
         JavaMailSenderImpl sender = buildSender(connection);
         MimeMessage message = sender.createMimeMessage();
+        boolean multipart = html != null && !html.isBlank();
         try {
-            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+            MimeMessageHelper helper = new MimeMessageHelper(message, multipart, "UTF-8");
             helper.setTo(to);
             helper.setSubject(subject);
-            helper.setText(body, false);
+            if (multipart) {
+                helper.setText(text, html);
+            } else {
+                helper.setText(text, false);
+            }
             helper.setFrom(fromAddress(connection));
             if (connection.replyToAddress() != null && !connection.replyToAddress().isBlank()) {
                 helper.setReplyTo(connection.replyToAddress());

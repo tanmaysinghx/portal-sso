@@ -3,6 +3,7 @@ package com.tanmaysinghx.portalsso.security;
 import com.tanmaysinghx.portalsso.analytics.service.LoginEventRecorder;
 import com.tanmaysinghx.portalsso.audit.entity.AuditAction;
 import com.tanmaysinghx.portalsso.audit.service.AuditService;
+import com.tanmaysinghx.portalsso.security.device.SignInNotifier;
 import com.tanmaysinghx.portalsso.user.entity.User;
 import com.tanmaysinghx.portalsso.user.repository.UserRepository;
 import java.time.Instant;
@@ -27,16 +28,19 @@ public class LoginAttemptListener {
     private final UserRepository userRepository;
     private final LoginEventRecorder loginEventRecorder;
     private final AuditService auditService;
+    private final SignInNotifier signInNotifier;
     private final int maxFailedAttempts;
 
     public LoginAttemptListener(
             UserRepository userRepository,
             LoginEventRecorder loginEventRecorder,
             AuditService auditService,
+            SignInNotifier signInNotifier,
             @Value("${app.security.max-failed-login-attempts:5}") int maxFailedAttempts) {
         this.userRepository = userRepository;
         this.loginEventRecorder = loginEventRecorder;
         this.auditService = auditService;
+        this.signInNotifier = signInNotifier;
         this.maxFailedAttempts = maxFailedAttempts;
     }
 
@@ -52,6 +56,11 @@ public class LoginAttemptListener {
                 user.setFailedLoginAttempts(0);
             }
             userRepository.save(user);
+
+            // Last, and deliberately so: everything above is security-critical bookkeeping, and
+            // this is advisory. SignInNotifier swallows its own failures, so a broken relay cannot
+            // undo the lockout reset or the audit entry that have already been written here.
+            signInNotifier.onSuccessfulSignIn(user);
         },
         () -> {
             loginEventRecorder.record(username, true, null);

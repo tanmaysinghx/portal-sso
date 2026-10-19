@@ -5,6 +5,7 @@ import com.tanmaysinghx.portalsso.audit.service.AuditService;
 import com.tanmaysinghx.portalsso.common.error.BusinessRuleViolationException;
 import com.tanmaysinghx.portalsso.common.error.ErrorCode;
 import com.tanmaysinghx.portalsso.common.error.ResourceConflictException;
+import com.tanmaysinghx.portalsso.mail.service.NotificationService;
 import com.tanmaysinghx.portalsso.registration.config.RegistrationProperties;
 import com.tanmaysinghx.portalsso.security.password.PasswordPolicy;
 import com.tanmaysinghx.portalsso.registration.web.dto.RegisterRequest;
@@ -61,6 +62,7 @@ public class PublicRegistrationController {
     private final RegistrationProperties properties;
     private final AuditService auditService;
     private final PasswordPolicy passwordPolicy;
+    private final NotificationService notificationService;
 
     public PublicRegistrationController(
             UserRepository userRepository,
@@ -68,13 +70,15 @@ public class PublicRegistrationController {
             PasswordEncoder passwordEncoder,
             RegistrationProperties properties,
             AuditService auditService,
-            PasswordPolicy passwordPolicy) {
+            PasswordPolicy passwordPolicy,
+            NotificationService notificationService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.properties = properties;
         this.auditService = auditService;
         this.passwordPolicy = passwordPolicy;
+        this.notificationService = notificationService;
     }
 
     /** Readable whether or not registration is on — that answer is the whole point of it. */
@@ -129,6 +133,13 @@ public class PublicRegistrationController {
                 saved.getId(),
                 email,
                 "role=%s, pendingApproval=%s".formatted(properties.defaultRole(), properties.requireAdminApproval()));
+
+        // Only once the account can actually be used. Under require-admin-approval the account is
+        // created disabled, and a "welcome, sign in here" message to someone who will be refused at
+        // the door is worse than waiting — they would read the refusal as the product being broken.
+        if (saved.isEnabled()) {
+            notificationService.sendWelcome(email, saved.getFirstName());
+        }
 
         return new RegistrationResponse(email, properties.requireAdminApproval());
     }

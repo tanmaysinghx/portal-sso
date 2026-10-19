@@ -72,6 +72,14 @@ public enum ErrorCode {
     /** Fields that are optional while email is switched off and required once it is enabled. */
     INVALID_MAIL_SETTINGS("PRTL-4006", "The email settings are incomplete or invalid.", HttpStatus.BAD_REQUEST),
 
+    // Magic links. Each reason is distinct so the landing page can say what to do next rather than
+    // "invalid link" — safe to differentiate, because reaching here means the caller already holds
+    // an unguessable token and has nothing left to enumerate.
+    MAGIC_LINK_DISABLED("PRTL-4010", "Passwordless sign-in is not enabled on this server.", HttpStatus.FORBIDDEN),
+    MAGIC_LINK_INVALID("PRTL-4011", "This sign-in link is not valid.", HttpStatus.BAD_REQUEST),
+    MAGIC_LINK_EXPIRED("PRTL-4012", "This sign-in link has expired. Request a new one.", HttpStatus.GONE),
+    MAGIC_LINK_ALREADY_USED("PRTL-4013", "This sign-in link has already been used. Request a new one.", HttpStatus.GONE),
+
     // =========================================================================
     // 5000 Series: Server, Database & Internal Errors
     // =========================================================================

@@ -1,0 +1,138 @@
+<!doctype html>
+<!--/*
+  Shared chrome for every notification: preheader, branded header, card, footer.
+
+  WHY THIS LOOKS LIKE 2005 HTML
+  Tables, width attributes and inline styles are not nostalgia. Outlook on Windows renders mail
+  through Word's HTML engine, which has no flexbox, no grid, no `max-width` on block elements and
+  drops most of a <style> block. Anything that layout depends on is therefore inline and
+  table-based; the <style> block carries only progressive enhancement (the mobile breakpoint),
+  so a client that ignores it still gets a correct, if less polished, message.
+
+  COLOUR
+  Palette matches the console's design tokens (portal-client/src/styles.css): zinc neutrals against
+  the logo's amber. The configured accent drives the header rule, links and highlights — but NOT
+  the primary button, which is fixed at ink-900. That is deliberate: the tokens file notes white on
+  #F59E0B is about 2:1 contrast, i.e. unreadable, and an operator is free to set the accent to any
+  colour including a pale one. A button is the one element whose label must be legible no matter
+  what, so it does not take a configurable background.
+*/-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:fragment="page(preheader, content)">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="x-apple-disable-message-reformatting">
+  <!--/* Tells supporting clients not to auto-invert; the palette below is already explicit. */-->
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <title th:text="${brand.productName}">Portal SSO</title>
+  <style>
+    /* Progressive enhancement only — never layout. */
+    @media only screen and (max-width: 600px) {
+      .sm-px { padding-left: 24px !important; padding-right: 24px !important; }
+      .sm-py { padding-top: 28px !important; padding-bottom: 28px !important; }
+      .sm-full { width: 100% !important; }
+      .sm-block { display: block !important; width: 100% !important; }
+      .sm-h1 { font-size: 22px !important; line-height: 30px !important; }
+    }
+    /* Stop iOS and some Android clients turning detected dates and addresses into blue links. */
+    a[x-apple-data-detectors], .detail-value a { color: inherit !important; text-decoration: none !important; }
+  </style>
+</head>
+<body style="margin:0; padding:0; width:100%; background-color:#f4f4f5; -webkit-font-smoothing:antialiased;">
+
+  <!--/*
+    Preheader: the snippet a client shows next to the subject in the list view. Without one, clients
+    fall back to scraping the first words of the body, which here is the logo alt text. The trailing
+    non-breaking spaces stop it pulling body copy in after the sentence ends.
+  */-->
+  <div style="display:none; font-size:1px; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden; mso-hide:all;">
+    <span th:text="${preheader}">Notification from Portal SSO</span>
+    &#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;&#8203;&nbsp;
+  </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+         style="background-color:#f4f4f5;">
+    <tr>
+      <td align="center" style="padding:32px 12px;">
+
+        <!--/* 560px rather than the usual 600: shorter measure, and it still clears Outlook's
+               reading pane without a horizontal scrollbar. */-->
+        <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" class="sm-full"
+               style="width:560px; max-width:560px;">
+
+          <!-- Brand lockup, outside the card -->
+          <tr>
+            <td align="center" style="padding:0 8px 20px;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td th:if="${brand.hasLogo()}" style="padding:0;">
+                    <!--/* Height is capped and width left auto: an operator's logo can be any
+                           aspect ratio, and a fixed width would squash a square mark. */-->
+                    <img th:src="${brand.logoUrl}" th:alt="${brand.productName}"
+                         height="36" style="height:36px; width:auto; max-width:200px; display:block; border:0;">
+                  </td>
+                  <td th:unless="${brand.hasLogo()}" style="padding:0;">
+                    <span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:17px; font-weight:700; letter-spacing:-0.01em; color:#18181b;"
+                          th:text="${brand.productName}">Portal SSO</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Card -->
+          <tr>
+            <td style="background-color:#ffffff; border:1px solid #e4e4e7; border-radius:14px; overflow:hidden;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+
+                <!--/* 3px accent rule across the top of the card. The one place the configured
+                       accent carries real weight, and it needs no legible text on top of it. */-->
+                <tr>
+                  <td th:style="'background-color:' + ${brand.accentColor} + '; height:3px; line-height:3px; font-size:0;'">&nbsp;</td>
+                </tr>
+
+                <tr>
+                  <td class="sm-px sm-py" style="padding:36px 40px 40px;">
+                    <!--/* Each template supplies this block. */-->
+                    <div th:replace="${content}">Message body</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td class="sm-px" style="padding:24px 40px 0;">
+              <p style="margin:0 0 10px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:12px; line-height:19px; color:#71717a;">
+                <span th:text="${brand.productName}">Portal SSO</span> ·
+                <a th:href="${brand.portalUrl}" th:text="${brand.portalUrl}"
+                   th:style="'color:' + ${brand.accentColor} + '; text-decoration:none;'">https://sso.example.com</a>
+              </p>
+
+              <p th:if="${brand.hasFooterNote()}"
+                 style="margin:0 0 10px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:12px; line-height:19px; color:#71717a;"
+                 th:text="${brand.footerNote}">Internal use only.</p>
+
+              <p th:if="${brand.hasSupportUrl()}"
+                 style="margin:0 0 10px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:12px; line-height:19px; color:#71717a;">
+                Need help?
+                <a th:href="${brand.supportUrl}" th:style="'color:' + ${brand.accentColor} + '; text-decoration:none;'">Contact support</a>
+              </p>
+
+              <!--/* Every message here is transactional — account creation, a sign-in alert, a link
+                     the user just asked for — so there is deliberately no unsubscribe link: there
+                     is nothing to unsubscribe from, and offering one would imply the security
+                     alerts are optional. This line says so plainly instead. */-->
+              <p style="margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:12px; line-height:19px; color:#a1a1aa;">
+                This is an automated message about your account. You cannot reply to it.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

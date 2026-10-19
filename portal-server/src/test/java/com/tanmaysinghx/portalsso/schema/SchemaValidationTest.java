@@ -5,9 +5,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.tanmaysinghx.portalsso.client.entity.OAuthClient;
 import com.tanmaysinghx.portalsso.client.repository.OAuthClientRepository;
 import com.tanmaysinghx.portalsso.config.JpaAuditingConfig;
+import com.tanmaysinghx.portalsso.mail.entity.EmailSettings;
 import com.tanmaysinghx.portalsso.mail.entity.SmtpSettings;
 import com.tanmaysinghx.portalsso.mail.entity.SmtpTransportSecurity;
+import com.tanmaysinghx.portalsso.mail.repository.EmailSettingsRepository;
 import com.tanmaysinghx.portalsso.mail.repository.SmtpSettingsRepository;
+import com.tanmaysinghx.portalsso.security.device.entity.KnownDevice;
+import com.tanmaysinghx.portalsso.security.device.repository.KnownDeviceRepository;
+import com.tanmaysinghx.portalsso.security.magiclink.entity.MagicLinkPurpose;
+import com.tanmaysinghx.portalsso.security.magiclink.entity.MagicLinkToken;
+import com.tanmaysinghx.portalsso.security.magiclink.repository.MagicLinkTokenRepository;
 import com.tanmaysinghx.portalsso.user.entity.Role;
 import com.tanmaysinghx.portalsso.user.entity.User;
 import com.tanmaysinghx.portalsso.user.repository.RoleRepository;
@@ -40,6 +47,15 @@ class SchemaValidationTest {
 
     @Autowired
     private SmtpSettingsRepository smtpSettingsRepository;
+
+    @Autowired
+    private EmailSettingsRepository emailSettingsRepository;
+
+    @Autowired
+    private MagicLinkTokenRepository magicLinkTokenRepository;
+
+    @Autowired
+    private KnownDeviceRepository knownDeviceRepository;
 
     /**
      * Uses the role seeded by migration 011 rather than inserting one. That is not just to avoid
@@ -96,6 +112,59 @@ class SchemaValidationTest {
         assertThat(found.getPort()).isEqualTo(587);
         assertThat(found.hasPassword()).isTrue();
         assertThat(found.isUsable()).isTrue();
+    }
+
+    @Test
+    void persistsEmailSettings() {
+        EmailSettings settings = new EmailSettings();
+        settings.setProductName("Acme Identity");
+        settings.setAccentColor("#2563EB");
+        settings.setMagicLinkEnabled(true);
+        settings.setMagicLinkTtlMinutes(20);
+
+        EmailSettings saved = emailSettingsRepository.save(settings);
+
+        EmailSettings found = emailSettingsRepository
+                .findByConfigKey(EmailSettings.SINGLETON_KEY)
+                .orElseThrow();
+        assertThat(found.getId()).isEqualTo(saved.getId());
+        assertThat(found.isMagicLinkEnabled()).isTrue();
+        assertThat(found.getMagicLinkTtlMinutes()).isEqualTo(20);
+    }
+
+    @Test
+    void persistsMagicLinkToken() {
+        MagicLinkToken token = new MagicLinkToken(
+                "a".repeat(64),
+                "someone@example.com",
+                MagicLinkPurpose.SIGN_UP,
+                java.time.Instant.now().plusSeconds(600),
+                "127.0.0.1");
+
+        MagicLinkToken saved = magicLinkTokenRepository.save(token);
+
+        MagicLinkToken found = magicLinkTokenRepository.findByTokenHash("a".repeat(64)).orElseThrow();
+        assertThat(found.getId()).isEqualTo(saved.getId());
+        assertThat(found.getPurpose()).isEqualTo(MagicLinkPurpose.SIGN_UP);
+        assertThat(found.isRedeemable(java.time.Instant.now())).isTrue();
+    }
+
+    @Test
+    void persistsKnownDevice() {
+        java.util.UUID userId = java.util.UUID.randomUUID();
+        KnownDevice device = new KnownDevice(
+                userId, "b".repeat(64), "Chrome on macOS", java.time.Instant.now());
+        device.setLastIpAddress("203.0.113.42");
+
+        KnownDevice saved = knownDeviceRepository.save(device);
+
+        KnownDevice found = knownDeviceRepository
+                .findByUserIdAndDeviceHash(userId, "b".repeat(64))
+                .orElseThrow();
+        // The UUID round-trip through VARCHAR(36) is the part only a read can prove.
+        assertThat(found.getId()).isEqualTo(saved.getId());
+        assertThat(found.getUserId()).isEqualTo(userId);
+        assertThat(found.getDeviceLabel()).isEqualTo("Chrome on macOS");
     }
 
     @Test

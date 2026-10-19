@@ -1,0 +1,108 @@
+<!doctype html>
+<!--/*
+  Pieces shared by more than one message. Each is a dozen lines of inline style that must stay
+  byte-identical across templates to look like one product, which is exactly the thing to define
+  once rather than copy five times.
+*/-->
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--/*
+  Primary call to action.
+
+  The nested VML is the "bulletproof button" pattern: Outlook on Windows ignores padding on an <a>,
+  so the link alone would render as bare underlined text with no button around it. The conditional
+  comment draws a rounded rectangle Outlook does understand; every other client skips it and uses
+  the styled anchor. Background is fixed ink-900 rather than the configured accent — see the note
+  in _layout.html on why a button's background is not configurable.
+*/-->
+<table role="presentation" th:fragment="button(url, label)" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 8px;">
+  <tr>
+    <td align="center" style="border-radius:10px; background-color:#18181b;">
+      <!--[if mso]>
+      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word"
+                   th:attr="href=${url}" style="height:46px; v-text-anchor:middle; width:260px;" arcsize="22%" stroke="f" fillcolor="#18181b">
+        <w:anchorlock/>
+        <center style="color:#ffffff; font-family:'Segoe UI',Arial,sans-serif; font-size:15px; font-weight:600;" th:text="${label}">Continue</center>
+      </v:roundrect>
+      <![endif]-->
+      <!--[if !mso]><!-- -->
+      <a th:href="${url}" th:text="${label}"
+         style="display:inline-block; padding:14px 30px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:15px; font-weight:600; line-height:18px; color:#ffffff; text-decoration:none; border-radius:10px; background-color:#18181b;">Continue</a>
+      <!--<![endif]-->
+    </td>
+  </tr>
+</table>
+
+<!--/*
+  Where and when a sign-in happened. A bordered block rather than prose: the recipient's whole job
+  on receiving this is to decide "was that me?", and a scannable list of four facts answers that
+  faster than a sentence containing them.
+*/-->
+<table role="presentation" th:fragment="signInDetails" width="100%" cellpadding="0" cellspacing="0" border="0"
+       style="margin:0 0 24px; background-color:#fafafa; border:1px solid #e4e4e7; border-radius:10px;">
+  <tr>
+    <td style="padding:18px 20px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+             style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+        <tr>
+          <td width="34%" style="padding:0 0 8px; font-size:12px; line-height:18px; color:#71717a; vertical-align:top;">Device</td>
+          <td class="detail-value" style="padding:0 0 8px; font-size:13px; line-height:18px; font-weight:600; color:#18181b; vertical-align:top;"
+              th:text="${deviceLabel} ?: 'Unknown device'">Chrome on macOS</td>
+        </tr>
+        <tr>
+          <td width="34%" style="padding:0 0 8px; font-size:12px; line-height:18px; color:#71717a; vertical-align:top;">When</td>
+          <td class="detail-value" style="padding:0 0 8px; font-size:13px; line-height:18px; font-weight:600; color:#18181b; vertical-align:top;"
+              th:text="${occurredAt}">1 January 2026 at 09:14 UTC</td>
+        </tr>
+        <tr th:if="${hasLocation}">
+          <td width="34%" style="padding:0 0 8px; font-size:12px; line-height:18px; color:#71717a; vertical-align:top;">Near</td>
+          <td class="detail-value" style="padding:0 0 8px; font-size:13px; line-height:18px; font-weight:600; color:#18181b; vertical-align:top;"
+              th:text="${location}">Bengaluru, India</td>
+        </tr>
+        <tr>
+          <td width="34%" style="padding:0; font-size:12px; line-height:18px; color:#71717a; vertical-align:top;">IP address</td>
+          <!--/* Monospaced so an operator comparing it against a log can read it a character at a
+                 time without transposing digits. */-->
+          <td class="detail-value" style="padding:0; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:13px; line-height:18px; color:#3f3f46; vertical-align:top;"
+              th:text="${ipAddress} ?: 'Unknown'">203.0.113.42</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<!--/*
+  Marks a message sent from the admin console's preview button. Previews go to a real mailbox, and a
+  new-device security alert that arrives looking entirely genuine is alarming to receive by
+  surprise — so it says what it is, in the body as well as the subject.
+*/-->
+<table role="presentation" th:fragment="previewBanner" width="100%" cellpadding="0" cellspacing="0" border="0"
+       style="margin:0 0 24px; background-color:#fff8ed; border:1px solid #fedba8; border-radius:10px;">
+  <tr>
+    <td style="padding:12px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:12px; line-height:18px; color:#9a3412;">
+      <strong style="font-weight:600;">Preview.</strong>
+      Sent from the admin console with sample details. Nothing happened on your account.
+    </td>
+  </tr>
+</table>
+
+<!--/*
+  The "if this wasn't you" closer on security mail. Deliberately specific about what to do: an
+  alert that worries someone without telling them the next step is worse than no alert, because the
+  one action that actually helps — change the password, which invalidates nothing else on its own —
+  is not obvious under stress.
+*/-->
+<table role="presentation" th:fragment="securityFooter" width="100%" cellpadding="0" cellspacing="0" border="0"
+       style="margin:8px 0 0; border-top:1px solid #e4e4e7;">
+  <tr>
+    <td style="padding:20px 0 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:13px; line-height:21px; color:#52525b;">
+      <strong style="color:#18181b; font-weight:600;">If this wasn't you</strong>, change your password now and
+      review your active sessions — both are under Settings once you sign in. If you cannot sign in,
+      contact an administrator straight away.
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>

@@ -147,6 +147,22 @@ app:
     read-timeout: 10s
     write-timeout: 10s
 
+  magic-link:
+    # Abuse controls for passwordless sign-in. Whether magic links are ON, and how long one lives,
+    # are set by an administrator in Settings -> Email templates; these stay properties so turning
+    # the feature on in the console cannot also loosen them.
+    #
+    # The per-address cap does a job the per-IP rate limiter cannot: an attacker rotating source
+    # addresses to flood one person's mailbox never trips a per-IP bucket, because every request
+    # comes from somewhere new.
+    max-per-address-per-window: 5
+    window: 15m
+    # How long consumed and expired tokens are kept before the purge job deletes them. Not zero:
+    # the tail is what lets an administrator answer "was a link issued for this address?" after an
+    # incident report.
+    retention: 7d
+    purge-cron: "0 20 * * * *"
+
   analytics:
     retention:
       # login_events gains a row on every sign-in attempt. Deletes entries older than 48 hours.
@@ -169,6 +185,10 @@ app:
       "[/oauth2/token]": { capacity: 30, per-minute: 120 }
       # Unauthenticated app-connect submissions and redeems; a real app needs a handful.
       "[/api/external/connect/]": { capacity: 10, per-minute: 10 }
+      # Magic-link requests send mail to an address the caller chose, which makes an unlimited
+      # endpoint a mail-flood tool aimed at third parties and a way to burn a relay's reputation.
+      # Tight on purpose: a real user asks for one link, occasionally two.
+      "[/api/public/magic-link/request]": { capacity: 3, per-minute: 5 }
 
   connect:
     # "Connect with Portal SSO": apps register themselves, an administrator approves at
