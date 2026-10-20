@@ -62,6 +62,7 @@ public class EmailTemplateRenderer {
             // is a sign-in link they do not click.
             case MAGIC_LINK_SIGN_IN -> "Your sign-in link for " + product;
             case MAGIC_LINK_SIGN_UP -> "Finish creating your " + product + " account";
+            case PASSWORD_RESET -> "Reset your " + product + " password";
         };
     }
 

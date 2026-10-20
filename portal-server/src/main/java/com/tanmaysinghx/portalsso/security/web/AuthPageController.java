@@ -2,11 +2,12 @@ package com.tanmaysinghx.portalsso.security.web;
 
 import com.tanmaysinghx.portalsso.client.entity.OAuthClient;
 import com.tanmaysinghx.portalsso.client.repository.OAuthClientRepository;
-import com.tanmaysinghx.portalsso.security.PortalUserDetailsService;
 import com.tanmaysinghx.portalsso.common.web.ClientIpResolver;
 import com.tanmaysinghx.portalsso.security.magiclink.service.MagicLinkService;
 import com.tanmaysinghx.portalsso.security.mfa.MfaAuthenticationSuccessHandler;
 import com.tanmaysinghx.portalsso.security.mfa.MfaService;
+import com.tanmaysinghx.portalsso.security.passwordreset.service.PasswordResetService;
+import com.tanmaysinghx.portalsso.security.signin.SignInCompletion;
 import com.tanmaysinghx.portalsso.user.entity.User;
 import com.tanmaysinghx.portalsso.user.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,13 +24,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.authentication.event.AuthenticationFailureBadCredentialsEvent;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsent;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
-import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.http.MediaType;
@@ -57,26 +54,28 @@ public class AuthPageController {
     private final OAuth2AuthorizationConsentService consentService;
     private final MfaService mfaService;
     private final UserRepository userRepository;
-    private final PortalUserDetailsService userDetailsService;
     private final ApplicationEventPublisher eventPublisher;
     private final MagicLinkService magicLinkService;
-    private final SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
+    private final SignInCompletion signInCompletion;
+    private final PasswordResetService passwordResetService;
 
     public AuthPageController(
             OAuthClientRepository clientRepository,
             OAuth2AuthorizationConsentService consentService,
             MfaService mfaService,
             UserRepository userRepository,
-            PortalUserDetailsService userDetailsService,
             ApplicationEventPublisher eventPublisher,
-            MagicLinkService magicLinkService) {
+            MagicLinkService magicLinkService,
+            SignInCompletion signInCompletion,
+            PasswordResetService passwordResetService) {
         this.clientRepository = clientRepository;
         this.consentService = consentService;
         this.mfaService = mfaService;
         this.userRepository = userRepository;
-        this.userDetailsService = userDetailsService;
         this.eventPublisher = eventPublisher;
         this.magicLinkService = magicLinkService;
+        this.signInCompletion = signInCompletion;
+        this.passwordResetService = passwordResetService;
     }
 
     @GetMapping("/login")
@@ -118,6 +117,7 @@ public class AuthPageController {
         model.addAttribute("magicLinkEnabled", magicLinkService.isEnabled());
         model.addAttribute("magicLinkSent", "sent".equals(link));
         model.addAttribute("magicLinkFailed", "error".equals(link));
+        model.addAttribute("passwordResetAvailable", passwordResetService.isAvailable());
 
         resolveClientFromSavedRequest(request, response)
                 .ifPresent(client -> {
@@ -212,26 +212,13 @@ public class AuthPageController {
             return "redirect:/mfa-challenge?error";
         }
 
-        // MFA Verified: upgrade session to full authenticated state
-        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-        Authentication authentication = new UsernamePasswordAuthenticationToken(
-                userDetails, null, userDetails.getAuthorities());
-
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(authentication);
-        SecurityContextHolder.setContext(context);
-        securityContextRepository.saveContext(context, request, response);
-
+        // MFA verified: upgrade to a full sign-in (new session id, context saved, and the
+        // remember-me cookie issued now if it was asked for) and resume the saved request.
         session.removeAttribute(MfaAuthenticationSuccessHandler.MFA_PRE_AUTH_EMAIL_ATTR);
-        eventPublisher.publishEvent(new AuthenticationSuccessEvent(authentication));
-
-        // Follow saved request (e.g. from /oauth2/authorize) or land on root
-        SavedRequest saved = new HttpSessionRequestCache().getRequest(request, response);
-        if (saved != null) {
-            return "redirect:" + saved.getRedirectUrl();
-        }
-
-        return "redirect:/";
+        String target = signInCompletion.complete(request, response, email);
+        eventPublisher.publishEvent(
+                new AuthenticationSuccessEvent(SecurityContextHolder.getContext().getAuthentication()));
+        return "redirect:" + target;
     }
 
     @GetMapping("/oauth2/consent")

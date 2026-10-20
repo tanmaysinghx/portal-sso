@@ -9,6 +9,10 @@ export interface PasswordPolicy {
   requireLowercase: boolean;
   requireDigit: boolean;
   requireSymbol: boolean;
+  /** Days a password lasts before it must be changed; 0 means passwords never expire. */
+  maxAgeDays: number;
+  /** How many days ahead of expiry to start warning. */
+  expiryWarningDays: number;
 }
 
 export interface Account {
@@ -24,6 +28,9 @@ export interface Account {
   mfaAvailable: boolean;
   recoveryCodesRemaining: number;
   passwordPolicy: PasswordPolicy;
+  passwordChangedAt: string | null;
+  /** Null when expiry is switched off. */
+  passwordExpiresAt: string | null;
 }
 
 export interface KnownDevice {
@@ -82,4 +89,42 @@ export function passwordChecklist(policy: PasswordPolicy, value: string): { labe
   if (policy.requireDigit) rules.push({ label: 'A number', met: /\d/.test(value) });
   if (policy.requireSymbol) rules.push({ label: 'A symbol', met: /[^\p{L}\p{N}\s]/u.test(value) });
   return rules;
+}
+
+export type PasswordExpiryState = 'never' | 'ok' | 'warning' | 'expired';
+
+export interface PasswordExpiry {
+  state: PasswordExpiryState;
+  /** Whole days until expiry, rounded up so "expires in 1 day" means "before this time tomorrow". */
+  daysLeft: number | null;
+  /** Days since the password was set, rounded down. */
+  ageDays: number | null;
+  /** 0–1 share of the allowed lifetime already used; null when expiry is off. */
+  usedFraction: number | null;
+  /** Short human phrasing: "Expires in 12 days", "Expires today", "Expired". */
+  label: string;
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Everything the console says about when a password expires, from the account and the clock. */
+export function passwordExpiry(account: Account, now: Date = new Date()): PasswordExpiry {
+  const changed = account.passwordChangedAt ? new Date(account.passwordChangedAt).getTime() : null;
+  const ageDays = changed === null ? null : Math.max(0, Math.floor((now.getTime() - changed) / DAY_MS));
+
+  if (!account.passwordExpiresAt) {
+    return { state: 'never', daysLeft: null, ageDays, usedFraction: null, label: 'Never expires' };
+  }
+
+  const msLeft = new Date(account.passwordExpiresAt).getTime() - now.getTime();
+  const maxAgeMs = account.passwordPolicy.maxAgeDays * DAY_MS;
+  const usedFraction = maxAgeMs > 0 ? Math.min(1, Math.max(0, 1 - msLeft / maxAgeMs)) : null;
+
+  if (msLeft <= 0) {
+    return { state: 'expired', daysLeft: 0, ageDays, usedFraction: 1, label: 'Expired' };
+  }
+  const daysLeft = Math.ceil(msLeft / DAY_MS);
+  const state: PasswordExpiryState = daysLeft <= account.passwordPolicy.expiryWarningDays ? 'warning' : 'ok';
+  const label = msLeft < DAY_MS ? 'Expires today' : `Expires in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`;
+  return { state, daysLeft, ageDays, usedFraction, label };
 }

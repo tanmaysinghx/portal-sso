@@ -39,3 +39,7 @@ databaseChangeLog:
       file: db/changelog/changes/019-create-magic-link-tokens-table.yaml
   - include:
       file: db/changelog/changes/020-create-user-known-devices-table.yaml
+  - include:
+      file: db/changelog/changes/021-add-password-changed-at-to-users.yaml
+  - include:
+      file: db/changelog/changes/022-create-password-reset-tokens-table.yaml

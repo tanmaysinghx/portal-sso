@@ -36,13 +36,28 @@
         </div>
 
         <!-- At-a-glance security posture -->
-        <dl class="grid grid-cols-3 gap-2 sm:w-auto sm:gap-3">
+        <dl class="grid grid-cols-2 gap-2 sm:w-auto sm:grid-cols-4 sm:gap-3">
           <div class="rounded-xl bg-ink-50 px-3 py-2.5">
             <dt class="text-[10px] font-semibold uppercase tracking-wider text-ink-500">2FA</dt>
             <dd class="mt-0.5 text-sm font-semibold" [class]="a.mfaEnabled ? 'text-emerald-700' : 'text-amber-700'">
               {{ a.mfaEnabled ? 'On' : 'Off' }}
             </dd>
           </div>
+          @if (expiry(); as e) {
+            <div class="rounded-xl bg-ink-50 px-3 py-2.5">
+              <dt class="text-[10px] font-semibold uppercase tracking-wider text-ink-500">Password</dt>
+              <dd
+                class="mt-0.5 text-sm font-semibold"
+                [class]="e.state === 'expired' ? 'text-red-700' : e.state === 'warning' ? 'text-amber-700' : 'text-ink-900'"
+              >
+                @switch (e.state) {
+                  @case ('never') { {{ e.ageDays === null ? '—' : e.ageDays + 'd old' }} }
+                  @case ('expired') { Expired }
+                  @default { {{ e.daysLeft }} day{{ e.daysLeft === 1 ? '' : 's' }} left }
+                }
+              </dd>
+            </div>
+          }
           <div class="rounded-xl bg-ink-50 px-3 py-2.5">
             <dt class="text-[10px] font-semibold uppercase tracking-wider text-ink-500">Member since</dt>
             <dd class="mt-0.5 text-sm font-semibold text-ink-900">{{ a.createdAt ? (a.createdAt | date: 'MMM y') : '—' }}</dd>
@@ -53,6 +68,33 @@
           </div>
         </dl>
       </div>
+
+      @if (expiry(); as e) {
+        @if (e.state === 'warning' || e.state === 'expired') {
+          <div
+            class="mt-5 flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between"
+            [class]="e.state === 'expired' ? 'border-red-200 bg-red-50/80' : 'border-amber-200 bg-amber-50/80'"
+            role="status"
+          >
+            <p class="text-xs leading-relaxed" [class]="e.state === 'expired' ? 'text-red-900' : 'text-amber-900'">
+              <span class="font-semibold">
+                {{ e.state === 'expired' ? 'Your password has expired.' : 'Your password ' + e.label.toLowerCase() + '.' }}
+              </span>
+              {{ e.state === 'expired'
+                ? 'You will be asked to change it the next time you sign in with it.'
+                : 'After that you will have to change it before you can sign in.' }}
+            </p>
+            <button
+              type="button"
+              (click)="scrollTo('password')"
+              class="shrink-0 rounded-lg px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition"
+              [class]="e.state === 'expired' ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-600 hover:bg-amber-700'"
+            >
+              Change it now
+            </button>
+          </div>
+        }
+      }
 
       @if (!a.mfaEnabled && a.mfaAvailable) {
         <div class="mt-5 flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50/80 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -160,6 +202,54 @@
             <h2 class="text-sm font-semibold text-ink-900">Password</h2>
             <p class="text-xs text-ink-500">Changing it signs you out everywhere else.</p>
           </header>
+          @if (expiry(); as e) {
+            <div class="border-b border-ink-100 px-5 py-4 sm:px-6">
+              <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-xs">
+                <p class="text-ink-600">
+                  Last changed
+                  <strong class="font-semibold text-ink-900">
+                    {{ e.ageDays === 0 ? 'today' : e.ageDays === 1 ? 'yesterday' : e.ageDays + ' days ago' }}
+                  </strong>
+                  @if (a.passwordChangedAt) {
+                    <span class="text-ink-400">({{ a.passwordChangedAt | date: 'MMM d, y' }})</span>
+                  }
+                </p>
+                @if (e.state === 'never') {
+                  <p class="text-ink-500">Passwords on this server don't expire.</p>
+                } @else {
+                  <p
+                    class="font-semibold"
+                    [class]="e.state === 'expired' ? 'text-red-700' : e.state === 'warning' ? 'text-amber-700' : 'text-ink-900'"
+                  >
+                    {{ e.label }}
+                    @if (a.passwordExpiresAt && e.state !== 'expired') {
+                      <span class="font-normal text-ink-400">· {{ a.passwordExpiresAt | date: 'MMM d, y' }}</span>
+                    }
+                  </p>
+                }
+              </div>
+              @if (e.usedFraction !== null) {
+                <div
+                  class="mt-2.5 h-1.5 overflow-hidden rounded-full bg-ink-100"
+                  role="progressbar"
+                  aria-label="Password lifetime used"
+                  [attr.aria-valuenow]="e.ageDays"
+                  aria-valuemin="0"
+                  [attr.aria-valuemax]="a.passwordPolicy.maxAgeDays"
+                  [attr.aria-valuetext]="e.label"
+                >
+                  <div
+                    class="h-full rounded-full transition-all"
+                    [class]="e.state === 'expired' ? 'bg-red-500' : e.state === 'warning' ? 'bg-amber-500' : 'bg-emerald-500'"
+                    [style.width.%]="e.usedFraction * 100"
+                  ></div>
+                </div>
+                <p class="mt-1.5 text-[11px] text-ink-400">
+                  Passwords last {{ a.passwordPolicy.maxAgeDays }} days here. You'll be reminded {{ a.passwordPolicy.expiryWarningDays }} days before.
+                </p>
+              }
+            </div>
+          }
           <form class="p-5 sm:p-6" (ngSubmit)="changePassword()">
             <!-- Hidden username lets password managers file the new password under the right account. -->
             <input type="email" name="username" autocomplete="username" [value]="a.email" class="hidden" aria-hidden="true" tabindex="-1" />

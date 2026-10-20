@@ -184,15 +184,23 @@ class MfaChallengeIntegrationTest {
         long now = Instant.now().getEpochSecond();
         String validCode = totpService.generateCode(secret, now);
 
-        mockMvc.perform(post("/mfa-challenge")
+        MvcResult verified = mockMvc.perform(post("/mfa-challenge")
                         .cookie(sessionCookie)
                         .param("code", validCode)
                         .with(csrf()))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/"));
+                .andExpect(redirectedUrl("/"))
+                .andReturn();
+
+        // The session id is rotated as the sign-in completes, so the id seen before the second
+        // factor is worthless after it.
+        Cookie rotated = verified.getResponse().getCookie("SESSION");
+        assertThat(rotated).isNotNull();
+        assertThat(rotated.getValue()).isNotEqualTo(sessionCookie.getValue());
+        mockMvc.perform(get("/api/admin/me").cookie(sessionCookie)).andExpect(status().isUnauthorized());
 
         // Now fully authenticated: can access /api/admin/me
-        mockMvc.perform(get("/api/admin/me").cookie(sessionCookie))
+        mockMvc.perform(get("/api/admin/me").cookie(rotated))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value(USER_EMAIL));
     }

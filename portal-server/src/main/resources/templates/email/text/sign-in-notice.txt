@@ -13,7 +13,7 @@ YOU SIGNED IN
 [/]  IP address: [(${ipAddress} ?: 'Unknown')]
 
 IF THIS WASN'T YOU
-Change your password now and review your active sessions; both are under Settings
+Change your password now and review your active sessions; both are under My Account
 once you sign in. If you cannot sign in, contact an administrator straight away.
 
 --

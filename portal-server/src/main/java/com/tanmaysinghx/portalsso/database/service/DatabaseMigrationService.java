@@ -62,7 +62,9 @@ public class DatabaseMigrationService {
             "user_known_devices",
             // Outstanding magic links keep working across the move, and the retention tail that
             // answers "was a link issued for this address?" survives with them.
-            "magic_link_tokens");
+            "magic_link_tokens",
+            // Same reasoning: a reset link emailed just before the move still works after it.
+            "password_reset_tokens");
 
     private final DataSource activeDataSource;
 

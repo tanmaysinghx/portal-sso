@@ -15,17 +15,13 @@ import com.tanmaysinghx.portalsso.security.device.DeviceSignature;
 import com.tanmaysinghx.portalsso.security.magiclink.entity.MagicLinkPurpose;
 import com.tanmaysinghx.portalsso.security.magiclink.entity.MagicLinkToken;
 import com.tanmaysinghx.portalsso.security.magiclink.repository.MagicLinkTokenRepository;
+import com.tanmaysinghx.portalsso.security.token.OpaqueTokens;
 import com.tanmaysinghx.portalsso.user.entity.Role;
 import com.tanmaysinghx.portalsso.user.entity.User;
 import com.tanmaysinghx.portalsso.user.repository.RoleRepository;
 import com.tanmaysinghx.portalsso.user.repository.UserRepository;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.Locale;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -71,8 +67,6 @@ public class MagicLinkService {
 
     private static final Logger log = LoggerFactory.getLogger(MagicLinkService.class);
 
-    private static final int TOKEN_BYTES = 32;
-
     private final MagicLinkTokenRepository tokenRepository;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
@@ -83,7 +77,6 @@ public class MagicLinkService {
     private final MagicLinkProperties magicLinkProperties;
     private final PasswordEncoder passwordEncoder;
     private final AuditService auditService;
-    private final SecureRandom secureRandom = new SecureRandom();
 
     public MagicLinkService(
             MagicLinkTokenRepository tokenRepository,
@@ -175,10 +168,10 @@ public class MagicLinkService {
         // Supersede anything outstanding before minting a replacement.
         tokenRepository.consumeAllOutstandingFor(email, now);
 
-        String token = generateToken();
+        String token = OpaqueTokens.generate();
         int ttlMinutes = settings.getMagicLinkTtlMinutes();
         tokenRepository.save(new MagicLinkToken(
-                hash(token), email, purpose, now.plus(Duration.ofMinutes(ttlMinutes)), requesterIp));
+                OpaqueTokens.hash(token), email, purpose, now.plus(Duration.ofMinutes(ttlMinutes)), requesterIp));
 
         String linkUrl = emailSettingsService.currentBranding().portalUrl()
                 + "/magic-link?token=" + token;
@@ -235,8 +228,8 @@ public class MagicLinkService {
         }
 
         Instant now = Instant.now();
-        MagicLinkToken token = tokenRepository.findByTokenHash(hash(rawToken))
-                .filter(candidate -> constantTimeEquals(candidate.getTokenHash(), hash(rawToken)))
+        MagicLinkToken token = tokenRepository.findByTokenHash(OpaqueTokens.hash(rawToken))
+                .filter(candidate -> OpaqueTokens.constantTimeEquals(candidate.getTokenHash(), OpaqueTokens.hash(rawToken)))
                 .orElseThrow(() -> new BusinessRuleViolationException(
                         ErrorCode.MAGIC_LINK_INVALID, "This sign-in link is not valid."));
 
@@ -305,7 +298,7 @@ public class MagicLinkService {
         // would be a shared known plaintext across every such account. Password sign-in is
         // therefore impossible for this account until an administrator sets one, which is the
         // intended behaviour rather than a gap.
-        User user = new User(email, passwordEncoder.encode(generateToken()));
+        User user = new User(email, passwordEncoder.encode(OpaqueTokens.generate()));
         user.setEnabled(true);
         user.addRole(role);
         User saved = userRepository.save(user);
@@ -332,39 +325,8 @@ public class MagicLinkService {
                 >= magicLinkProperties.maxPerAddressPerWindow();
     }
 
-    private String generateToken() {
-        byte[] bytes = new byte[TOKEN_BYTES];
-        secureRandom.nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-    }
-
     private static String normalize(String email) {
         return email == null ? "" : email.strip().toLowerCase(Locale.ROOT);
-    }
-
-    private static String hash(String token) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] bytes = digest.digest(token.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hex = new StringBuilder(bytes.length * 2);
-            for (byte b : bytes) {
-                hex.append(Character.forDigit((b >> 4) & 0xF, 16));
-                hex.append(Character.forDigit(b & 0xF, 16));
-            }
-            return hex.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 is unavailable", e);
-        }
-    }
-
-    /**
-     * The lookup is already by indexed hash, so this does not decide which row is found. It is here
-     * so the final accept/reject does not short-circuit on the first differing byte, keeping
-     * response timing uninformative about how much of a hash was correct.
-     */
-    private static boolean constantTimeEquals(String a, String b) {
-        return MessageDigest.isEqual(
-                a.getBytes(StandardCharsets.UTF_8), b.getBytes(StandardCharsets.UTF_8));
     }
 
     /**

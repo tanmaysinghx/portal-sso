@@ -131,6 +131,13 @@ app:
       require-lowercase: true
       require-digit: true
       require-symbol: false
+      # Password expiry. A password older than this must be changed at the next password sign-in,
+      # and My Account counts down to it. 0 turns expiry off. NIST 800-63B advises against forced
+      # rotation (it breeds Summer2024! -> Autumn2024!); it is here because many compliance regimes
+      # still require it. Existing accounts start their clock when this version is first deployed.
+      max-age-days: ${APP_SECURITY_PASSWORD_MAX_AGE_DAYS:90}
+      # How many days before expiry the console starts warning.
+      expiry-warning-days: ${APP_SECURITY_PASSWORD_EXPIRY_WARNING_DAYS:14}
 
   mail:
     # Outbound email. Host, port, credentials, TLS mode and the From address are NOT here: an
@@ -163,6 +170,15 @@ app:
     retention: 7d
     purge-cron: "0 20 * * * *"
 
+  password-reset:
+    # "Forgot password?" links. Offered only while an SMTP relay is configured.
+    ttl: 30m
+    # Per-address cap, alongside the per-IP rate limit below; see app.magic-link for why both.
+    max-per-address-per-window: 3
+    window: 15m
+    retention: 7d
+    purge-cron: "0 25 * * * *"
+
   analytics:
     retention:
       # login_events gains a row on every sign-in attempt. Deletes entries older than 48 hours.
@@ -194,6 +210,10 @@ app:
       "[/api/user/account/password]": { capacity: 5, per-minute: 5 }
       "[/api/user/account/recovery-codes]": { capacity: 5, per-minute: 5 }
       "[/api/mfa/disable]": { capacity: 5, per-minute: 5 }
+      # Forgot-password emails go to an address the caller chose, like magic links.
+      "[/api/public/password-reset/request]": { capacity: 3, per-minute: 5 }
+      "[/api/public/password-reset/confirm]": { capacity: 10, per-minute: 10 }
+      "[/password-expired]": { capacity: 10, per-minute: 10 }
 
   connect:
     # "Connect with Portal SSO": apps register themselves, an administrator approves at

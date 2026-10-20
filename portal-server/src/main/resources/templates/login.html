@@ -149,7 +149,9 @@
 
         <!-- Okta-style left-aligned footer links -->
         <div class="footer-links">
-          <a href="/login?help=forgot">Forgot password?</a>
+          <!-- ?from=login sends "back to sign in" here rather than to the console's sign-in page, so a
+               user in the middle of an OAuth sign-in returns to it with the saved request intact. -->
+          <a th:if="${passwordResetAvailable}" href="/forgot-password?from=login">Forgot password?</a>
           <a href="/login?help=support">Help</a>
         </div>
       </div>

@@ -346,6 +346,15 @@
                     Keep me signed in
                   </span>
                 </label>
+                @if (passwordResetAvailable()) {
+                  <a
+                    routerLink="/forgot-password"
+                    class="text-xs font-medium underline-offset-2 hover:underline"
+                    [class]="themeService.isDark() ? 'text-ink-300 hover:text-white' : 'text-slate-700 hover:text-slate-950'"
+                  >
+                    Forgot password?
+                  </a>
+                }
               </div>
 
               <button

@@ -17,8 +17,8 @@ This link works once and expires in [(${expiresInMinutes})] minutes.
 
 An account here signs you in to every application your organisation has connected
 to [(${brand.productName})]. It is created without a password, so you sign in by
-asking for a link each time. You can add two-factor authentication under Settings,
-and an administrator can set a password for you if you would rather use one.
+asking for a link each time. You can add two-factor authentication under My Account,
+and if you would rather use a password, "Forgot password?" on the sign-in page sets one.
 
 --
 [(${brand.productName})] - [(${brand.portalUrl})]

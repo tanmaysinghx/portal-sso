@@ -1,5 +1,7 @@
 {
   "/api": { "target": "http://localhost:8080", "secure": false, "changeOrigin": true },
   "/login": { "target": "http://localhost:8080", "secure": false, "changeOrigin": true },
-  "/logout": { "target": "http://localhost:8080", "secure": false, "changeOrigin": true }
+  "/logout": { "target": "http://localhost:8080", "secure": false, "changeOrigin": true },
+  "/mfa-challenge": { "target": "http://localhost:8080", "secure": false, "changeOrigin": false },
+  "/password-expired": { "target": "http://localhost:8080", "secure": false, "changeOrigin": false }
 }

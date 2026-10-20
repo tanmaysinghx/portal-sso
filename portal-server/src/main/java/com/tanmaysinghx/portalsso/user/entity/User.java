@@ -50,6 +50,10 @@ public class User extends BaseEntity {
     @Column(name = "last_login_at")
     private Instant lastLoginAt;
 
+    /** When the current password was set; the clock for {@code app.security.password.max-age-days}. */
+    @Column(name = "password_changed_at", nullable = false)
+    private Instant passwordChangedAt;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "user_roles",
@@ -64,6 +68,7 @@ public class User extends BaseEntity {
     public User(String email, String passwordHash) {
         this.email = email;
         this.passwordHash = passwordHash;
+        this.passwordChangedAt = Instant.now();
     }
 
     public String getEmail() {
@@ -78,8 +83,17 @@ public class User extends BaseEntity {
         return passwordHash;
     }
 
+    /**
+     * Replaces the password and restarts its expiry clock. Every way a password gets set goes
+     * through here, so the age can never describe a password other than the current one.
+     */
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
+        this.passwordChangedAt = Instant.now();
+    }
+
+    public Instant getPasswordChangedAt() {
+        return passwordChangedAt;
     }
 
     public String getFirstName() {

@@ -11,6 +11,8 @@ import java.util.UUID;
  * @param mfaAvailable false when the server has no at-rest encryption key, so enrolment would fail.
  * @param recoveryCodesRemaining unused recovery codes; zero when MFA is off.
  * @param passwordPolicy the rules a new password must meet, so the form can show them up front.
+ * @param passwordChangedAt when the current password was set.
+ * @param passwordExpiresAt when it must next be changed; null when expiry is switched off.
  */
 public record AccountResponse(
         UUID id,
@@ -23,4 +25,6 @@ public record AccountResponse(
         boolean mfaEnabled,
         boolean mfaAvailable,
         int recoveryCodesRemaining,
-        PasswordPolicyDescription passwordPolicy) {}
+        PasswordPolicyDescription passwordPolicy,
+        Instant passwordChangedAt,
+        Instant passwordExpiresAt) {}

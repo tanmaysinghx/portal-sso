@@ -196,7 +196,9 @@ public class AccountService {
                 user.isMfaEnabled(),
                 mfaService.isAvailable(),
                 user.isMfaEnabled() ? mfaService.countUnusedRecoveryCodes(user) : 0,
-                passwordPolicy.describe());
+                passwordPolicy.describe(),
+                user.getPasswordChangedAt(),
+                passwordPolicy.expiresAt(user.getPasswordChangedAt()).orElse(null));
     }
 
     private User load(String email) {

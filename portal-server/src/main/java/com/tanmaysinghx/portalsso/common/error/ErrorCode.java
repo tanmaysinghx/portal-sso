@@ -86,6 +86,9 @@ public enum ErrorCode {
     MAGIC_LINK_INVALID("PRTL-4011", "This sign-in link is not valid.", HttpStatus.BAD_REQUEST),
     MAGIC_LINK_EXPIRED("PRTL-4012", "This sign-in link has expired. Request a new one.", HttpStatus.GONE),
     MAGIC_LINK_ALREADY_USED("PRTL-4013", "This sign-in link has already been used. Request a new one.", HttpStatus.GONE),
+    PASSWORD_RESET_INVALID("PRTL-4014", "This password reset link is not valid.", HttpStatus.BAD_REQUEST),
+    PASSWORD_RESET_EXPIRED("PRTL-4016", "This password reset link has expired. Request a new one.", HttpStatus.GONE),
+    PASSWORD_RESET_ALREADY_USED("PRTL-4017", "This password reset link has already been used. Request a new one.", HttpStatus.GONE),
 
     // =========================================================================
     // 5000 Series: Server, Database & Internal Errors

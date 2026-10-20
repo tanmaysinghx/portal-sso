@@ -35,6 +35,7 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import com.tanmaysinghx.portalsso.security.signin.PortalRememberMeServices;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -104,7 +105,7 @@ public class SecurityConfig {
     @Order(1)
     SecurityFilterChain authorizationServerSecurityFilterChain(
             HttpSecurity http,
-            PortalUserDetailsService userDetailsService,
+            PortalRememberMeServices rememberMeServices,
             @Value("${app.security.remember-me-key:portal-sso-remember-me-key-3b71e86a}") String rememberMeKey) throws Exception {
         // getEndpointsMatcher() defers to this exact instance's state, populated only once it is
         // init()-ed as part of http.build() — it must be the same instance wired in below via
@@ -135,11 +136,11 @@ public class SecurityConfig {
                 .exceptionHandling(exceptions -> exceptions.defaultAuthenticationEntryPointFor(
                         new LoginUrlAuthenticationEntryPoint("/login"), new MediaTypeRequestMatcher(MediaType.TEXT_HTML)))
                 .oauth2ResourceServer(resourceServer -> resourceServer.jwt(Customizer.withDefaults()))
+                // Shared bean (RememberMeConfig) so sign-in can hold the cookie back until any
+                // second step completes. The key must match the one the bean signs with.
                 .rememberMe(rememberMe -> rememberMe
-                        .userDetailsService(userDetailsService)
-                        .key(rememberMeKey)
-                        .tokenValiditySeconds(30 * 24 * 60 * 60)
-                        .rememberMeParameter("remember-me"));
+                        .rememberMeServices(rememberMeServices)
+                        .key(rememberMeKey));
 
         return http.build();
     }
@@ -161,7 +162,7 @@ public class SecurityConfig {
     @Order(3)
     SecurityFilterChain defaultSecurityFilterChain(
             HttpSecurity http,
-            PortalUserDetailsService userDetailsService,
+            PortalRememberMeServices rememberMeServices,
             com.tanmaysinghx.portalsso.security.mfa.MfaAuthenticationSuccessHandler mfaSuccessHandler,
             @Value("${app.security.remember-me-key:portal-sso-remember-me-key-3b71e86a}") String rememberMeKey) throws Exception {
         http.csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
@@ -184,6 +185,7 @@ public class SecurityConfig {
                         // It stays CSRF-protected like every other endpoint.
                         .requestMatchers(PathPatternRequestMatcher.pathPattern("/api/public/**")).permitAll()
                         .requestMatchers(PathPatternRequestMatcher.pathPattern("/mfa-challenge")).permitAll()
+                        .requestMatchers(PathPatternRequestMatcher.pathPattern("/password-expired")).permitAll()
                         .requestMatchers(PathPatternRequestMatcher.pathPattern("/api/**")).authenticated()
                         // The consent screen names the application and the signed-in user, so it is
                         // only meaningful — and only safe to render — for an authenticated session.
@@ -197,11 +199,11 @@ public class SecurityConfig {
                 // stock unstyled form; AuthPageController serves the branded one at the same path,
                 // so the POST target and CSRF handling are unchanged.
                 .formLogin(form -> form.loginPage("/login").successHandler(mfaSuccessHandler).permitAll())
+                // Shared bean (RememberMeConfig) so sign-in can hold the cookie back until any
+                // second step completes. The key must match the one the bean signs with.
                 .rememberMe(rememberMe -> rememberMe
-                        .userDetailsService(userDetailsService)
-                        .key(rememberMeKey)
-                        .tokenValiditySeconds(30 * 24 * 60 * 60)
-                        .rememberMeParameter("remember-me"));
+                        .rememberMeServices(rememberMeServices)
+                        .key(rememberMeKey));
 
         return http.build();
     }

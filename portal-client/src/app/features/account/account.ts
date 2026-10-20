@@ -2,7 +2,13 @@ import { DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { Account as AccountModel, AccountService, KnownDevice, passwordChecklist } from '../../core/services/account.service';
+import {
+  Account as AccountModel,
+  AccountService,
+  KnownDevice,
+  passwordChecklist,
+  passwordExpiry,
+} from '../../core/services/account.service';
 import { ADMIN_ROLE } from '../../core/models/current-user.model';
 import { MfaClientService } from '../../core/services/mfa.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
@@ -53,6 +59,12 @@ export class Account implements OnInit {
   readonly roleLabels = computed(() =>
     (this.account()?.roles ?? []).map((r) => (r === ADMIN_ROLE ? 'Administrator' : r.replace(/^ROLE_/, '').toLowerCase())),
   );
+
+  /** Countdown to the password's expiry, recomputed whenever the account reloads. */
+  readonly expiry = computed(() => {
+    const a = this.account();
+    return a ? passwordExpiry(a) : null;
+  });
 
   // Profile
   readonly firstName = signal('');
@@ -177,6 +189,7 @@ export class Account implements OnInit {
         this.currentPassword.set('');
         this.newPassword.set('');
         this.confirmPassword.set('');
+        this.loadAccount();
         const n = res.otherSessionsSignedOut;
         this.snackbar.success(
           'Password changed',

@@ -140,7 +140,13 @@ When modifying or adding code, you **MUST** uphold these rules:
 - `MagicLinkPageController` must keep rotating the session id (`request.changeSessionId()`) before granting authority, and must keep publishing `AuthenticationSuccessEvent` so the sign-in reaches `login_events`, the lockout reset and the new-device check like any other.
 - **`requestLink` must answer identically for every address**, including when the relay is unconfigured or failing. The deliverability check runs *before* the account lookup, and send failures are logged rather than returned, specifically to preserve that. Do not "improve" the error reporting here.
 
-### 6. Client IP Resolution
+### 6. Password Reset, Expiry & Second Steps
+- `PasswordResetService` owns "forgot password". It follows the magic-link rules (token primitives are shared in `security/token/OpaqueTokens` — never fork them): 256-bit token, only the SHA-256 stored, single use, short TTL, issuing cancels outstanding links, identical response for every address with the relay check *before* the lookup. A reset **sets the password and stops** — it never signs anyone in, so MFA is still asked at the next sign-in.
+- `User.setPasswordHash` is the only way to change a password: it also restarts `password_changed_at`, the clock for `app.security.password.max-age-days`.
+- Anything that must happen after the password step (expired password, MFA) is decided by `SecondStep` and finished by `SignInCompletion.complete`, which rotates the session id, saves the context and only then issues the remember-me cookie (`PortalRememberMeServices`). Never let a remember-me cookie be minted before a second step completes — it would be a full session that skipped it.
+- The console learns about a pending step from `GET /api/public/sign-in/pending`, not by following `/login`'s redirects.
+
+### 7. Client IP Resolution
 - Never inspect `X-Forwarded-For` raw headers directly in controllers. Always use `ClientIpResolver.getClientIp(request)`.
 - When deployed behind reverse proxies, `server.forward-headers-strategy=FRAMEWORK` handles trusted proxy resolution centrally.
 

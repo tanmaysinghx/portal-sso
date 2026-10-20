@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, catchError, of, switchMap, tap } from 'rxjs';
+import { NEVER, Observable, catchError, of, switchMap, tap } from 'rxjs';
 import { ADMIN_ROLE, CurrentUser } from '../models/current-user.model';
 
 /**
@@ -34,6 +34,10 @@ export class AuthService {
    * POST /login is form-login's endpoint, shared with the OAuth2 authorization_code flow's
    * server-rendered login page — its success/failure responses are redirect chains not meant
    * for a fetch client, so we deliberately ignore them and confirm the outcome via /me instead.
+   *
+   * When /me says "not signed in", the password may still have been right with a further step
+   * pending (an MFA challenge, or changing an expired password). The server is asked, and if so the
+   * browser goes to that step's page; this then never emits, rather than reporting a wrong password.
    */
   login(email: string, password: string, rememberMe = false): Observable<CurrentUser | null> {
     let body = new HttpParams().set('username', email).set('password', password);
@@ -47,7 +51,21 @@ export class AuthService {
       .pipe(
         catchError(() => of(null)),
         switchMap(() => this.loadCurrentUser()),
+        switchMap((user) => (user ? of(user) : this.continuePendingSignIn())),
       );
+  }
+
+  private continuePendingSignIn(): Observable<CurrentUser | null> {
+    return this.http.get<{ step: string | null; path: string | null }>('/api/public/sign-in/pending').pipe(
+      catchError(() => of({ step: null, path: null })),
+      switchMap((pending) => {
+        if (pending.path) {
+          window.location.assign(pending.path);
+          return NEVER;
+        }
+        return of(null);
+      }),
+    );
   }
 
   logout(): Observable<void> {

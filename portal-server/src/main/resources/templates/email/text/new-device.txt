@@ -15,7 +15,7 @@ sign in from a device it has not signed in from before.
 If that was you, nothing more is needed - this device will not be flagged again.
 
 IF THIS WASN'T YOU
-Change your password now and review your active sessions; both are under Settings
+Change your password now and review your active sessions; both are under My Account
 once you sign in. If you cannot sign in, contact an administrator straight away.
 
 A device is recognised by its browser and operating system, so a new browser on a

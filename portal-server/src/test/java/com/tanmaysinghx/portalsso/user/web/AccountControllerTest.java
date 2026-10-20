@@ -93,7 +93,11 @@ class AccountControllerTest {
                 .andExpect(jsonPath("$.mfaEnabled").value(false))
                 .andExpect(jsonPath("$.mfaAvailable").value(true))
                 .andExpect(jsonPath("$.recoveryCodesRemaining").value(0))
-                .andExpect(jsonPath("$.passwordPolicy.minLength").isNumber());
+                .andExpect(jsonPath("$.passwordPolicy.minLength").isNumber())
+                // The shipped default is a 90-day maximum age, counted from when the password was set.
+                .andExpect(jsonPath("$.passwordPolicy.maxAgeDays").value(90))
+                .andExpect(jsonPath("$.passwordChangedAt").isNotEmpty())
+                .andExpect(jsonPath("$.passwordExpiresAt").isNotEmpty());
     }
 
     @Test

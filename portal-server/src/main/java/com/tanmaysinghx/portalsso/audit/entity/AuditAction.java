@@ -74,7 +74,12 @@ public enum AuditAction {
     /** The previous set stops working, so this is a credential change like any other. */
     USER_RECOVERY_CODES_REGENERATED(TargetType.USER, "Recovery codes regenerated"),
     /** A remembered device was forgotten, so its next sign-in raises a new-device alert again. */
-    USER_DEVICE_FORGOTTEN(TargetType.USER, "Remembered device removed");
+    USER_DEVICE_FORGOTTEN(TargetType.USER, "Remembered device removed"),
+
+    /** A reset link was emailed. Recorded because it is a credential that can set the password. */
+    PASSWORD_RESET_REQUESTED(TargetType.USER, "Password reset requested"),
+    /** The password was set through an emailed reset link; every session is signed out with it. */
+    PASSWORD_RESET_COMPLETED(TargetType.USER, "Password reset by email link");
 
     /** What the action operates on. Stored so the log can be filtered by object as well as verb. */
     public enum TargetType {

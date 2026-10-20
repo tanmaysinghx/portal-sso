@@ -14,7 +14,7 @@ Sign in: [(${signInUrl})]
 
 TURN ON TWO-FACTOR AUTHENTICATION
 Your account unlocks every connected application, which makes it worth a second
-factor. It takes about a minute under Settings.
+factor. It takes about a minute under My Account.
 
 MISSING AN APPLICATION?
 Some apps are restricted. If you cannot see one you need, request access from

@@ -187,6 +187,10 @@ public class EmailSettings extends BaseEntity {
             // notification toggle: a link the user explicitly asked for is not a notification, and
             // suppressing it would break the flow rather than quieten it.
             case MAGIC_LINK_SIGN_IN, MAGIC_LINK_SIGN_UP -> magicLinkEnabled;
+            // Same reasoning, with no feature switch at all: the user asked for it, and a server
+            // that can send mail but refuses to send this one leaves forgotten passwords to an
+            // administrator for no benefit.
+            case PASSWORD_RESET -> true;
         };
     }
 }

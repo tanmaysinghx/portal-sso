@@ -91,6 +91,18 @@ public class NotificationService {
     }
 
     /**
+     * Sends a password-reset link. Synchronous and throwing, like {@link #sendMagicLink}; the
+     * caller decides what the user is told.
+     */
+    public void sendPasswordReset(
+            String email, String firstName, String linkUrl, int ttlMinutes, SignInDetails details) {
+        Map<String, Object> model = signInModel(firstName, details);
+        model.put("linkUrl", linkUrl);
+        model.put("expiresInMinutes", ttlMinutes);
+        send(EmailTemplateType.PASSWORD_RESET, email, model);
+    }
+
+    /**
      * Sends one template filled with sample data, ignoring the notification switches.
      *
      * <p>Synchronous and throwing: an administrator clicking "preview" is waiting for the answer,
@@ -103,8 +115,13 @@ public class NotificationService {
 
         Map<String, Object> model = signInModel("Alex", sample);
         model.put("signInUrl", branding.portalUrl() + "/sign-in");
-        model.put("linkUrl", branding.portalUrl() + "/magic-link?token=sample-preview-token");
-        model.put("expiresInMinutes", emailSettingsService.currentSettings().getMagicLinkTtlMinutes());
+        if (type == EmailTemplateType.PASSWORD_RESET) {
+            model.put("linkUrl", branding.portalUrl() + "/reset-password?token=sample-preview-token");
+            model.put("expiresInMinutes", 30);
+        } else {
+            model.put("linkUrl", branding.portalUrl() + "/magic-link?token=sample-preview-token");
+            model.put("expiresInMinutes", emailSettingsService.currentSettings().getMagicLinkTtlMinutes());
+        }
         // Marks the message in the body as well as the subject. Previews go to a real mailbox, and
         // a new-device alert that looks genuine is alarming to receive by surprise.
         model.put("preview", true);

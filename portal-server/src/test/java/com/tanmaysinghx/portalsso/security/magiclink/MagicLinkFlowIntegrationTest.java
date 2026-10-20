@@ -19,11 +19,11 @@ import com.tanmaysinghx.portalsso.security.magiclink.entity.MagicLinkPurpose;
 import com.tanmaysinghx.portalsso.security.magiclink.entity.MagicLinkToken;
 import com.tanmaysinghx.portalsso.security.magiclink.repository.MagicLinkTokenRepository;
 import com.tanmaysinghx.portalsso.security.magiclink.service.MagicLinkService;
+import com.tanmaysinghx.portalsso.security.token.OpaqueTokens;
 import com.tanmaysinghx.portalsso.user.entity.Role;
 import com.tanmaysinghx.portalsso.user.entity.User;
 import com.tanmaysinghx.portalsso.user.repository.RoleRepository;
 import com.tanmaysinghx.portalsso.user.repository.UserRepository;
-import java.lang.reflect.Method;
 import java.time.Instant;
 import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
@@ -139,15 +139,12 @@ class MagicLinkFlowIntegrationTest {
     }
 
     /**
-     * Mints a token the way the service does, returning the raw value. Reflection reaches the
-     * private hash so the test cannot accidentally encode a second, divergent definition of it —
-     * if the hashing changes, this follows rather than silently testing the old scheme.
+     * Mints a token the way the service does, returning the raw value. Uses the service's own
+     * hashing (OpaqueTokens) so the test cannot encode a second, divergent definition of it.
      */
     private String issueToken(String email, MagicLinkPurpose purpose, Instant expiresAt) throws Exception {
         String raw = "test-token-" + java.util.UUID.randomUUID();
-        Method hash = MagicLinkService.class.getDeclaredMethod("hash", String.class);
-        hash.setAccessible(true);
-        String hashed = (String) hash.invoke(null, raw);
+        String hashed = OpaqueTokens.hash(raw);
         tokenRepository.save(new MagicLinkToken(hashed, email, purpose, expiresAt, "127.0.0.1"));
         return raw;
     }

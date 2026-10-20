@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { BrandingService } from '../../../core/services/branding.service';
 import { MagicLinkService } from '../../../core/services/magic-link.service';
+import { PasswordResetService } from '../../../core/services/password-reset.service';
 import { RegistrationService } from '../../../core/services/registration.service';
 import { SetupService } from '../../../core/services/setup.service';
 import { ThemeService } from '../../../core/services/theme.service';
@@ -19,6 +20,7 @@ export class Login {
   private readonly registrationService = inject(RegistrationService);
   private readonly setupService = inject(SetupService);
   private readonly magicLinkService = inject(MagicLinkService);
+  private readonly passwordResetService = inject(PasswordResetService);
   readonly brandingService = inject(BrandingService);
   readonly themeService = inject(ThemeService);
 
@@ -27,6 +29,9 @@ export class Login {
 
   /** Drives the passwordless option — off unless an administrator has enabled it. */
   readonly magicLinkPolicy = this.magicLinkService.policy;
+
+  /** "Forgot password?" is offered only on a server that can send the reset email. */
+  readonly passwordResetAvailable = this.passwordResetService.available;
 
   /** Magic link request state. Separate from `error`/`successMessage` so a failed password
    *  attempt and a sent link cannot overwrite each other's banner. */
@@ -86,6 +91,7 @@ export class Login {
     });
 
     this.registrationService.loadPolicy().subscribe();
+    this.passwordResetService.loadPolicy().subscribe({ error: () => {} });
   }
 
   submit(): void {

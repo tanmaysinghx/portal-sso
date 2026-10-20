@@ -15,6 +15,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * mandating them at all in favour of length and breach-list checks. A breach list is the better
  * control and is not implemented here, so these defaults keep a modest composition floor and a
  * length minimum above the old 8.
+ *
+ * <p>{@code maxAgeDays} turns on password expiry. The same NIST guidance advises against forced
+ * periodic rotation, because it produces {@code Summer2024!} → {@code Autumn2024!}; it is offered
+ * because many compliance regimes still require it. An expired password is changed at the next
+ * password sign-in, before the account goes any further.
  */
 @ConfigurationProperties(prefix = "app.security.password")
 public record PasswordPolicyProperties(
@@ -23,7 +28,9 @@ public record PasswordPolicyProperties(
         Boolean requireUppercase,
         Boolean requireLowercase,
         Boolean requireDigit,
-        Boolean requireSymbol) {
+        Boolean requireSymbol,
+        Integer maxAgeDays,
+        Integer expiryWarningDays) {
 
     public PasswordPolicyProperties {
         if (minLength == null) minLength = 10;
@@ -34,5 +41,8 @@ public record PasswordPolicyProperties(
         if (requireLowercase == null) requireLowercase = true;
         if (requireDigit == null) requireDigit = true;
         if (requireSymbol == null) requireSymbol = false;
+        // 0 means passwords never expire.
+        if (maxAgeDays == null || maxAgeDays < 0) maxAgeDays = 0;
+        if (expiryWarningDays == null || expiryWarningDays < 0) expiryWarningDays = 14;
     }
 }

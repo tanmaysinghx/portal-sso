@@ -2,8 +2,11 @@ package com.tanmaysinghx.portalsso.security.password;
 
 import com.tanmaysinghx.portalsso.common.error.BusinessRuleViolationException;
 import com.tanmaysinghx.portalsso.common.error.ErrorCode;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.stereotype.Component;
 
 /** Enforces {@link PasswordPolicyProperties}. The single place a password is judged. */
@@ -58,6 +61,18 @@ public class PasswordPolicy {
         return failures;
     }
 
+    /** When a password set at {@code changedAt} expires, or empty when expiry is switched off. */
+    public Optional<Instant> expiresAt(Instant changedAt) {
+        if (properties.maxAgeDays() == 0 || changedAt == null) {
+            return Optional.empty();
+        }
+        return Optional.of(changedAt.plus(Duration.ofDays(properties.maxAgeDays())));
+    }
+
+    public boolean isExpired(Instant changedAt, Instant now) {
+        return expiresAt(changedAt).map(expiry -> !now.isBefore(expiry)).orElse(false);
+    }
+
     /** The rules in a form the sign-up page can display before the user types anything. */
     public PasswordPolicyDescription describe() {
         return new PasswordPolicyDescription(
@@ -66,14 +81,22 @@ public class PasswordPolicy {
                 properties.requireUppercase(),
                 properties.requireLowercase(),
                 properties.requireDigit(),
-                properties.requireSymbol());
+                properties.requireSymbol(),
+                properties.maxAgeDays(),
+                properties.expiryWarningDays());
     }
 
+    /**
+     * @param maxAgeDays days a password lasts before it must be changed; 0 means never.
+     * @param expiryWarningDays how far ahead of expiry the console starts warning.
+     */
     public record PasswordPolicyDescription(
             int minLength,
             int maxLength,
             boolean requireUppercase,
             boolean requireLowercase,
             boolean requireDigit,
-            boolean requireSymbol) {}
+            boolean requireSymbol,
+            int maxAgeDays,
+            int expiryWarningDays) {}
 }

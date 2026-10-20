@@ -33,7 +33,12 @@ public enum EmailTemplateType {
     MAGIC_LINK_SIGN_UP(
             "magic-link-sign-up",
             "Magic link sign-up",
-            "The passwordless registration link, which both proves the address and creates the account.");
+            "The passwordless registration link, which both proves the address and creates the account."),
+
+    PASSWORD_RESET(
+            "password-reset",
+            "Password reset",
+            "The single-use link sent when someone uses \"Forgot password?\". Always on while a relay is configured.");
 
     private final String template;
     private final String label;

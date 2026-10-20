@@ -10,7 +10,7 @@ and is out of date; this file is the one to trust and to update.
   no plaintext secrets, audit records field names but never values, mail through `MailService`.
 - Size: **S** ≈ a session, **M** ≈ a few sessions, **L** = needs a design note first.
 
-_Last reviewed: 2026-10-19 (against `main` @ `4e9fd3c`)_
+_Last reviewed: 2026-10-19 (against `main` @ `b47ba01` + forgot-password / expiry work)_
 
 ---
 
@@ -31,6 +31,10 @@ _Last reviewed: 2026-10-19 (against `main` @ `4e9fd3c`)_
 - Account lockout after N failures + admin unlock
 - TOTP MFA (AES-256-GCM secrets, encryption-key rotation via `previous-encryption-key`) + recovery codes; admin MFA reset
 - Magic-link passwordless sign-in & sign-up (MFA still enforced, no enumeration)
+- **Forgot password** (`/forgot-password` → emailed link → `/reset-password`): same token rules as magic links (shared `OpaqueTokens`), identical answer for every address, link stripped from the URL bar, reset clears lockout and signs out every session, never signs in (MFA still asked at next sign-in); offered only while a relay is configured
+- **Password expiry** (`app.security.password.max-age-days`, default 90, 0 = off): countdown on My Account + console-wide banner inside the warning window (`expiry-warning-days`, 14); an expired password is changed at `/password-expired` right after the password step, before MFA
+- Remember-me is issued only after a sign-in's second step completes (it used to be minted before the MFA challenge, so the cookie alone bypassed MFA); MFA completion now rotates the session id
+- Console sign-in follows MFA / expired-password steps (`GET /api/public/sign-in/pending`) instead of reporting "invalid password"
 - New-device detection (browser + OS family) with alert email
 - Public self-registration (toggleable policy)
 - Per-path token-bucket rate limiting
@@ -77,7 +81,7 @@ _(nothing yet)_
 
 | # | Feature | Size | Notes |
 |---|---|---|---|
-| 1 | **Forgot password / self-service reset** | M | Reuse the magic-link token design (256-bit, SHA-256 stored, single use, short TTL, identical response for every address). New `PASSWORD_RESET` template. Revoke all sessions on reset. Still requires MFA afterwards. |
+| 0 | **🐞 Embedded H2 fails on second start** | S–M | Pre-existing on `main` (reproduced on `b47ba01`): a fresh `~/.portal-sso` boots, every later boot dies in Liquibase with `Table "databasechangelog" already exists`. Liquibase 5.0.3 + H2 2.4.240 + `DATABASE_TO_LOWER=TRUE`; lower-case table names, `default-schema=public` and `preserveSchemaCase` did not fix it. Fix first — it breaks the "just run the JAR" promise. |
 | 3 | **Email verification + admin invitations** | M | Verify the address on self-sign-up; admin "Invite user" sends a set-password link instead of an admin choosing a password. Adds `email_verified` claim. |
 | 4 | **Signing-key rotation & retirement** | M | Admin "Rotate now" + optional scheduled rotation; old keys stay in JWKS for a grace period, then retire. Today keys are only generated on first boot. |
 | 5 | **OIDC logout, done properly** | S–M | Confirm RP-initiated logout (`end_session_endpoint`) works with stored `post_logout_redirect_uris`, add them to onboarding UI/snippets, then add back-channel logout to notify apps. |
@@ -114,6 +118,7 @@ _(nothing yet)_
 ---
 
 ## 🧹 Housekeeping (pick up alongside features)
-- Follow-ups from My Account: "password changed" security email (new template + switch); revoke the user's OAuth refresh tokens on password change; magic-link-only accounts cannot change password or turn off 2FA (no known password) — solved by #1 Forgot password.
+- Follow-ups from My Account / reset: "your password was changed" security email (new template + switch); revoke the user's OAuth refresh tokens on password change and reset; email reminder N days before expiry (today the warning is in the console only).
+- Password expiry is enforced at the password step; a sign-in by magic link or a still-valid remember-me cookie is not stopped by an expired password (both are shown the banner).
 - Rewrite `docs/FEATURES.md` from this file (its "Planned" rows are mostly already shipped).
 - Frontend test coverage is thin (4 spec files vs 56 backend test classes).
