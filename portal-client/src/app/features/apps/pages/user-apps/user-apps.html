@@ -1,275 +1,243 @@
-<div class="min-h-screen bg-slate-50 text-slate-950 selection:bg-slate-950 selection:text-white">
-  <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
-    <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-      <div class="flex min-w-0 items-center gap-3">
-        @if (brandingService.hasCustomLogo()) {
-          <div class="flex items-center gap-2">
-            <img src="logo-mark.svg" alt="Portal SSO" class="h-8 w-8 shrink-0 rounded-lg" />
-            <div class="h-6 w-px bg-slate-200"></div>
-            <img
-              [src]="brandingService.companyLogoUrl()!"
-              alt="Company Logo"
-              class="h-8 max-w-[7rem] shrink-0 object-contain"
-            />
-          </div>
-          <div class="hidden min-w-0 sm:block">
-            <p class="truncate text-sm font-semibold text-slate-950">
-              {{ brandingService.companyName() || 'Organization' }}
-            </p>
-            <p class="text-xs text-slate-500">Applications</p>
-          </div>
-        } @else {
-          <img src="logo.svg" alt="Portal SSO" class="h-9 w-9 shrink-0 rounded-xl" />
-          <div class="min-w-0">
-            <p class="truncate text-sm font-semibold text-slate-950">Portal SSO</p>
-            <p class="text-xs text-slate-500">Applications</p>
-          </div>
-        }
-      </div>
+<div class="animate-fade-in-up">
+  <!-- Header with title & search -->
+  <div class="mb-7 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+    <div>
+      <h1 class="text-[22px] font-semibold tracking-tight text-ink-900">Applications</h1>
+      <p class="mt-1 text-sm text-ink-500">
+        Your work tools in one place. Open an app or request access from an administrator.
+      </p>
+    </div>
 
-      <div class="flex items-center gap-2 sm:gap-3">
-        @if (isAdmin()) {
-          <a
-            routerLink="/dashboard"
-            class="hidden items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 sm:inline-flex"
-          >
-            Admin console
-          </a>
-        }
+    <label class="relative block w-full sm:max-w-xs">
+      <span class="sr-only">Search applications</span>
+      <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+      </svg>
+      <input
+        type="search"
+        [value]="searchQuery()"
+        (input)="searchQuery.set($any($event.target).value)"
+        placeholder="Find an application"
+        class="w-full rounded-lg border border-ink-300 bg-white py-2 pl-9 pr-3 text-sm text-ink-900 shadow-sm outline-none transition placeholder:text-ink-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25"
+      />
+    </label>
+  </div>
 
-        <div class="hidden max-w-[220px] items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 md:flex">
-          <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-900 text-[11px] font-semibold text-white">
-            {{ userInitial() }}
-          </div>
-          <span class="truncate text-xs font-medium text-slate-700">{{ currentUser()?.email }}</span>
-        </div>
+  <!-- Metric summary cards -->
+  <div class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+    <div class="rounded-xl border border-ink-200/80 bg-white p-4 shadow-sm">
+      <p class="text-xs font-medium uppercase tracking-wider text-ink-500">Available</p>
+      <p class="mt-1 text-2xl font-bold tracking-tight text-ink-900">
+        {{ loading() ? '–' : accessibleCount() }}
+      </p>
+    </div>
+    <div class="rounded-xl border border-ink-200/80 bg-white p-4 shadow-sm">
+      <p class="text-xs font-medium uppercase tracking-wider text-ink-500">By request</p>
+      <p class="mt-1 text-2xl font-bold tracking-tight text-ink-900">
+        {{ loading() ? '–' : requestableCount() }}
+      </p>
+    </div>
+    <div class="col-span-2 rounded-xl border border-ink-200/80 bg-white p-4 shadow-sm sm:col-span-1">
+      <p class="text-xs font-medium uppercase tracking-wider text-ink-500">Pending requests</p>
+      <p class="mt-1 text-2xl font-bold tracking-tight" [class]="pendingCount() > 0 ? 'text-brand-600' : 'text-ink-900'">
+        {{ loading() ? '–' : pendingCount() }}
+      </p>
+    </div>
+  </div>
 
+  @if (categories().length > 1) {
+    <div class="mb-5 flex flex-wrap items-center gap-2" role="group" aria-label="Filter by category">
+      @for (cat of categories(); track cat) {
         <button
           type="button"
-          (click)="logout()"
-          title="Sign out"
-          class="rounded-lg border border-transparent p-2 text-slate-500 transition hover:border-slate-200 hover:bg-white hover:text-slate-900"
-          aria-label="Sign out"
+          (click)="selectedCategory.set(cat)"
+          [attr.aria-pressed]="selectedCategory() === cat"
+          class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[13px] font-medium transition focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+          [class]="selectedCategory() === cat
+            ? 'border-ink-900 bg-ink-900 text-white shadow-sm'
+            : 'border-ink-200 bg-white text-ink-600 hover:bg-ink-50'"
         >
-          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l3 3m0 0l-3 3m3-3H2.25" />
-          </svg>
+          <span>{{ cat === 'all' ? 'All' : cat }}</span>
+          <span
+            class="rounded px-1.5 text-[11px] tabular-nums"
+            [class]="selectedCategory() === cat ? 'bg-white/15 text-white' : 'bg-ink-100 text-ink-500'"
+          >
+            {{ categoryCounts().get(cat) ?? 0 }}
+          </span>
         </button>
-      </div>
+      }
     </div>
-  </header>
+  }
 
-  <main class="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-11 lg:px-8">
-    <section class="relative mb-8 overflow-hidden rounded-2xl border border-slate-200 bg-white px-6 py-7 shadow-sm sm:px-8 sm:py-8">
-      <div class="pointer-events-none absolute -right-14 -top-24 h-64 w-64 rounded-full bg-orange-100/70 blur-3xl"></div>
-      <div class="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-600">Your workspace</p>
-          <h1 class="mt-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-[34px]">Applications</h1>
-          <p class="mt-2 max-w-lg text-sm leading-6 text-slate-600">Your work tools, together in one place. Open an app or request access from your administrator.</p>
-          @if (!loading()) {
-            <div class="mt-5 flex flex-wrap gap-2">
-              <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700">
-                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>{{ accessibleApps().length }} available
-              </span>
-              @if (requestableApps().length > 0) {
-                <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600">
-                  {{ requestableApps().length }} available by request
-                </span>
+  @if (error()) {
+    <div class="mb-5 flex items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+      <span>{{ error() }}</span>
+      <button
+        type="button"
+        (click)="loadApplications()"
+        class="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100"
+      >
+        Retry
+      </button>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      @for (item of [1, 2, 3]; track item) {
+        <div class="rounded-xl border border-ink-200 bg-white p-5 shadow-sm">
+          <div class="h-10 w-10 animate-pulse rounded-lg bg-ink-200"></div>
+          <div class="mt-4 h-4 w-32 animate-pulse rounded bg-ink-200"></div>
+          <div class="mt-2 h-3 w-48 animate-pulse rounded bg-ink-100"></div>
+          <div class="mt-6 h-9 w-full animate-pulse rounded-lg bg-ink-100"></div>
+        </div>
+      }
+    </div>
+  } @else if (accessibleApps().length === 0 && requestableApps().length === 0) {
+    <div class="rounded-xl border border-ink-200 bg-white px-6 py-14 text-center shadow-sm">
+      <div class="mx-auto flex h-11 w-11 items-center justify-center rounded-lg border border-ink-200 bg-ink-50 text-ink-500">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+        </svg>
+      </div>
+      <h2 class="mt-4 text-base font-semibold text-ink-900">
+        {{ applications().length === 0 ? 'No applications assigned' : 'No applications found' }}
+      </h2>
+      <p class="mx-auto mt-1 max-w-md text-sm text-ink-500">
+        {{ applications().length === 0
+          ? 'Your account does not currently have access to any applications.'
+          : 'Try a different search term or category.' }}
+      </p>
+      @if (searchQuery() || selectedCategory() !== 'all') {
+        <button
+          type="button"
+          (click)="clearFilters()"
+          class="mt-4 rounded-lg border border-ink-300 bg-white px-3.5 py-2 text-[13px] font-medium text-ink-700 shadow-sm transition hover:bg-ink-50"
+        >
+          Clear filters
+        </button>
+      }
+    </div>
+  } @else {
+    @if (accessibleApps().length > 0) {
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        @for (app of accessibleApps(); track app.id) {
+          <article class="group flex flex-col rounded-xl border border-ink-200 bg-white p-5 shadow-sm transition hover:border-ink-300 hover:shadow-md">
+            <div class="flex items-start justify-between gap-3">
+              @if (app.iconUrl) {
+                <img
+                  [src]="app.iconUrl"
+                  [alt]="app.name"
+                  class="h-10 w-10 shrink-0 rounded-lg border border-ink-100 bg-ink-50 object-contain p-1.5"
+                  (error)="$any($event.target).style.display = 'none'"
+                />
+              } @else {
+                <div [class]="'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ' + getGradient(app.name) + ' text-xs font-semibold text-white'">
+                  {{ getInitials(app.name) }}
+                </div>
               }
+              <div class="flex items-center gap-1.5">
+                @if (app.clientId) {
+                  <span class="rounded-md border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">SSO</span>
+                }
+                <span class="rounded-md bg-ink-100 px-2 py-0.5 text-[11px] font-medium text-ink-600">{{ app.category || 'General' }}</span>
+              </div>
             </div>
-          }
-        </div>
-
-        <label class="relative block w-full lg:max-w-[19rem]">
-          <span class="sr-only">Search applications</span>
-          <svg class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-          </svg>
-          <input type="search" [value]="searchQuery()" (input)="searchQuery.set($any($event.target).value)"
-            placeholder="Find an application"
-            class="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-orange-300 focus:bg-white focus:ring-4 focus:ring-orange-100" />
-        </label>
-      </div>
-    </section>
-
-    @if (categories().length > 1) {
-      <div class="mb-6 flex flex-wrap items-center gap-2">
-        @for (cat of categories(); track cat) {
-          <button
-            type="button"
-            (click)="selectedCategory.set(cat)"
-            class="inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-medium transition"
-            [class]="selectedCategory() === cat
-              ? 'border-slate-950 bg-slate-950 text-white shadow-sm'
-              : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'"
-          >
-            <span>{{ cat === 'all' ? 'All' : cat }}</span>
-            <span
-              class="rounded px-1.5 py-0.5 text-[10px] tabular-nums"
-              [class]="selectedCategory() === cat ? 'bg-white/15 text-white' : 'bg-slate-100 text-slate-500'"
+            <div class="mt-4 min-w-0 flex-1">
+              <h2 class="truncate text-[15px] font-semibold tracking-tight text-ink-900">{{ app.name }}</h2>
+              <p class="mt-1 line-clamp-2 text-sm leading-5 text-ink-500">{{ app.description || app.appUrl }}</p>
+            </div>
+            <a
+              [href]="app.appUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              [attr.aria-label]="'Open ' + app.name + ' in a new tab'"
+              class="mt-5 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-ink-900 px-3.5 py-2 text-[13px] font-semibold text-white shadow-sm transition hover:bg-ink-800 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
             >
-              {{ categoryCounts().get(cat) ?? 0 }}
-            </span>
-          </button>
+              Open
+              <svg class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+              </svg>
+            </a>
+          </article>
         }
       </div>
     }
 
-    @if (error()) {
-      <div class="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-        {{ error() }}
-      </div>
-    }
-
-    @if (loading()) {
-      <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 sm:p-4">
-        @for (item of [1, 2, 3, 4, 5, 6]; track item) {
-          <div class="flex items-center gap-4 border-b border-slate-100 px-3 py-4 last:border-b-0">
-            <div class="h-12 w-12 animate-pulse rounded-xl bg-slate-200"></div>
-            <div class="min-w-0 flex-1">
-              <div class="h-4 w-36 animate-pulse rounded bg-slate-200"></div>
-              <div class="mt-2 h-3 w-56 animate-pulse rounded bg-slate-100"></div>
-            </div>
-            <div class="h-8 w-20 animate-pulse rounded-lg bg-slate-100"></div>
-          </div>
-        }
-      </div>
-    } @else if (accessibleApps().length === 0 && requestableApps().length === 0) {
-      <div class="rounded-xl border border-slate-200 bg-white px-6 py-14 text-center">
-        <div class="mx-auto flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500">
-          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
-          </svg>
+    @if (requestableApps().length > 0) {
+      <section [class]="accessibleApps().length > 0 ? 'mt-10' : ''">
+        <div class="mb-4">
+          <h2 class="text-base font-semibold tracking-tight text-ink-900">More applications</h2>
+          <p class="mt-0.5 text-sm text-ink-500">Ask an administrator to grant you access.</p>
         </div>
-        <h2 class="mt-4 text-base font-semibold text-slate-950">
-          {{ applications().length === 0 ? 'No applications assigned' : 'No applications found' }}
-        </h2>
-        <p class="mx-auto mt-1 max-w-md text-sm text-slate-600">
-          {{ applications().length === 0
-            ? 'Your account does not currently have access to any applications.'
-            : 'Try a different search term or category.' }}
-        </p>
-        @if (searchQuery()) {
-          <button
-            type="button"
-            (click)="searchQuery.set('')"
-            class="mt-4 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
-          >
-            Clear search
-          </button>
-        }
-      </div>
-    } @else {
-      @if (accessibleApps().length > 0) {
-        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          @for (app of accessibleApps(); track app.id) {
-            <article class="group flex min-h-[220px] flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg hover:shadow-slate-200/60">
-              <div class="flex items-start justify-between gap-3">
+        <div class="overflow-hidden rounded-xl border border-ink-200 bg-white shadow-sm">
+          <ul class="divide-y divide-ink-100">
+            @for (app of requestableApps(); track app.id) {
+              <li class="flex items-center gap-4 px-5 py-4">
                 @if (app.iconUrl) {
                   <img
                     [src]="app.iconUrl"
                     [alt]="app.name"
-                    class="h-12 w-12 shrink-0 rounded-xl border border-slate-100 bg-slate-50 object-contain p-2"
+                    class="h-9 w-9 shrink-0 rounded-lg border border-ink-100 bg-ink-50 object-contain p-1.5"
                     (error)="$any($event.target).style.display = 'none'"
                   />
                 } @else {
-                  <div [class]="'flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ' + getGradient(app.name) + ' text-sm font-semibold text-white shadow-sm'">
+                  <div [class]="'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ' + getGradient(app.name) + ' text-[11px] font-semibold text-white opacity-80'">
                     {{ getInitials(app.name) }}
                   </div>
                 }
-                <span class="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600">{{ app.category || 'General' }}</span>
-              </div>
-              <div class="mt-5 min-w-0 flex-1">
-                <div class="flex items-center gap-2">
-                  <h2 class="truncate text-base font-semibold tracking-tight text-slate-950">{{ app.name }}</h2>
-                  @if (app.clientId) {
-                    <span class="shrink-0 rounded-md border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-emerald-700">SSO</span>
-                  }
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-2">
+                    <h3 class="truncate text-sm font-semibold text-ink-900">{{ app.name }}</h3>
+                    <span class="hidden shrink-0 rounded-md bg-ink-100 px-2 py-0.5 text-[11px] font-medium text-ink-600 sm:inline">{{ app.category || 'General' }}</span>
+                  </div>
+                  <p class="truncate text-[13px] text-ink-500">{{ app.description || app.appUrl }}</p>
                 </div>
-                <p class="mt-1.5 line-clamp-2 text-sm leading-5 text-slate-500">{{ app.description || app.appUrl }}</p>
-              </div>
-              <div class="mt-5 border-t border-slate-100 pt-4">
-                <a
-                  [href]="app.appUrl"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-orange-600 focus:outline-none focus:ring-4 focus:ring-orange-100"
-                >
-                  <span>Launch application</span>
-                  <svg class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                  </svg>
-                </a>
-              </div>
-            </article>
-          }
+                @if (app.pendingRequestStatus === 'PENDING') {
+                  <span class="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800">
+                    <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>Pending
+                  </span>
+                } @else {
+                  <button
+                    type="button"
+                    (click)="openRequestModal(app)"
+                    class="shrink-0 rounded-lg border border-ink-300 bg-white px-3 py-1.5 text-[13px] font-medium text-ink-700 shadow-sm transition hover:bg-ink-50 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+                  >
+                    Request access
+                  </button>
+                }
+              </li>
+            }
+          </ul>
         </div>
-      }
-
-      @if (requestableApps().length > 0) {
-        <section class="mt-12">
-          <div class="mb-5 flex items-end justify-between gap-4">
-            <div>
-              <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Discover</p>
-              <h2 class="mt-1 text-xl font-semibold tracking-tight text-slate-950">More applications</h2>
-              <p class="mt-1 text-sm text-slate-500">Ask an administrator to grant you access.</p>
-            </div>
-          </div>
-          <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              @for (app of requestableApps(); track app.id) {
-                <article class="flex min-h-[210px] flex-col rounded-2xl border border-dashed border-slate-300 bg-white/70 p-5 transition hover:border-slate-400 hover:bg-white">
-                  <div class="flex items-start justify-between gap-3">
-                    @if (app.iconUrl) {
-                      <img
-                        [src]="app.iconUrl"
-                        [alt]="app.name"
-                        class="h-12 w-12 shrink-0 rounded-xl border border-slate-100 bg-white object-contain p-2"
-                        (error)="$any($event.target).style.display = 'none'"
-                      />
-                    } @else {
-                      <div [class]="'flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ' + getGradient(app.name) + ' text-sm font-semibold text-white shadow-sm opacity-80'">
-                        {{ getInitials(app.name) }}
-                      </div>
-                    }
-                    <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">{{ app.category || 'General' }}</span>
-                  </div>
-                  <div class="mt-5 flex-1">
-                    <h3 class="truncate text-base font-semibold tracking-tight text-slate-900">{{ app.name }}</h3>
-                    <p class="mt-1.5 line-clamp-2 text-sm leading-5 text-slate-500">{{ app.description || app.appUrl }}</p>
-                  </div>
-                  <div class="mt-5 border-t border-slate-100 pt-4">
-                    @if (app.pendingRequestStatus === 'PENDING') {
-                      <span class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs font-semibold text-amber-800">
-                        <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>Request pending
-                      </span>
-                    } @else {
-                      <button type="button" (click)="openRequestModal(app)"
-                        class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 transition hover:border-slate-950 hover:bg-slate-950 hover:text-white focus:outline-none focus:ring-4 focus:ring-slate-100">
-                        Request access
-                      </button>
-                    }
-                  </div>
-                </article>
-              }
-          </div>
-        </section>
-      }
+      </section>
     }
-  </main>
+  }
 </div>
 
 @if (showRequestModal()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" (click)="closeRequestModal()">
-    <div class="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl" (click)="$event.stopPropagation()">
-      <h3 class="text-lg font-semibold text-slate-950">Request Access</h3>
-      <p class="mt-1 text-sm text-slate-500">Request access to <span class="font-medium text-slate-700">{{ showRequestModal()!.name }}</span></p>
-      
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" (click)="closeRequestModal()">
+    <div
+      class="w-full max-w-md rounded-xl border border-ink-200 bg-white p-6 shadow-xl"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="request-access-title"
+      (click)="$event.stopPropagation()"
+    >
+      <h3 id="request-access-title" class="text-lg font-semibold text-ink-900">Request access</h3>
+      <p class="mt-1 text-sm text-ink-500">
+        Request access to <span class="font-medium text-ink-700">{{ showRequestModal()!.name }}</span>
+      </p>
+
       <div class="mt-5 space-y-4">
         <div>
-          <label class="mb-1.5 block text-sm font-medium text-slate-700">Send request to</label>
-          <select [value]="selectedAdminId()" (change)="selectedAdminId.set($any($event.target).value)"
-            class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500">
+          <label for="request-admin" class="mb-1.5 block text-sm font-medium text-ink-700">Send request to</label>
+          <select
+            id="request-admin"
+            [value]="selectedAdminId()"
+            (change)="selectedAdminId.set($any($event.target).value)"
+            class="w-full rounded-lg border border-ink-300 bg-white px-3 py-2 text-sm text-ink-900 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+          >
             <option value="" disabled>Select an administrator</option>
             @for (admin of admins(); track admin.id) {
               <option [value]="admin.id">
@@ -278,19 +246,37 @@
             }
           </select>
         </div>
-        
+
         <div>
-          <label class="mb-1.5 block text-sm font-medium text-slate-700">Reason (optional)</label>
-          <textarea [value]="requestReason()" (input)="requestReason.set($any($event.target).value)"
-            rows="3" maxlength="500" placeholder="Why do you need access?"
-            class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"></textarea>
+          <label for="request-reason" class="mb-1.5 block text-sm font-medium text-ink-700">Reason (optional)</label>
+          <textarea
+            id="request-reason"
+            [value]="requestReason()"
+            (input)="requestReason.set($any($event.target).value)"
+            rows="3"
+            maxlength="500"
+            placeholder="Why do you need access?"
+            class="w-full rounded-lg border border-ink-300 bg-white px-3 py-2 text-sm text-ink-900 placeholder:text-ink-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/25"
+          ></textarea>
         </div>
       </div>
-      
+
       <div class="mt-6 flex items-center justify-end gap-3">
-        <button type="button" (click)="closeRequestModal()" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancel</button>
-        <button type="button" (click)="submitAccessRequest()" [disabled]="!selectedAdminId() || submittingRequest()"
-          class="rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50">Submit Request</button>
+        <button
+          type="button"
+          (click)="closeRequestModal()"
+          class="rounded-lg border border-ink-300 bg-white px-4 py-2 text-sm font-medium text-ink-700 transition hover:bg-ink-50"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          (click)="submitAccessRequest()"
+          [disabled]="!selectedAdminId() || submittingRequest()"
+          class="rounded-lg bg-ink-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-ink-800 disabled:opacity-50"
+        >
+          {{ submittingRequest() ? 'Sending…' : 'Submit request' }}
+        </button>
       </div>
     </div>
   </div>

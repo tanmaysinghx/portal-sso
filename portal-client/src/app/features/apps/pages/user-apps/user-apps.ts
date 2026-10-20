@@ -1,8 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { AuthService } from '../../../../core/services/auth.service';
-import { BrandingService } from '../../../../core/services/branding.service';
 import { UserApplication } from '../../../applications/models/application.model';
 import { ApplicationService } from '../../../applications/services/application.service';
 import { AccessRequestService } from '../../../access-requests/services/access-request.service';
@@ -12,19 +9,13 @@ import { SnackbarService } from '../../../../core/services/snackbar.service';
 @Component({
   selector: 'app-user-apps',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule],
   templateUrl: './user-apps.html',
 })
 export class UserApps {
   private readonly applicationService = inject(ApplicationService);
-  private readonly authService = inject(AuthService);
-  private readonly router = inject(Router);
-  readonly brandingService = inject(BrandingService);
   private readonly accessRequestService = inject(AccessRequestService);
   private readonly snackbar = inject(SnackbarService);
-
-  readonly currentUser = this.authService.currentUser;
-  readonly isAdmin = this.authService.isAdmin;
 
   readonly applications = signal<UserApplication[]>([]);
   readonly loading = signal(true);
@@ -38,11 +29,6 @@ export class UserApps {
   readonly selectedAdminId = signal<string>('');
   readonly requestReason = signal('');
   readonly submittingRequest = signal(false);
-
-  readonly userInitial = computed(() => {
-    const email = this.currentUser()?.email ?? '';
-    return email ? email.charAt(0).toUpperCase() : '?';
-  });
 
   readonly categories = computed(() => {
     const cats = new Set<string>();
@@ -80,6 +66,13 @@ export class UserApps {
 
   readonly accessibleApps = computed(() => this.filteredApplications().filter(a => a.accessible));
   readonly requestableApps = computed(() => this.filteredApplications().filter(a => !a.accessible));
+
+  // Summary cards count the whole catalog, not just what the current search/category shows.
+  readonly accessibleCount = computed(() => this.applications().filter((a) => a.accessible).length);
+  readonly requestableCount = computed(() => this.applications().filter((a) => !a.accessible).length);
+  readonly pendingCount = computed(
+    () => this.applications().filter((a) => !a.accessible && a.pendingRequestStatus === 'PENDING').length,
+  );
 
   constructor() {
     this.loadApplications();
@@ -125,10 +118,9 @@ export class UserApps {
     return gradients[index];
   }
 
-  logout(): void {
-    this.authService.logout().subscribe(() => {
-      this.router.navigateByUrl('/sign-in');
-    });
+  clearFilters(): void {
+    this.searchQuery.set('');
+    this.selectedCategory.set('all');
   }
 
   openRequestModal(app: UserApplication): void {
