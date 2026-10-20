@@ -248,9 +248,8 @@ export class AuthService {
     this.isAuthenticated.set(false);
   }
 
-  getAccessToken(): string | null {
-    const session = this.sso.getSession();
-    return session ? session.accessToken : null;
+  async getAccessToken(): Promise<string | null> {
+    return this.sso.getAccessTokenAsync();
   }
 }
 ```
@@ -375,5 +374,9 @@ const sso = new PortalSSO({
   Returns cached user or `null` if expired or not logged in.
 - `getSession(): Session | null`
   Returns active session with access token, id token, and expiration timestamp.
+- `getAccessTokenAsync(): Promise<string | null>`
+  Returns a fresh access token and refreshes it when it is close to expiry.
+- `getSessionAsync(): Promise<Session | null>`
+  Returns a session with a usable access token, refreshing it when needed.
 - `logout(): void`
   Clears cached tokens and local session.

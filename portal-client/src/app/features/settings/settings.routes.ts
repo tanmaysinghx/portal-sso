@@ -47,6 +47,14 @@ export const SETTINGS_ROUTES: Routes = [
         path: 'system',
         loadComponent: () => import('./sections/system/system-settings').then((m) => m.SystemSettings),
       },
+      {
+        path: 'retention',
+        loadComponent: () => import('./sections/retention/retention-settings').then((m) => m.RetentionSettingsComponent),
+      },
+      {
+        path: 'registration',
+        loadComponent: () => import('./sections/registration/registration-settings').then((m) => m.RegistrationSettingsComponent),
+      },
       { path: '**', redirectTo: 'branding' },
     ],
   },

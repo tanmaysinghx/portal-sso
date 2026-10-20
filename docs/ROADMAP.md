@@ -36,7 +36,7 @@ _Last reviewed: 2026-10-19 (against `main` @ `b47ba01` + forgot-password / expir
 - Remember-me is issued only after a sign-in's second step completes (it used to be minted before the MFA challenge, so the cookie alone bypassed MFA); MFA completion now rotates the session id
 - Console sign-in follows MFA / expired-password steps (`GET /api/public/sign-in/pending`) instead of reporting "invalid password"
 - New-device detection (browser + OS family) with alert email
-- Public self-registration (toggleable policy)
+- Public self-registration (admin-managed enable switch and optional account approval)
 - Per-path token-bucket rate limiting
 
 ### Applications & integration
@@ -56,6 +56,7 @@ _Last reviewed: 2026-10-19 (against `main` @ `b47ba01` + forgot-password / expir
 ### Governance & analytics
 - Append-only audit log with filters + CSV export
 - Login events with GeoIP, dashboard KPIs/map/recency, hourly retention purge (48 h default)
+- Admin-managed retention windows for login attempts and audit events, with scheduled cleanup and system audit entries
 
 ### Mail
 - DB-stored SMTP relay (encrypted password, test send, audited changes)
@@ -68,6 +69,7 @@ _Last reviewed: 2026-10-19 (against `main` @ `b47ba01` + forgot-password / expir
 - Light/dark theme, console branding, product / docs / download pages
 - Settings split into grouped sub-routes (`/settings/branding`, `/email-delivery`, `/email-templates`, `/protocol`, `/database`, `/system`); old `?tab=` links redirect
 - GitHub Actions CI + release workflows
+- Release version labels read the latest GitHub release at runtime and cache it for six hours
 
 ---
 

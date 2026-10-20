@@ -1,6 +1,7 @@
 package com.tanmaysinghx.portalsso.security.signin;
 
 import com.tanmaysinghx.portalsso.security.PortalUserDetailsService;
+import com.tanmaysinghx.portalsso.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,8 +23,9 @@ public class RememberMeConfig {
     public PortalRememberMeServices rememberMeServices(
             PortalUserDetailsService userDetailsService,
             SecondStep secondStep,
+            UserRepository userRepository,
             @Value("${app.security.remember-me-key:portal-sso-remember-me-key-3b71e86a}") String rememberMeKey) {
-        PortalRememberMeServices services = new PortalRememberMeServices(rememberMeKey, userDetailsService, secondStep);
+        PortalRememberMeServices services = new PortalRememberMeServices(rememberMeKey, userDetailsService, secondStep, userRepository);
         services.setTokenValiditySeconds(VALIDITY_SECONDS);
         services.setParameter(PARAMETER);
         return services;

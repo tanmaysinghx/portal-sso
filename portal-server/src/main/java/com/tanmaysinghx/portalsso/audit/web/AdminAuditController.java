@@ -17,9 +17,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Read-only by design. There is no endpoint to edit or delete an entry, and adding one would defeat
- * the point: a trail an administrator can rewrite proves nothing. Retention is therefore an operator
- * concern (a scheduled purge against the database) rather than an application feature — which is
- * also true of {@code login_events}, and still outstanding for both.
+ * the point: a trail an administrator can rewrite proves nothing. There are no direct edit/delete
+ * endpoints; an administrator may configure a scheduled retention window separately.
  */
 @RestController
 @RequestMapping("/api/admin/audit")

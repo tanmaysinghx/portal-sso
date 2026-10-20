@@ -329,7 +329,7 @@
                 </div>
               </div>
 
-              <div class="mt-4 flex items-center justify-between">
+              <div class="mt-4 flex flex-col items-start gap-1">
                 <label class="group flex cursor-pointer items-center gap-2">
                   <input
                     id="remember-me"
@@ -343,13 +343,16 @@
                     class="text-xs transition-colors"
                     [class]="themeService.isDark() ? 'text-ink-400 group-hover:text-ink-300' : 'text-slate-600 group-hover:text-slate-800'"
                   >
-                    Keep me signed in
+                    Keep me signed in for 30 days
                   </span>
                 </label>
+                <p class="pl-6 text-[11px] leading-4" [class]="themeService.isDark() ? 'text-ink-500' : 'text-slate-500'">
+                  For MFA accounts, this browser will skip MFA prompts for 30 days.
+                </p>
                 @if (passwordResetAvailable()) {
                   <a
                     routerLink="/forgot-password"
-                    class="text-xs font-medium underline-offset-2 hover:underline"
+                    class="mt-1 text-xs font-medium underline-offset-2 hover:underline"
                     [class]="themeService.isDark() ? 'text-ink-300 hover:text-white' : 'text-slate-700 hover:text-slate-950'"
                   >
                     Forgot password?

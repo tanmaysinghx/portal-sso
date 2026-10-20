@@ -143,7 +143,7 @@ When modifying or adding code, you **MUST** uphold these rules:
 ### 6. Password Reset, Expiry & Second Steps
 - `PasswordResetService` owns "forgot password". It follows the magic-link rules (token primitives are shared in `security/token/OpaqueTokens` — never fork them): 256-bit token, only the SHA-256 stored, single use, short TTL, issuing cancels outstanding links, identical response for every address with the relay check *before* the lookup. A reset **sets the password and stops** — it never signs anyone in, so MFA is still asked at the next sign-in.
 - `User.setPasswordHash` is the only way to change a password: it also restarts `password_changed_at`, the clock for `app.security.password.max-age-days`.
-- Anything that must happen after the password step (expired password, MFA) is decided by `SecondStep` and finished by `SignInCompletion.complete`, which rotates the session id, saves the context and only then issues the remember-me cookie (`PortalRememberMeServices`). Never let a remember-me cookie be minted before a second step completes — it would be a full session that skipped it.
+- Anything that must happen after the password step (expired password, MFA) is decided by `SecondStep` and finished by `SignInCompletion.complete`, which rotates the session id, saves the context and only then issues the remember-me cookie (`PortalRememberMeServices`). Never let a remember-me cookie be minted before a second step completes — it would be a full session that skipped it. For MFA accounts the cookie signature also covers the MFA secret, so enabling or resetting MFA invalidates outstanding cookies.
 - The console learns about a pending step from `GET /api/public/sign-in/pending`, not by following `/login`'s redirects.
 
 ### 7. Client IP Resolution

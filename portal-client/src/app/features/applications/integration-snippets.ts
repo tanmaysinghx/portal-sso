@@ -110,6 +110,7 @@ export const sso = new PortalSSO({
 });
 
 const session = await sso.loginWithPopup();   // { user, accessToken, idToken, expiresAt }
+const accessToken = await sso.getAccessTokenAsync(); // refreshes before expiry when needed
 sso.getCurrentUser();                         // cached user or null
 sso.logout();
 \`\`\`

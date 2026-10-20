@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { NEVER, Observable, catchError, of, switchMap, tap } from 'rxjs';
+import { Observable, catchError, map, of, switchMap, tap } from 'rxjs';
 import { ADMIN_ROLE, CurrentUser } from '../models/current-user.model';
 
 /**
@@ -37,9 +37,9 @@ export class AuthService {
    *
    * When /me says "not signed in", the password may still have been right with a further step
    * pending (an MFA challenge, or changing an expired password). The server is asked, and if so the
-   * browser goes to that step's page; this then never emits, rather than reporting a wrong password.
+   * result names that step's page for the caller to send the browser to.
    */
-  login(email: string, password: string, rememberMe = false): Observable<CurrentUser | null> {
+  login(email: string, password: string, rememberMe = false): Observable<LoginResult> {
     let body = new HttpParams().set('username', email).set('password', password);
     if (rememberMe) {
       body = body.set('remember-me', 'true');
@@ -47,24 +47,22 @@ export class AuthService {
     return this.http
       .post('/login', body.toString(), {
         headers: new HttpHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' }),
+        observe: 'response',
+        responseType: 'text',
       })
       .pipe(
         catchError(() => of(null)),
         switchMap(() => this.loadCurrentUser()),
-        switchMap((user) => (user ? of(user) : this.continuePendingSignIn())),
+        switchMap((user) =>
+          user ? of({ status: 'authenticated', user } as const) : this.pendingSignIn()),
       );
   }
 
-  private continuePendingSignIn(): Observable<CurrentUser | null> {
+  private pendingSignIn(): Observable<LoginResult> {
     return this.http.get<{ step: string | null; path: string | null }>('/api/public/sign-in/pending').pipe(
       catchError(() => of({ step: null, path: null })),
-      switchMap((pending) => {
-        if (pending.path) {
-          window.location.assign(pending.path);
-          return NEVER;
-        }
-        return of(null);
-      }),
+      map((pending): LoginResult =>
+        pending.path ? { status: 'second-step', path: pending.path } : { status: 'failed' }),
     );
   }
 
@@ -81,3 +79,10 @@ export class AuthService {
     this.resolvedSignal.set(true);
   }
 }
+
+export type LoginResult =
+  /** Password accepted; the browser must finish at `path` (MFA challenge or expired password). */
+  | { status: 'second-step'; path: string }
+  | { status: 'authenticated'; user: CurrentUser }
+  | { status: 'failed' };
+

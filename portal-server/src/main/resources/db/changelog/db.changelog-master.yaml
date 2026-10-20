@@ -40,6 +40,10 @@ databaseChangeLog:
   - include:
       file: db/changelog/changes/020-create-user-known-devices-table.yaml
   - include:
-      file: db/changelog/changes/021-add-password-changed-at-to-users.yaml
+      file: db/changelog/changes/021-create-analytics-retention-settings-table.yaml
   - include:
-      file: db/changelog/changes/022-create-password-reset-tokens-table.yaml
+      file: db/changelog/changes/022-create-registration-settings-table.yaml
+  - include:
+      file: db/changelog/changes/023-add-password-changed-at-to-users.yaml
+  - include:
+      file: db/changelog/changes/024-create-password-reset-tokens-table.yaml

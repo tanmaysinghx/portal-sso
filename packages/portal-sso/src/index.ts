@@ -28,6 +28,8 @@ export class PortalSSO {
   readonly storageKey: string;
 
   private listeners: Set<AuthStateCallback> = new Set();
+  private refreshTimer: ReturnType<typeof setTimeout> | null = null;
+  private refreshInFlight: Promise<PortalSession | null> | null = null;
 
   constructor(config: PortalSSOConfig) {
     if (!config || !config.clientId) {
@@ -240,6 +242,8 @@ export class PortalSSO {
       localStorage.setItem(this.storageKey, JSON.stringify(session));
     } catch {}
 
+    this.scheduleRefresh(session);
+
     return session;
   }
 
@@ -261,13 +265,110 @@ export class PortalSSO {
       if (!raw) return null;
       const session: PortalSession = JSON.parse(raw);
       if (session.expiresAt && Date.now() > session.expiresAt) {
-        this.logout();
+        if (session.refreshToken) {
+          void this.refreshSession();
+        } else {
+          this.logout();
+        }
         return null;
       }
+      this.scheduleRefresh(session);
       return session;
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Returns a session with a usable access token, refreshing it first when it is close to expiry.
+   * Prefer this in async request flows; the synchronous getSession() cannot wait for the token endpoint.
+   */
+  async getSessionAsync(): Promise<PortalSession | null> {
+    const session = this.readStoredSession();
+    if (!session) return null;
+
+    if (session.expiresAt > Date.now() + 60_000) {
+      this.scheduleRefresh(session);
+      return session;
+    }
+    if (session.refreshToken) return this.refreshSession();
+
+    this.logout();
+    return null;
+  }
+
+  /** Refreshes the current session now, using the rotated refresh token returned by Portal. */
+  async refreshSession(): Promise<PortalSession | null> {
+    if (this.refreshInFlight) return this.refreshInFlight;
+    const session = this.readStoredSession();
+    if (!session?.refreshToken) {
+      this.logout();
+      return null;
+    }
+
+    this.refreshInFlight = (async () => {
+      try {
+        const body = new URLSearchParams({
+          grant_type: 'refresh_token',
+          client_id: this.clientId,
+          refresh_token: session.refreshToken!,
+        });
+        const response = await fetch(`${this.portalUrl}/oauth2/token`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: body.toString(),
+        });
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({}));
+          throw new Error(error.error_description || error.error || 'Failed to refresh Portal SSO session');
+        }
+
+        const data = await response.json();
+        const refreshed: PortalSession = {
+          ...session,
+          accessToken: data.access_token,
+          idToken: data.id_token || session.idToken,
+          refreshToken: data.refresh_token || session.refreshToken,
+          expiresIn: data.expires_in || 900,
+          expiresAt: Date.now() + (data.expires_in || 900) * 1000,
+        };
+        if (!refreshed.accessToken) {
+          throw new Error('Portal SSO returned no access token during refresh');
+        }
+
+        const latest = this.readStoredSession();
+        if (!latest) return null; // logout happened while the refresh request was in flight
+        if (latest.refreshToken !== session.refreshToken) {
+          this.scheduleRefresh(latest);
+          return latest; // another tab or SDK instance already rotated the token
+        }
+
+        try {
+          localStorage.setItem(this.storageKey, JSON.stringify(refreshed));
+        } catch {}
+        this.scheduleRefresh(refreshed);
+        this.notifyListeners(refreshed.user);
+        return refreshed;
+      } catch {
+        // Another tab or SDK instance may have rotated this single-use token first.
+        const latest = this.readStoredSession();
+        if (latest?.refreshToken && latest.refreshToken !== session.refreshToken) {
+          this.scheduleRefresh(latest);
+          return latest;
+        }
+        // A transient network failure should not discard an access token that is still valid.
+        if (session.expiresAt > Date.now()) {
+          this.scheduleRefresh(session);
+          return session;
+        }
+        this.logout();
+        return null;
+      } finally {
+        this.refreshInFlight = null;
+      }
+    })();
+
+    return this.refreshInFlight;
   }
 
   /**
@@ -278,10 +379,20 @@ export class PortalSSO {
     return session ? session.accessToken : null;
   }
 
+  /** Returns a usable access token, refreshing the session when needed. */
+  async getAccessTokenAsync(): Promise<string | null> {
+    const session = await this.getSessionAsync();
+    return session?.accessToken || null;
+  }
+
   /**
    * Logs out locally and clears stored session.
    */
   logout(): void {
+    if (this.refreshTimer) {
+      clearTimeout(this.refreshTimer);
+      this.refreshTimer = null;
+    }
     if (typeof window !== 'undefined') {
       try {
         localStorage.removeItem(this.storageKey);
@@ -306,5 +417,26 @@ export class PortalSSO {
         console.error('[PortalSSO] Error in auth listener callback:', e);
       }
     });
+  }
+
+  private readStoredSession(): PortalSession | null {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = localStorage.getItem(this.storageKey);
+      return raw ? JSON.parse(raw) as PortalSession : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private scheduleRefresh(session: PortalSession): void {
+    if (this.refreshTimer) clearTimeout(this.refreshTimer);
+    this.refreshTimer = null;
+    if (!session.refreshToken || !session.expiresAt || typeof window === 'undefined') return;
+
+    const delay = Math.max(15_000, session.expiresAt - Date.now() - 60_000);
+    this.refreshTimer = setTimeout(() => {
+      void this.refreshSession();
+    }, delay);
   }
 }

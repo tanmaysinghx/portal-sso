@@ -2,7 +2,7 @@ import { Component, computed, inject, input, output } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { BrandingService } from '../../core/services/branding.service';
-import { environment } from '../../../environments/environment';
+import { ReleaseVersionService } from '../../core/services/release-version.service';
 import { AccessRequestService } from '../../features/access-requests/services/access-request.service';
 import { signal, OnInit } from '@angular/core';
 
@@ -26,10 +26,12 @@ export class Sidebar implements OnInit {
   private readonly router = inject(Router);
   readonly brandingService = inject(BrandingService);
   private readonly accessRequestService = inject(AccessRequestService);
+  readonly releaseVersionService = inject(ReleaseVersionService);
 
   readonly pendingRequestsCount = signal(0);
 
   ngOnInit() {
+    this.releaseVersionService.loadLatest();
     // Admin-only endpoint: asking as an ordinary user just produces a 403 in the console.
     if (!this.authService.isAdmin()) {
       return;
@@ -41,7 +43,7 @@ export class Sidebar implements OnInit {
 
   readonly currentUser = this.authService.currentUser;
   readonly initial = computed(() => (this.currentUser()?.email ?? '?').charAt(0).toUpperCase());
-  readonly version = environment.version;
+  readonly version = this.releaseVersionService.version;
 
   logout(): void {
     this.authService.logout().subscribe(() => this.router.navigateByUrl('/sign-in'));
