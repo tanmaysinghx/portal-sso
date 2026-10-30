@@ -124,7 +124,8 @@
       }
 
       function messageHandler(event) {
-        if (!event.data || event.data.type !== 'PORTAL_SSO_POPUP_CALLBACK') {
+        // Only the Portal SSO popup may answer; anything else could otherwise abort the sign-in.
+        if (event.origin !== new URL(self.redirectUri, window.location.href).origin ||!event.data || event.data.type !== 'PORTAL_SSO_POPUP_CALLBACK') {
           return;
         }
 
