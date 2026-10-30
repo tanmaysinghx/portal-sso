@@ -1,0 +1,119 @@
+# Dependabot: weekly upgrade PRs, plus immediate security PRs (those ignore the schedule and the
+# grouping below). Every PR runs the full CI pipeline, including the browser end-to-end test, so a
+# bump that breaks sign-in or first-run setup fails before it can be merged.
+#
+# Updates are grouped so a normal week is a handful of PRs, not dozens. Major versions of the
+# frameworks are ignored on purpose: they need code migrations (`ng update` schematics, Spring Boot
+# migration guides) that a version bump alone cannot do, so they are planned upgrades, not PRs.
+
+version: 2
+
+updates:
+  # ── Backend: Spring Boot, Spring Security, Liquibase, drivers, Bouncy Castle ─────────────────────
+  - package-ecosystem: maven
+    directory: /portal-server
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels: [dependencies]
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      spring:
+        patterns: ["org.springframework*"]
+        update-types: [minor, patch]
+      backend-minor-and-patch:
+        patterns: ["*"]
+        exclude-patterns: ["org.springframework*"]
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: "org.springframework.boot:*"
+        update-types: [version-update:semver-major]
+
+  # ── Admin console: Angular, Tailwind, ECharts, Vitest ────────────────────────────────────────────
+  # Dependabot regenerates package-lock.json on Linux, which is where `npm ci` runs in CI.
+  - package-ecosystem: npm
+    directory: /portal-client
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels: [dependencies]
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      # Angular packages must move together; mixed versions fail at build time.
+      angular:
+        patterns: ["@angular/*", "@angular-devkit/*", "zone.js", "typescript"]
+        update-types: [minor, patch]
+      frontend-minor-and-patch:
+        patterns: ["*"]
+        exclude-patterns: ["@angular/*", "@angular-devkit/*", "zone.js", "typescript"]
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: "@angular/*"
+        update-types: [version-update:semver-major]
+      - dependency-name: "@angular-devkit/*"
+        update-types: [version-update:semver-major]
+      # Angular pins the TypeScript range it supports; let `ng update` move it.
+      - dependency-name: "typescript"
+        update-types: [version-update:semver-major, version-update:semver-minor]
+
+  # ── End-to-end tests: Playwright ─────────────────────────────────────────────────────────────────
+  - package-ecosystem: npm
+    directory: /e2e
+    schedule:
+      interval: weekly
+      day: monday
+    labels: [dependencies]
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      e2e:
+        patterns: ["*"]
+
+  # ── CI: actions/checkout, setup-java, codeql-action, docker/* ────────────────────────────────────
+  # Majors included: action majors are usually runtime bumps (e.g. Node 20 → 24) and CI proves them.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    labels: [dependencies]
+    commit-message:
+      prefix: "chore(ci)"
+    groups:
+      github-actions:
+        patterns: ["*"]
+
+  # ── Container base images: node, eclipse-temurin ─────────────────────────────────────────────────
+  # Patch rebuilds of the same tags pick up OS security fixes. Majors are ignored: Node 24 and
+  # Java 25 are pinned deliberately (lockfile npm version, Java 25 LTS).
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    labels: [dependencies]
+    commit-message:
+      prefix: "chore(docker)"
+    ignore:
+      - dependency-name: "node"
+        update-types: [version-update:semver-major]
+      - dependency-name: "eclipse-temurin"
+        update-types: [version-update:semver-major]
+
+  # ── Compose: PostgreSQL ──────────────────────────────────────────────────────────────────────────
+  # A Postgres major needs pg_upgrade or a dump/restore of existing data, so never as a bump PR.
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    labels: [dependencies]
+    commit-message:
+      prefix: "chore(docker)"
+    ignore:
+      - dependency-name: "postgres"
+        update-types: [version-update:semver-major]

@@ -70,6 +70,7 @@ _Last reviewed: 2026-10-19 (against `main` @ `b47ba01` + forgot-password / expir
 - Light/dark theme, console branding, product / docs / download pages
 - Settings split into grouped sub-routes (`/settings/branding`, `/email-delivery`, `/email-templates`, `/protocol`, `/database`, `/system`); old `?tab=` links redirect
 - GitHub Actions CI + release workflows
+- Dependabot (`.github/dependabot.yml`): weekly grouped minor/patch PRs for Maven, npm (console, e2e), GitHub Actions and Docker images, plus security PRs; framework majors (Angular, Spring Boot, Node, Java, Postgres) left to planned upgrades
 - Release version labels read the latest GitHub release at runtime and cache it for six hours
 
 ---
