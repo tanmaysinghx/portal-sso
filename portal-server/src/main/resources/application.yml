@@ -85,6 +85,8 @@ app:
     # configuration knows this account's password.
     admin-email: ${APP_BOOTSTRAP_ADMIN_EMAIL:}
     admin-password: ${APP_BOOTSTRAP_ADMIN_PASSWORD:}
+    # With neither of the above set: print a one-time setup key and write it to
+    # <portal home>/secrets/initialAdminPassword, for the setup wizard on the sign-in page.
     auto-generate: ${APP_BOOTSTRAP_AUTO_GENERATE:true}
 
   seed:
@@ -214,6 +216,9 @@ app:
       "[/api/public/password-reset/request]": { capacity: 3, per-minute: 5 }
       "[/api/public/password-reset/confirm]": { capacity: 10, per-minute: 10 }
       "[/password-expired]": { capacity: 10, per-minute: 10 }
+      # The unauthenticated first-run wizard. The setup key is unguessable; this just keeps the
+      # endpoint from being a free oracle while a fresh install waits for its operator.
+      "[/api/public/setup/initialize]": { capacity: 5, per-minute: 5 }
 
   connect:
     # "Connect with Portal SSO": apps register themselves, an administrator approves at

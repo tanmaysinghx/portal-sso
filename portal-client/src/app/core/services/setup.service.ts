@@ -1,16 +1,23 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { PasswordPolicy } from './account.service';
 
 export interface SetupStatusResponse {
   setupRequired: boolean;
+  /** False while setup is required means the wizard cannot be used: auto-generation is off. */
+  setupKeyIssued: boolean;
+  /** Where the operator finds the key; present only while setup is required. */
+  setupKeyFile?: string;
+  /** The policy with the administrator's higher length floor already applied. */
+  passwordPolicy: PasswordPolicy;
   databaseType: string;
   isEmbeddedDatabase: boolean;
   databaseProduct: string;
-  version: string;
 }
 
 export interface SetupInitializeRequest {
+  setupKey: string;
   email: string;
   password: string;
   firstName?: string;

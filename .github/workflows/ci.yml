@@ -4,7 +4,8 @@ name: CI
 #
 #   1 · Build & test       backend tests · console build + unit tests · SDK build
 #   2 · Static analysis    CodeQL (Java, TypeScript)
-#   3 · Package            Docker image build + smoke test against PostgreSQL
+#   3 · Package            Docker image build + smoke test against PostgreSQL ·
+#                          browser end-to-end test of first-run setup (Playwright)
 #   4 · Gate               single required status check for branch protection
 #   5 · Release            tagged GitHub release (main pushes only)
 #
@@ -352,6 +353,54 @@ jobs:
         if: failure()
         run: docker logs ci-app || true
 
+  # Unit and MockMvc tests prove the pieces; this proves a person can actually start using the
+  # product. It runs the JAR built in Stage 1 against an empty home directory and drives a real
+  # browser through first-run setup: setup key, first administrator, dashboard, sign in again.
+  e2e:
+    name: "Stage 3 · End-to-end (browser)"
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+
+      - name: Download jar
+        uses: actions/download-artifact@v4
+        with:
+          name: portal-server-jar
+          path: portal-server/target
+
+      - name: Install Playwright
+        working-directory: e2e
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Run end-to-end tests
+        working-directory: e2e
+        run: npx playwright test
+
+      - name: Publish Playwright report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            e2e/playwright-report/
+            e2e/test-results/
+          retention-days: 7
+
   # ───────────────────────────────────────────────────────────────────────────────────────────────
   # Stage 4 · Gate
   # ───────────────────────────────────────────────────────────────────────────────────────────────
@@ -363,7 +412,7 @@ jobs:
     name: "Stage 4 · All checks passed"
     runs-on: ubuntu-latest
     if: always()
-    needs: [backend, frontend, sdk, codeql, image]
+    needs: [backend, frontend, sdk, codeql, image, e2e]
     steps:
       - name: Evaluate results
         env:

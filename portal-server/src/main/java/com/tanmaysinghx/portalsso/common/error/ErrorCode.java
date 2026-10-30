@@ -20,6 +20,8 @@ public enum ErrorCode {
     INVALID_MFA_CODE("PRTL-1007", "Invalid or expired multi-factor authentication code.", HttpStatus.BAD_REQUEST),
     MFA_REQUIRED("PRTL-1008", "Multi-factor authentication challenge required.", HttpStatus.UNAUTHORIZED),
     MFA_UNAVAILABLE("PRTL-1009", "Multi-factor authentication is not configured on this server.", HttpStatus.SERVICE_UNAVAILABLE),
+    SETUP_KEY_INVALID("PRTL-1010", "The setup key is incorrect.", HttpStatus.FORBIDDEN),
+    SETUP_ALREADY_COMPLETED("PRTL-1011", "Initial setup has already been completed.", HttpStatus.CONFLICT),
 
     // =========================================================================
     // 2000 Series: User Management

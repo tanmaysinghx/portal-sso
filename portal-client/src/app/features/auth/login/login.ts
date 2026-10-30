@@ -1,6 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { PasswordPolicy, passwordChecklist } from '../../../core/services/account.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { BrandingService } from '../../../core/services/branding.service';
 import { MagicLinkService } from '../../../core/services/magic-link.service';
@@ -54,6 +55,15 @@ export class Login {
   readonly setupRequired = signal(false);
   readonly setupLoading = signal(true);
   readonly databaseType = signal('');
+  readonly setupKey = signal('');
+  /** False while setup is required: auto-generation is off and the wizard cannot be unlocked. */
+  readonly setupKeyIssued = signal(false);
+  readonly setupKeyFile = signal<string | null>(null);
+  readonly setupPasswordPolicy = signal<PasswordPolicy | null>(null);
+  readonly setupChecklist = computed(() => {
+    const policy = this.setupPasswordPolicy();
+    return policy ? passwordChecklist(policy, this.password()) : [];
+  });
 
   constructor() {
     this.authService.loadCurrentUser().subscribe((user) => {
@@ -84,6 +94,9 @@ export class Login {
     this.setupService.getStatus().subscribe({
       next: (status) => {
         this.setupRequired.set(status.setupRequired);
+        this.setupKeyIssued.set(status.setupKeyIssued);
+        this.setupKeyFile.set(status.setupKeyFile ?? null);
+        this.setupPasswordPolicy.set(status.passwordPolicy);
         this.databaseType.set(status.databaseType);
         this.setupLoading.set(false);
       },
@@ -131,7 +144,13 @@ export class Login {
     this.error.set(null);
     this.successMessage.set(null);
 
-    if (!this.email() || !this.password()) {
+    const email = this.email().trim();
+    const setupKey = this.setupKey().trim();
+    if (!setupKey) {
+      this.error.set('Paste the setup key from the server first.');
+      return;
+    }
+    if (!email || !this.password()) {
       this.error.set('Email and password are required.');
       return;
     }
@@ -139,20 +158,24 @@ export class Login {
       this.error.set('Passwords do not match.');
       return;
     }
-    if (this.password().length < 12) {
-      this.error.set('Administrator password must be at least 12 characters.');
+    const unmet = this.setupChecklist().filter((rule) => !rule.met);
+    if (unmet.length > 0) {
+      this.error.set(`Password needs: ${unmet.map((rule) => rule.label.toLowerCase()).join(', ')}.`);
       return;
     }
 
     this.submitting.set(true);
     this.setupService.initialize({
-      email: this.email(),
+      setupKey,
+      email,
       password: this.password(),
       firstName: this.firstName(),
       lastName: this.lastName(),
     }).subscribe({
       next: () => {
-        this.authService.login(this.email(), this.password(), true).subscribe({
+        this.email.set(email);
+        this.setupKey.set('');
+        this.authService.login(email, this.password(), false).subscribe({
           next: (user) => {
             this.submitting.set(false);
             if (user.status === 'second-step') {
@@ -173,8 +196,12 @@ export class Login {
       },
       error: (err) => {
         this.submitting.set(false);
-        const msg = err.error?.message || err.error?.error || 'Setup initialization failed. Please verify password requirements and try again.';
+        const msg = err.error?.message || err.error?.error || 'Setup failed. Check the details and try again.';
         this.error.set(msg);
+        // Someone else finished setup in the meantime: the wizard no longer applies.
+        if (err.error?.code === 'PRTL-1011') {
+          this.setupRequired.set(false);
+        }
       },
     });
   }
