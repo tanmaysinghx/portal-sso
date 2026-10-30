@@ -2,11 +2,8 @@ package com.tanmaysinghx.portalsso.bootstrap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.tanmaysinghx.portalsso.security.password.PasswordPolicy;
-import com.tanmaysinghx.portalsso.user.entity.User;
-import com.tanmaysinghx.portalsso.user.repository.RoleRepository;
+import com.tanmaysinghx.portalsso.setup.SetupKeyService;
 import com.tanmaysinghx.portalsso.user.repository.UserRepository;
-import com.tanmaysinghx.portalsso.user.service.RoleService;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,7 +12,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -50,28 +46,22 @@ class AdminBootstrapAutoGenerateTest {
     private UserRepository userRepository;
 
     @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private PasswordPolicy passwordPolicy;
+    private SetupKeyService setupKeyService;
 
     @Test
-    void initialAdminAccountAndPasswordFileAreCreated() throws IOException {
-        assertThat(userRepository.count()).isEqualTo(1);
+    void issuesASetupKeyAndCreatesNoAccount() throws IOException {
+        // No account with a password the operator never chose: they create their own in the wizard.
+        assertThat(userRepository.count()).isZero();
+        assertThat(setupKeyService.isIssued()).isTrue();
 
-        User admin = userRepository.findByEmail("admin@localhost").orElseThrow();
-        assertThat(admin.isEnabled()).isTrue();
-        assertThat(admin.getRoles()).extracting("name").contains(RoleService.ADMIN_ROLE, "ROLE_USER");
+        Path keyFile = tempHome.resolve("secrets").resolve("initialAdminPassword");
+        assertThat(setupKeyService.keyFile()).isEqualTo(keyFile);
+        assertThat(Files.exists(keyFile)).isTrue();
 
-        Path passwordFile = tempHome.resolve("secrets").resolve("initialAdminPassword");
-        assertThat(Files.exists(passwordFile)).isTrue();
-
-        String rawPassword = Files.readString(passwordFile).trim();
-        assertThat(passwordPolicy.failures(rawPassword)).isEmpty();
-        assertThat(rawPassword.length()).isGreaterThanOrEqualTo(AdminBootstrapper.MIN_PASSWORD_LENGTH);
-        assertThat(passwordEncoder.matches(rawPassword, admin.getPasswordHash())).isTrue();
+        String key = Files.readString(keyFile).trim();
+        assertThat(key).hasSizeGreaterThanOrEqualTo(43);
+        assertThat(setupKeyService.consume("not-the-key")).isFalse();
+        assertThat(setupKeyService.consume(key)).isTrue();
+        assertThat(setupKeyService.consume(key)).as("single use").isFalse();
     }
 }

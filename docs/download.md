@@ -44,26 +44,35 @@ Additional CLI options:
 | `--prefix=PATH` | `SERVER_SERVLET_CONTEXT_PATH` | `/` | Context path prefix |
 
 ### First-Run Unlock (initialAdminPassword)
-When launching for the first time without pre-configured credentials, Portal SSO automatically provisions an initial administrator account and writes a high-entropy password to disk, printing a prominent banner:
+When launching for the first time without pre-configured credentials, Portal SSO creates **no account**. It writes a one-time setup key to disk and prints a prominent banner:
 
 ```
 *************************************************************
 *************************************************************
-Portal SSO initial setup is required. An admin user has been created:
+Portal SSO initial setup is required.
 
-  Username: admin@localhost
-  Password: =@cY-cghCwYM_Mw!*bn5D6bn
+Open http://localhost:8080/sign-in and enter this setup key to create
+the first administrator:
 
-This password has also been written to:
+  <43-character random key>
+
+The key has also been written to:
   ~/.portal-sso/secrets/initialAdminPassword
 
-Please sign in at http://localhost:8080 to complete setup.
+It works once. If the server restarts before setup is
+finished, a new key replaces it.
 *************************************************************
 *************************************************************
 ```
 
-1. Open `http://localhost:8080` in your browser.
-2. Sign in using `admin@localhost` and the password from the banner or from `~/.portal-sso/secrets/initialAdminPassword`.
+1. Open `http://localhost:8080` in your browser. The setup wizard appears in place of the sign-in form.
+2. Paste the setup key, then enter your email, name and password (at least 12 characters; the form shows the rules as you type).
+3. Select **Complete setup**. You are signed straight in to the dashboard, and the key file is deleted.
+
+The wizard is closed for good once an administrator exists. To skip it entirely (for scripted or
+clustered deployments), set `APP_BOOTSTRAP_ADMIN_EMAIL` and `APP_BOOTSTRAP_ADMIN_PASSWORD`; no key
+is issued then. With `APP_BOOTSTRAP_AUTO_GENERATE=false` and neither set, the sign-in page explains
+that setup is locked.
 
 ---
 
@@ -107,7 +116,7 @@ To run Portal SSO as a background daemon on Linux servers:
    sudo systemctl enable --now portal-sso
    ```
 
-4. Check the service status and view the `initialAdminPassword`:
+4. Check the service status and view the setup key in `initialAdminPassword`:
    ```bash
    sudo systemctl status portal-sso
    sudo journalctl -u portal-sso -n 50

@@ -10,7 +10,7 @@ Welcome, AI Agent! This document provides authoritative context, architectural p
 
 ### Core Philosophy
 1. **Single Deployable Unit**: A single Spring Boot JAR embeds the compiled Angular SPA directly within its static resources. An operator can download one file (`portal-sso.jar`) and run it with `java -jar portal-sso.jar`—no external database or containers required for initial boot.
-2. **Zero-Friction Initial Boot (Jenkins LTS Style)**: On fresh launch without external configuration, it boots with an embedded H2 database (`~/.portal-sso/`), provisions default platform roles, bootstraps an initial admin account, and outputs an unlock key to `~/.portal-sso/secrets/initialAdminPassword`.
+2. **Zero-Friction Initial Boot (Jenkins LTS Style)**: On fresh launch without external configuration, it boots with an embedded H2 database (`~/.portal-sso/`), provisions default platform roles, and outputs a one-time setup key to `~/.portal-sso/secrets/initialAdminPassword`. The operator pastes it into the wizard at `/sign-in` and creates their own administrator. No account is created until then.
 3. **Seamless In-App DB Migration**: The admin console includes an automated migration wizard allowing seamless zero-data-loss transfer from embedded H2 to PostgreSQL or MySQL.
 4. **Security by Default**:
    - Enforces PKCE on **all** clients (public and confidential).
@@ -146,7 +146,13 @@ When modifying or adding code, you **MUST** uphold these rules:
 - Anything that must happen after the password step (expired password, MFA) is decided by `SecondStep` and finished by `SignInCompletion.complete`, which rotates the session id, saves the context and only then issues the remember-me cookie (`PortalRememberMeServices`). Never let a remember-me cookie be minted before a second step completes — it would be a full session that skipped it. For MFA accounts the cookie signature also covers the MFA secret, so enabling or resetting MFA invalidates outstanding cookies.
 - The console learns about a pending step from `GET /api/public/sign-in/pending`, not by following `/login`'s redirects.
 
-### 7. Client IP Resolution
+### 7. First-Run Setup
+- `POST /api/public/setup/initialize` is unauthenticated, so it **always requires the setup key** from `SetupKeyService` (256-bit, SHA-256 held in memory only, single use, consumed atomically, key file deleted on success). Never add a path that creates an administrator without it.
+- The wizard never adopts an existing account (that would let it set someone else's password). Recovering a disabled admin is what `app.bootstrap.*` is for.
+- Validation runs before the key is spent, so a typo in the password does not cost the operator their key.
+- `e2e/first-run-setup.spec.ts` drives this flow in a real browser against the packaged JAR. Keep it passing; it is the test that proves a new install is usable.
+
+### 8. Client IP Resolution
 - Never inspect `X-Forwarded-For` raw headers directly in controllers. Always use `ClientIpResolver.getClientIp(request)`.
 - When deployed behind reverse proxies, `server.forward-headers-strategy=FRAMEWORK` handles trusted proxy resolution centrally.
 
@@ -189,6 +195,15 @@ npx ng test --watch=false
 
 # Production build
 npm run build
+```
+
+### End-to-end Tests (Playwright)
+```bash
+# Needs the packaged JAR: (cd portal-server && ./mvnw package -DskipTests)
+cd e2e
+npm ci
+npx playwright install chromium
+npx playwright test        # boots the JAR on a fresh temp home and drives first-run setup
 ```
 
 ---

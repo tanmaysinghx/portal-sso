@@ -64,7 +64,8 @@ _Last reviewed: 2026-10-19 (against `main` @ `b47ba01` + forgot-password / expir
 
 ### Operations
 - Single JAR with embedded Angular SPA; Docker image + Compose; `install.sh`
-- Zero-config H2 boot, initial-admin secret file, first-run setup wizard
+- Zero-config H2 boot and first-run setup wizard: a one-time setup key (printed + `secrets/initialAdminPassword`) unlocks the wizard, the operator creates their own admin and is signed straight in; no `admin@localhost` account, no unauthenticated admin creation, existing accounts never adopted
+- Browser end-to-end test of first-run setup (Playwright, `e2e/`) runs the packaged JAR in CI and gates releases
 - In-app H2 → PostgreSQL/MySQL migration wizard with restart
 - Light/dark theme, console branding, product / docs / download pages
 - Settings split into grouped sub-routes (`/settings/branding`, `/email-delivery`, `/email-templates`, `/protocol`, `/database`, `/system`); old `?tab=` links redirect

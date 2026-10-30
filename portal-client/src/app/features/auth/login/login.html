@@ -104,7 +104,8 @@
                 Create the first administrator
               </h2>
               <p class="mt-2 text-sm leading-6" [class]="themeService.isDark() ? 'text-ink-400' : 'text-slate-600'">
-                Set the root account for this Portal SSO instance. You can add more administrators later.
+                Unlock this Portal SSO instance with the setup key from the server, then create your own
+                administrator account. You can add more administrators later.
               </p>
               @if (databaseType()) {
                 <p class="mt-3 text-xs" [class]="themeService.isDark() ? 'text-ink-500' : 'text-slate-500'">
@@ -137,7 +138,23 @@
             }
           </div>
 
-          @if (setupRequired()) {
+          @if (setupRequired() && !setupKeyIssued()) {
+            <div
+              class="rounded-xl border p-6 text-sm leading-6 shadow-sm"
+              [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900 text-ink-300' : 'border-slate-200 bg-white text-slate-700'"
+              role="status"
+            >
+              <p class="font-medium" [class]="themeService.isDark() ? 'text-white' : 'text-slate-950'">
+                Setup is locked on this server
+              </p>
+              <p class="mt-2">
+                No administrator exists and setup-key generation is turned off. Set
+                <code class="font-mono text-xs">APP_BOOTSTRAP_ADMIN_EMAIL</code> and
+                <code class="font-mono text-xs">APP_BOOTSTRAP_ADMIN_PASSWORD</code>, or
+                <code class="font-mono text-xs">APP_BOOTSTRAP_AUTO_GENERATE=true</code>, then restart the server.
+              </p>
+            </div>
+          } @else if (setupRequired()) {
             <form
               class="rounded-xl border p-6 shadow-sm"
               [class]="themeService.isDark() ? 'border-ink-800 bg-ink-900' : 'border-slate-200 bg-white'"
@@ -156,6 +173,30 @@
               }
 
               <div class="space-y-4">
+                <div>
+                  <label for="setup-key" class="mb-1.5 block text-xs font-medium" [class]="themeService.isDark() ? 'text-ink-300' : 'text-slate-700'">Setup key</label>
+                  <input
+                    id="setup-key"
+                    type="password"
+                    name="setupKey"
+                    autocomplete="off"
+                    spellcheck="false"
+                    required
+                    aria-describedby="setup-key-hint"
+                    [ngModel]="setupKey()"
+                    (ngModelChange)="setupKey.set($event)"
+                    placeholder="Paste the key printed at startup"
+                    class="block w-full rounded-lg border px-3 py-2.5 font-mono text-sm transition-colors focus:outline-none focus:ring-2"
+                    [class]="themeService.isDark()
+                      ? 'border-ink-700 bg-ink-950 text-white placeholder:text-ink-600 focus:border-brand-500 focus:ring-brand-500/20'
+                      : 'border-slate-300 bg-white text-slate-950 placeholder:text-slate-400 focus:border-brand-500 focus:ring-brand-500/20'"
+                  />
+                  <p id="setup-key-hint" class="mt-1.5 text-[11px] leading-5" [class]="themeService.isDark() ? 'text-ink-500' : 'text-slate-500'">
+                    Printed in the server log at startup and saved to
+                    <code class="break-all font-mono">{{ setupKeyFile() || 'secrets/initialAdminPassword' }}</code>
+                  </p>
+                </div>
+
                 <div>
                   <label for="setup-email" class="mb-1.5 block text-xs font-medium" [class]="themeService.isDark() ? 'text-ink-300' : 'text-slate-700'">Administrator email</label>
                   <input
@@ -208,16 +249,14 @@
                 </div>
 
                 <div>
-                  <div class="mb-1.5 flex items-center justify-between gap-3">
-                    <label for="setup-password" class="block text-xs font-medium" [class]="themeService.isDark() ? 'text-ink-300' : 'text-slate-700'">Password</label>
-                    <span class="text-[11px]" [class]="themeService.isDark() ? 'text-ink-500' : 'text-slate-500'">Minimum 12 characters</span>
-                  </div>
+                  <label for="setup-password" class="mb-1.5 block text-xs font-medium" [class]="themeService.isDark() ? 'text-ink-300' : 'text-slate-700'">Password</label>
                   <input
                     id="setup-password"
                     type="password"
                     name="password"
                     autocomplete="new-password"
                     required
+                    aria-describedby="setup-password-rules"
                     [ngModel]="password()"
                     (ngModelChange)="password.set($event)"
                     placeholder="Create a strong password"
@@ -226,6 +265,24 @@
                       ? 'border-ink-700 bg-ink-950 text-white placeholder:text-ink-600 focus:border-brand-500 focus:ring-brand-500/20'
                       : 'border-slate-300 bg-white text-slate-950 placeholder:text-slate-400 focus:border-brand-500 focus:ring-brand-500/20'"
                   />
+                  <ul id="setup-password-rules" class="mt-2 grid grid-cols-1 gap-1 sm:grid-cols-2">
+                    @for (rule of setupChecklist(); track rule.label) {
+                      <li
+                        class="flex items-center gap-2 text-xs"
+                        [class]="rule.met ? (themeService.isDark() ? 'text-emerald-400' : 'text-emerald-700') : (themeService.isDark() ? 'text-ink-500' : 'text-slate-500')"
+                      >
+                        @if (rule.met) {
+                          <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                          </svg>
+                        } @else {
+                          <span class="flex h-3.5 w-3.5 shrink-0 items-center justify-center" aria-hidden="true"><span class="h-1.5 w-1.5 rounded-full bg-current"></span></span>
+                        }
+                        <span>{{ rule.label }}</span>
+                        <span class="sr-only">{{ rule.met ? '(met)' : '(not met)' }}</span>
+                      </li>
+                    }
+                  </ul>
                 </div>
 
                 <div>

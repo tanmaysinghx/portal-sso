@@ -40,15 +40,11 @@ curl -LO https://github.com/tanmaysinghx/portal-sso/releases/latest/download/por
 java -jar portal-sso.jar --httpPort=8080
 ```
 
-On first start Portal SSO creates `~/.portal-sso/` (embedded H2 database, generated MFA key) and an
-initial administrator, then prints the credentials:
+On first start Portal SSO creates `~/.portal-sso/` (embedded H2 database, generated MFA key) and
+prints a one-time **setup key** (also saved to `~/.portal-sso/secrets/initialAdminPassword`).
 
-```
-Username: admin@localhost
-Password: <generated>          (also in ~/.portal-sso/secrets/initialAdminPassword)
-```
-
-Sign in at `http://localhost:8080`. Other flags: `--httpListenAddress`, `--portalHome`, `--prefix`.
+Open `http://localhost:8080`, paste the key, and create your own administrator account. You are
+signed straight in, and the key is spent. Other flags: `--httpListenAddress`, `--portalHome`, `--prefix`.
 Linux installer and systemd unit: [docs/download.md](docs/download.md).
 
 When you outgrow H2, go to **Settings → Database & Migration**, enter PostgreSQL or MySQL connection
