@@ -84,6 +84,13 @@ export class BrandingService {
 
     if (faviconElement) {
       faviconElement.href = logo || DEFAULT_FAVICON;
+      // A stale image/svg+xml type makes browsers drop a PNG/JPG logo, leaving no tab icon.
+      const isSvg = !logo || /^data:image\/svg\+xml|\.svg(\?|#|$)/i.test(logo);
+      if (isSvg) {
+        faviconElement.type = 'image/svg+xml';
+      } else {
+        faviconElement.removeAttribute('type');
+      }
     }
     if (faviconAlt) {
       faviconAlt.href = logo || 'favicon.ico';

@@ -313,8 +313,11 @@ public class AuthPageController {
                   background: #334155; overflow: hidden; border-radius: 2px; }
                 .wire::after { content: ""; position: absolute; top: 0; left: -40%; width: 40%; height: 100%;
                   background: linear-gradient(90deg, transparent, #818cf8, transparent); animation: pulse 1.1s ease-in-out infinite; }
+                .node { transition: border-color .3s, box-shadow .3s; }
                 .done .wire { background: #22c55e; }
                 .done .wire::after { display: none; }
+                .done .node { border-color: #22c55e; box-shadow: 0 0 0 4px rgba(34, 197, 94, .12); }
+                .failed .node { border-color: #ef4444; box-shadow: 0 0 0 4px rgba(239, 68, 68, .12); }
                 @keyframes pulse { to { left: 100%; } }
                 h1 { font-size: 17px; font-weight: 600; color: #f8fafc; margin-bottom: 4px; }
                 .sub { font-size: 13px; color: #94a3b8; margin-bottom: 20px; min-height: 18px; }
@@ -336,7 +339,9 @@ public class AuthPageController {
                 .failed .error { display: block; }
                 .failed ol, .failed .wire { display: none; }
                 button { margin-top: 16px; width: 100%; height: 38px; border-radius: 8px; border: 1px solid #334155;
-                  background: #111827; color: #e2e8f0; font-size: 13px; font-weight: 600; cursor: pointer; }
+                  background: #4f46e5; border-color: #4f46e5; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; }
+                button:hover { background: #4338ca; }
+                button:focus-visible { outline: 2px solid #a5b4fc; outline-offset: 2px; }
                 .hint { margin-top: 14px; font-size: 11.5px; color: #475569; }
                 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
               </style>
@@ -396,6 +401,7 @@ public class AuthPageController {
                     document.getElementById('error').textContent = params.get('error_description') || error;
                     document.getElementById('hint').hidden = true;
                     closeBtn.hidden = false;
+                    closeBtn.focus();
                     return;
                   }
                   if (!delivered) {
